@@ -109,5 +109,5 @@ Pull request'ler memnuniyetle karşılanır! Büyük değişiklikler için lütf
 
 ## İletişim
 
-- GitHub: [@archura](https://github.com/archura)
+- GitHub: [@archura](https://github.com/aybarsbarut)
 - Email: barutaybarsfahri@gmail.com
