@@ -22,6 +22,7 @@
 #include <cstdlib>
 #include <imgui.h>
 #include <string>
+#include <fstream>
 
 using namespace Archura;
 
@@ -48,7 +49,20 @@ int main() {
         return -1;
     }
 
-    std::cout << "\n=== Creating Demo Scene ===" << std::endl;
+    std::cout << "\n=== Archura Engine Initialization ===" << std::endl;
+    
+    // Print Version
+    std::ifstream versionFile("version.txt");
+    if (versionFile.is_open()) {
+        std::string version;
+        std::getline(versionFile, version);
+        std::cout << "Engine Version: " << version << std::endl;
+        versionFile.close();
+    } else {
+        std::cout << "Engine Version: Unknown (version.txt not found)" << std::endl;
+    }
+
+    std::cout << "=== Creating Demo Scene ===" << std::endl;
 
     // Sahne olustur
     Scene scene("Demo Scene");
