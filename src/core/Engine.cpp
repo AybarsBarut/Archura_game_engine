@@ -19,7 +19,7 @@ bool Engine::Init(const EngineConfig& config) {
 
     m_EditorMode = config.editorMode;
 
-    // Window oluştur
+    // Pencere olustur
     Window::WindowProps windowProps(
         config.windowTitle,
         config.windowWidth,
@@ -34,10 +34,10 @@ bool Engine::Init(const EngineConfig& config) {
         return false;
     }
 
-    // Input sistemi
+    // Giris sistemi
     m_Input = std::make_unique<Input>(m_Window->GetNativeWindow());
 
-    // Renderer sistemi
+    // Goruntu sistemi
     m_Renderer = std::make_unique<Renderer>();
     if (!m_Renderer->Init()) {
         std::cerr << "Failed to initialize renderer!" << std::endl;
@@ -52,7 +52,7 @@ bool Engine::Init(const EngineConfig& config) {
 void Engine::Run() {
     std::cout << "Engine is running..." << std::endl;
 
-    // Ana game loop
+    // Ana oyun dongusu
     while (m_Running && !m_Window->ShouldClose()) {
         float deltaTime = m_Window->GetDeltaTime();
         
@@ -66,7 +66,7 @@ void Engine::Run() {
         // Window update
         m_Window->Update();
 
-        // ESC tuşu ile çıkış
+        // ESC tusu ile cikis
         if (m_Input->IsKeyPressed(GLFW_KEY_ESCAPE)) {
             m_Running = false;
         }
@@ -89,7 +89,7 @@ void Engine::Shutdown() {
 }
 
 void Engine::Update(float deltaTime) {
-    // Her frame'de FPS bilgisini göster (console'da spam yapmamak için 1 saniyede bir)
+    // Her karede FPS bilgisini goster (konsolda spam yapmamak icin 1 saniyede bir)
     static float fpsTimer = 0.0f;
     fpsTimer += deltaTime;
     
@@ -99,7 +99,7 @@ void Engine::Update(float deltaTime) {
         fpsTimer = 0.0f;
     }
 
-    // Burada game logic update'leri yapılacak
+    // Burada oyun mantigi guncellemeleri yapilacak
     // - ECS update
     // - Physics update
     // - Animation update
@@ -109,7 +109,7 @@ void Engine::Update(float deltaTime) {
 void Engine::Render() {
     m_Renderer->BeginFrame();
     
-    // Burada render işlemleri yapılacak
+    // Burada goruntu islemleri yapilacak
     // - Scene rendering
     // - Editor UI (ImGui)
     // vs...

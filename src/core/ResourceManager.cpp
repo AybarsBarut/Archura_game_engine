@@ -11,17 +11,17 @@ ResourceManager& ResourceManager::Get() {
     return instance;
 }
 
-// ==================== Shader Management ====================
+// ==================== Shader Yonetimi ====================
 
 Shader* ResourceManager::LoadShader(const std::string& name, const std::string& vertPath, const std::string& fragPath) {
-    // Zaten var mı?
+    // Zaten var mi?
     auto it = m_Shaders.find(name);
     if (it != m_Shaders.end()) {
         std::cout << "Shader '" << name << "' already loaded, returning cached version." << std::endl;
         return it->second;
     }
 
-    // Yeni shader yükle
+    // Yeni shader yukle
     Shader* shader = new Shader();
     if (shader->LoadFromFile(vertPath, fragPath)) {
         m_Shaders[name] = shader;
@@ -39,7 +39,7 @@ Shader* ResourceManager::GetShader(const std::string& name) {
     return (it != m_Shaders.end()) ? it->second : nullptr;
 }
 
-// ==================== Texture Management ====================
+// ==================== Doku Yonetimi ====================
 
 Texture* ResourceManager::LoadTexture(const std::string& name, const std::string& path, bool generateMipmaps) {
     auto it = m_Textures.find(name);
@@ -62,7 +62,7 @@ Texture* ResourceManager::GetTexture(const std::string& name) {
     return (it != m_Textures.end()) ? it->second : nullptr;
 }
 
-// ==================== Mesh Management ====================
+// ==================== Model Yonetimi ====================
 
 Mesh* ResourceManager::AddMesh(const std::string& name, Mesh* mesh) {
     if (!mesh) return nullptr;
@@ -82,7 +82,7 @@ Mesh* ResourceManager::GetMesh(const std::string& name) {
     return (it != m_Meshes.end()) ? it->second : nullptr;
 }
 
-// ==================== Cleanup ====================
+// ==================== Temizlik ====================
 
 void ResourceManager::Clear() {
     ClearShaders();
