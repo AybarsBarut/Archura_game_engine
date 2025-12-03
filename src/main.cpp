@@ -100,13 +100,7 @@ int main() {
     // Oyuncu varligi (silah tasiyicisi)
     Entity* player = scene.CreateEntity("Player");
     auto* weapon = player->AddComponent<Weapon>();
-    weapon->type = Weapon::WeaponType::Rifle;
-    weapon->damage = 30.0f;
-    weapon->fireRate = 0.1f;
-    weapon->magSize = 30;
-    weapon->currentMag = 30;
-    weapon->totalAmmo = 120;
-    weapon->reloadTime = 2.0f;
+    weapon->InitInventory();
     
     // Player Health
     auto* playerHealthComp = player->AddComponent<Health>();
@@ -588,7 +582,7 @@ int main() {
             hudRenderer.DrawCrosshair(20.0f, glm::vec4(0.0f, 1.0f, 0.0f, 0.8f));
             
             // Mermi sayaci (sag alt)
-            hudRenderer.DrawAmmoCounter(weapon->currentMag, weapon->magSize, 1680.0f, 50.0f);
+            hudRenderer.DrawAmmoCounter(weapon->stats.currentMag, weapon->stats.magSize, 1680.0f, 50.0f);
             
             // Can bari (sol alt)
             hudRenderer.DrawHealthBar(playerHealthComp->current, playerHealthComp->max, 40.0f, 50.0f, 300.0f, 30.0f);

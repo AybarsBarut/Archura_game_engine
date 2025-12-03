@@ -6,6 +6,7 @@
 #include <GLFW/glfw3.h>
 #include <iostream>
 #include <cmath>
+#include <algorithm>
 
 namespace Archura {
 
@@ -21,19 +22,19 @@ void WeaponSystem::Update(Entity* entity, Input* input, Scene* scene, Camera* ca
     // Reload durumu
     if (weapon->isReloading) {
         weapon->reloadTimer += deltaTime;
-        if (weapon->reloadTimer >= weapon->reloadTime) {
+        if (weapon->reloadTimer >= weapon->stats.reloadTime) {
             // Reload tamamlandı
-            int ammoNeeded = weapon->magSize - weapon->currentMag;
-            int ammoToReload = std::min(ammoNeeded, weapon->totalAmmo);
+            int ammoNeeded = weapon->stats.magSize - weapon->stats.currentMag;
+            int ammoToReload = std::min(ammoNeeded, weapon->stats.totalAmmo);
             
-            weapon->currentMag += ammoToReload;
-            weapon->totalAmmo -= ammoToReload;
+            weapon->stats.currentMag += ammoToReload;
+            weapon->stats.totalAmmo -= ammoToReload;
             
             weapon->isReloading = false;
             weapon->reloadTimer = 0.0f;
             
-            std::cout << "Reload complete! Mag: " << weapon->currentMag << "/" << weapon->magSize 
-                      << " | Total: " << weapon->totalAmmo << std::endl;
+            std::cout << "Reload complete! Mag: " << weapon->stats.currentMag << "/" << weapon->stats.magSize 
+                      << " | Total: " << weapon->stats.totalAmmo << std::endl;
         }
         return; // Reload sırasında ateş edilemez
     }
@@ -42,55 +43,84 @@ void WeaponSystem::Update(Entity* entity, Input* input, Scene* scene, Camera* ca
 
     // Manuel reload (R tuşu)
     if (input->IsKeyPressed(GLFW_KEY_R)) {
-        if (weapon->currentMag < weapon->magSize && weapon->totalAmmo > 0 && !weapon->isReloading) {
+        if (weapon->stats.currentMag < weapon->stats.magSize && weapon->stats.totalAmmo > 0 && !weapon->isReloading) {
             Reload(weapon);
         }
     }
 
-    // Silah değiştirme (1-4 tuşları) - örnek
-    if (input->IsKeyPressed(GLFW_KEY_1)) weapon->type = Weapon::WeaponType::Pistol;
-    if (input->IsKeyPressed(GLFW_KEY_2)) weapon->type = Weapon::WeaponType::Rifle;
-    if (input->IsKeyPressed(GLFW_KEY_3)) weapon->type = Weapon::WeaponType::Shotgun;
-    if (input->IsKeyPressed(GLFW_KEY_4)) weapon->type = Weapon::WeaponType::Sniper;
+    // Silah değiştirme (1-4 tuşları)
+    if (input->IsKeyPressed(GLFW_KEY_1)) weapon->SwitchWeapon(Weapon::WeaponType::Rifle);
+    if (input->IsKeyPressed(GLFW_KEY_2)) weapon->SwitchWeapon(Weapon::WeaponType::Pistol);
+    if (input->IsKeyPressed(GLFW_KEY_3)) weapon->SwitchWeapon(Weapon::WeaponType::Knife);
+    if (input->IsKeyPressed(GLFW_KEY_4)) weapon->SwitchWeapon(Weapon::WeaponType::Grenade);
 }
 
 bool WeaponSystem::TryShoot(Weapon* weapon, Entity* entity, Scene* scene, Camera* camera, ProjectileSystem* projectileSystem) {
     if (!weapon) return false;
 
     // Ateş hızı kontrolü
-    if (weapon->timeSinceLastShot < weapon->fireRate) {
+    if (weapon->timeSinceLastShot < weapon->stats.fireRate) {
         return false;
     }
 
-    // Mermi kontrolü
-    if (weapon->currentMag <= 0) {
-        // Auto-reload
-        if (weapon->totalAmmo > 0 && !weapon->isReloading) {
-            Reload(weapon);
+    // Mermi kontrolü (Bıçak hariç)
+    if (weapon->type != Weapon::WeaponType::Knife) {
+        if (weapon->stats.currentMag <= 0) {
+            // Auto-reload (Bıçak ve Grenade hariç)
+            if (weapon->type != Weapon::WeaponType::Grenade && weapon->stats.totalAmmo > 0 && !weapon->isReloading) {
+                Reload(weapon);
+            }
+            return false;
         }
-        return false;
     }
 
     // Ateş et
-    weapon->currentMag--;
+    if (weapon->type != Weapon::WeaponType::Knife) {
+        weapon->stats.currentMag--;
+    }
+    
     weapon->timeSinceLastShot = 0.0f;
     
     // Recoil ekle
-    weapon->currentRecoil = weapon->recoilAmount;
+    weapon->currentRecoil = weapon->stats.recoilAmount;
 
     // Projectile spawn et
     if (projectileSystem && scene && camera) {
         glm::vec3 spawnPos = camera->GetPosition() + camera->GetFront() * 0.5f; // Kamera önünde spawn
         glm::vec3 direction = camera->GetFront();
         
-        projectileSystem->SpawnProjectile(
-            scene,
-            spawnPos,
-            direction,
-            weapon->range * 2.0f, // Speed (range'e göre ayarla)
-            weapon->damage,
-            entity
-        );
+        if (weapon->type == Weapon::WeaponType::Knife) {
+            // Knife Logic (Short Range Raycast)
+            // TODO: Implement proper melee hit detection
+            std::cout << "SWISH! Knife attack." << std::endl;
+            // For now, just simulate a short range "bullet" that dies instantly
+            // Or better, do a raycast here directly?
+            // Let's stick to projectile system for consistency for now, but invisible/short lived?
+            // Actually, let's just print for now as requested "Knife attack"
+        } 
+        else if (weapon->type == Weapon::WeaponType::Grenade) {
+            projectileSystem->SpawnProjectile(
+                scene,
+                spawnPos,
+                direction,
+                weapon->stats.range, // Throw speed
+                weapon->stats.damage,
+                entity,
+                Projectile::ProjectileType::Grenade
+            );
+        }
+        else {
+            // Guns
+            projectileSystem->SpawnProjectile(
+                scene,
+                spawnPos,
+                direction,
+                weapon->stats.range * 2.0f, // Bullet Speed
+                weapon->stats.damage,
+                entity,
+                Projectile::ProjectileType::Bullet
+            );
+        }
     }
 
     return true;
@@ -99,12 +129,12 @@ bool WeaponSystem::TryShoot(Weapon* weapon, Entity* entity, Scene* scene, Camera
 void WeaponSystem::Reload(Weapon* weapon) {
     if (!weapon || weapon->isReloading) return;
     
-    if (weapon->currentMag >= weapon->magSize) {
+    if (weapon->stats.currentMag >= weapon->stats.magSize) {
         std::cout << "Magazine is full!" << std::endl;
         return;
     }
     
-    if (weapon->totalAmmo <= 0) {
+    if (weapon->stats.totalAmmo <= 0) {
         std::cout << "No ammo left!" << std::endl;
         return;
     }

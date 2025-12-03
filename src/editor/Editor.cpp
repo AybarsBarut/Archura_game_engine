@@ -199,21 +199,21 @@ void Editor::DrawInspector() {
     // Weapon component
     auto* weapon = m_SelectedEntity->GetComponent<Weapon>();
     if (weapon && ImGui::CollapsingHeader("Weapon")) {
-        const char* weaponTypes[] = { "Pistol", "Rifle", "Shotgun", "Sniper" };
+        const char* weaponTypes[] = { "Rifle", "Pistol", "Knife", "Grenade", "Shotgun", "Sniper" };
         int currentType = (int)weapon->type;
-        if (ImGui::Combo("Type", &currentType, weaponTypes, 4)) {
-            weapon->type = (Weapon::WeaponType)currentType;
+        if (ImGui::Combo("Type", &currentType, weaponTypes, 6)) {
+            weapon->SwitchWeapon((Weapon::WeaponType)currentType);
         }
         
-        ImGui::DragFloat("Damage", &weapon->damage, 1.0f, 0.0f, 200.0f);
-        ImGui::DragFloat("Fire Rate", &weapon->fireRate, 0.01f, 0.01f, 5.0f);
-        ImGui::DragFloat("Range", &weapon->range, 1.0f, 10.0f, 500.0f);
-        ImGui::SliderFloat("Accuracy", &weapon->accuracy, 0.0f, 1.0f);
+        ImGui::DragFloat("Damage", &weapon->stats.damage, 1.0f, 0.0f, 200.0f);
+        ImGui::DragFloat("Fire Rate", &weapon->stats.fireRate, 0.01f, 0.01f, 5.0f);
+        ImGui::DragFloat("Range", &weapon->stats.range, 1.0f, 10.0f, 500.0f);
+        // Accuracy removed from stats for now, or add it back if needed
         
         ImGui::Separator();
         ImGui::Text("Ammo:");
-        ImGui::Text("  Magazine: %d / %d", weapon->currentMag, weapon->magSize);
-        ImGui::Text("  Total: %d", weapon->totalAmmo);
+        ImGui::Text("  Magazine: %d / %d", weapon->stats.currentMag, weapon->stats.magSize);
+        ImGui::Text("  Total: %d", weapon->stats.totalAmmo);
         ImGui::Text("  Reloading: %s", weapon->isReloading ? "Yes" : "No");
     }
 

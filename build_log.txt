@@ -1,0 +1,102 @@
+.NET Framework i├ºin MSBuild s├╝r├╝m 17.14.14+a129329f1
+
+  glad.vcxproj -> C:\Users\4RCHURA\Desktop\Archura_game_engine\build\lib\Release\glad.lib
+  glfw.vcxproj -> C:\Users\4RCHURA\Desktop\Archura_game_engine\build\lib\Release\glfw3.lib
+  imgui.vcxproj -> C:\Users\4RCHURA\Desktop\Archura_game_engine\build\lib\Release\imgui.lib
+  main.cpp
+C:\Users\4RCHURA\Desktop\Archura_game_engine\src\game\Projectile.h(54,9): error C2061: s├Âzdizimi hatas─▒: tan─▒mlay─▒c─▒ 'ProjectileType' [C:\Users\4RCHURA\Desktop\Archura_game_engine\build\ArchuraEngine.vcxproj]
+  ('../src/main.cpp' kaynak dosyas─▒ derleniyor)
+  
+  Editor.cpp
+C:\Users\4RCHURA\Desktop\Archura_game_engine\src\game\Projectile.h(54,9): error C2061: s├Âzdizimi hatas─▒: tan─▒mlay─▒c─▒ 'ProjectileType' [C:\Users\4RCHURA\Desktop\Archura_game_engine\build\ArchuraEngine.vcxproj]
+  ('../src/editor/Editor.cpp' kaynak dosyas─▒ derleniyor)
+  
+C:\Users\4RCHURA\Desktop\Archura_game_engine\src\editor\Editor.cpp(208,45): error C2039: 'damage': bir 'Archura::Weapon' ├╝yesi de─ƒil [C:\Users\4RCHURA\Desktop\Archura_game_engine\build\ArchuraEngine.vcxproj]
+      C:\Users\4RCHURA\Desktop\Archura_game_engine\src\game\Weapon.h(18,8):
+      'Archura::Weapon' bildirimine bak─▒n
+  
+C:\Users\4RCHURA\Desktop\Archura_game_engine\src\editor\Editor.cpp(208,16): error C2664: 'bool ImGui::DragFloat(const char *,float *,float,float,float,const char *,ImGuiSliderFlags)' : 2 ba─ƒ─▒ms─▒z de─ƒi┼ƒkeni 'float' de─ƒerinden 'float *' de─ƒerine d├Ân├╝┼ƒt├╝r├╝lemez [C:\Users\4RCHURA\Desktop\Archura_game_engine\build\ArchuraEngine.vcxproj]
+      C:\Users\4RCHURA\Desktop\Archura_game_engine\external\imgui\imgui.h(546,29):
+      'ImGui::DragFloat' bildirimine bak─▒n
+      C:\Users\4RCHURA\Desktop\Archura_game_engine\src\editor\Editor.cpp(208,16):
+      '(const char [7], float, float, float)' ba─ƒ─▒ms─▒z de─ƒi┼ƒken listesi e┼ƒlenmeye ├ºal─▒┼ƒ─▒l─▒rken
+  
+C:\Users\4RCHURA\Desktop\Archura_game_engine\src\editor\Editor.cpp(209,48): error C2039: 'fireRate': bir 'Archura::Weapon' ├╝yesi de─ƒil [C:\Users\4RCHURA\Desktop\Archura_game_engine\build\ArchuraEngine.vcxproj]
+      C:\Users\4RCHURA\Desktop\Archura_game_engine\src\game\Weapon.h(18,8):
+      'Archura::Weapon' bildirimine bak─▒n
+  
+C:\Users\4RCHURA\Desktop\Archura_game_engine\src\editor\Editor.cpp(209,16): error C2664: 'bool ImGui::DragFloat(const char *,float *,float,float,float,const char *,ImGuiSliderFlags)' : 2 ba─ƒ─▒ms─▒z de─ƒi┼ƒkeni 'float' de─ƒerinden 'float *' de─ƒerine d├Ân├╝┼ƒt├╝r├╝lemez [C:\Users\4RCHURA\Desktop\Archura_game_engine\build\ArchuraEngine.vcxproj]
+      C:\Users\4RCHURA\Desktop\Archura_game_engine\external\imgui\imgui.h(546,29):
+      'ImGui::DragFloat' bildirimine bak─▒n
+      C:\Users\4RCHURA\Desktop\Archura_game_engine\src\editor\Editor.cpp(209,16):
+      '(const char [10], float, float, float)' ba─ƒ─▒ms─▒z de─ƒi┼ƒken listesi e┼ƒlenmeye ├ºal─▒┼ƒ─▒l─▒rken
+  
+C:\Users\4RCHURA\Desktop\Archura_game_engine\src\editor\Editor.cpp(210,44): error C2039: 'range': bir 'Archura::Weapon' ├╝yesi de─ƒil [C:\Users\4RCHURA\Desktop\Archura_game_engine\build\ArchuraEngine.vcxproj]
+      C:\Users\4RCHURA\Desktop\Archura_game_engine\src\game\Weapon.h(18,8):
+      'Archura::Weapon' bildirimine bak─▒n
+  
+C:\Users\4RCHURA\Desktop\Archura_game_engine\src\editor\Editor.cpp(210,16): error C2664: 'bool ImGui::DragFloat(const char *,float *,float,float,float,const char *,ImGuiSliderFlags)' : 2 ba─ƒ─▒ms─▒z de─ƒi┼ƒkeni 'float' de─ƒerinden 'float *' de─ƒerine d├Ân├╝┼ƒt├╝r├╝lemez [C:\Users\4RCHURA\Desktop\Archura_game_engine\build\ArchuraEngine.vcxproj]
+      C:\Users\4RCHURA\Desktop\Archura_game_engine\external\imgui\imgui.h(546,29):
+      'ImGui::DragFloat' bildirimine bak─▒n
+      C:\Users\4RCHURA\Desktop\Archura_game_engine\src\editor\Editor.cpp(210,16):
+      '(const char [6], float, float, float)' ba─ƒ─▒ms─▒z de─ƒi┼ƒken listesi e┼ƒlenmeye ├ºal─▒┼ƒ─▒l─▒rken
+  
+C:\Users\4RCHURA\Desktop\Archura_game_engine\src\editor\Editor.cpp(211,49): error C2039: 'accuracy': bir 'Archura::Weapon' ├╝yesi de─ƒil [C:\Users\4RCHURA\Desktop\Archura_game_engine\build\ArchuraEngine.vcxproj]
+      C:\Users\4RCHURA\Desktop\Archura_game_engine\src\game\Weapon.h(18,8):
+      'Archura::Weapon' bildirimine bak─▒n
+  
+C:\Users\4RCHURA\Desktop\Archura_game_engine\src\editor\Editor.cpp(211,16): error C2660: 'ImGui::SliderFloat': i┼ƒlev 3 ba─ƒ─▒ms─▒z de─ƒi┼ƒken alm─▒yor [C:\Users\4RCHURA\Desktop\Archura_game_engine\build\ArchuraEngine.vcxproj]
+      C:\Users\4RCHURA\Desktop\Archura_game_engine\external\imgui\imgui.h(565,29):
+      'ImGui::SliderFloat' bildirimine bak─▒n
+      C:\Users\4RCHURA\Desktop\Archura_game_engine\src\editor\Editor.cpp(211,16):
+      '(const char [9], float, float)' ba─ƒ─▒ms─▒z de─ƒi┼ƒken listesi e┼ƒlenmeye ├ºal─▒┼ƒ─▒l─▒rken
+  
+C:\Users\4RCHURA\Desktop\Archura_game_engine\src\editor\Editor.cpp(215,52): error C2039: 'currentMag': bir 'Archura::Weapon' ├╝yesi de─ƒil [C:\Users\4RCHURA\Desktop\Archura_game_engine\build\ArchuraEngine.vcxproj]
+      C:\Users\4RCHURA\Desktop\Archura_game_engine\src\game\Weapon.h(18,8):
+      'Archura::Weapon' bildirimine bak─▒n
+  
+C:\Users\4RCHURA\Desktop\Archura_game_engine\src\editor\Editor.cpp(215,72): error C2039: 'magSize': bir 'Archura::Weapon' ├╝yesi de─ƒil [C:\Users\4RCHURA\Desktop\Archura_game_engine\build\ArchuraEngine.vcxproj]
+      C:\Users\4RCHURA\Desktop\Archura_game_engine\src\game\Weapon.h(18,8):
+      'Archura::Weapon' bildirimine bak─▒n
+  
+C:\Users\4RCHURA\Desktop\Archura_game_engine\src\editor\Editor.cpp(216,44): error C2039: 'totalAmmo': bir 'Archura::Weapon' ├╝yesi de─ƒil [C:\Users\4RCHURA\Desktop\Archura_game_engine\build\ArchuraEngine.vcxproj]
+      C:\Users\4RCHURA\Desktop\Archura_game_engine\src\game\Weapon.h(18,8):
+      'Archura::Weapon' bildirimine bak─▒n
+  
+  Projectile.cpp
+C:\Users\4RCHURA\Desktop\Archura_game_engine\src\game\Projectile.h(54,9): error C2061: s├Âzdizimi hatas─▒: tan─▒mlay─▒c─▒ 'ProjectileType' [C:\Users\4RCHURA\Desktop\Archura_game_engine\build\ArchuraEngine.vcxproj]
+  ('../src/game/Projectile.cpp' kaynak dosyas─▒ derleniyor)
+  
+C:\Users\4RCHURA\Desktop\Archura_game_engine\src\game\Projectile.cpp(137,27): error C2511: 'Archura::Entity *Archura::ProjectileSystem::SpawnProjectile(Archura::Scene *,const glm::vec3 &,const glm::vec3 &,float,float,Archura::Entity *,Archura::Projectile::ProjectileType)': a┼ƒ─▒r─▒ y├╝klenen ├╝ye i┼ƒlev 'Archura::ProjectileSystem' i├ºinde bulunamad─▒ [C:\Users\4RCHURA\Desktop\Archura_game_engine\build\ArchuraEngine.vcxproj]
+      C:\Users\4RCHURA\Desktop\Archura_game_engine\src\game\Projectile.h(39,7):
+      'Archura::ProjectileSystem' bildirimine bak─▒n
+  
+  Weapon.cpp
+C:\Users\4RCHURA\Desktop\Archura_game_engine\src\game\Projectile.h(54,9): error C2061: s├Âzdizimi hatas─▒: tan─▒mlay─▒c─▒ 'ProjectileType' [C:\Users\4RCHURA\Desktop\Archura_game_engine\build\ArchuraEngine.vcxproj]
+  ('../src/game/Weapon.cpp' kaynak dosyas─▒ derleniyor)
+  
+C:\Users\4RCHURA\Desktop\Archura_game_engine\src\game\Weapon.cpp(46,21): error C2039: 'currentMag': bir 'Archura::Weapon' ├╝yesi de─ƒil [C:\Users\4RCHURA\Desktop\Archura_game_engine\build\ArchuraEngine.vcxproj]
+      C:\Users\4RCHURA\Desktop\Archura_game_engine\src\game\Weapon.h(18,8):
+      'Archura::Weapon' bildirimine bak─▒n
+  
+C:\Users\4RCHURA\Desktop\Archura_game_engine\src\game\Weapon.cpp(46,42): error C2039: 'magSize': bir 'Archura::Weapon' ├╝yesi de─ƒil [C:\Users\4RCHURA\Desktop\Archura_game_engine\build\ArchuraEngine.vcxproj]
+      C:\Users\4RCHURA\Desktop\Archura_game_engine\src\game\Weapon.h(18,8):
+      'Archura::Weapon' bildirimine bak─▒n
+  
+C:\Users\4RCHURA\Desktop\Archura_game_engine\src\game\Weapon.cpp(46,61): error C2039: 'totalAmmo': bir 'Archura::Weapon' ├╝yesi de─ƒil [C:\Users\4RCHURA\Desktop\Archura_game_engine\build\ArchuraEngine.vcxproj]
+      C:\Users\4RCHURA\Desktop\Archura_game_engine\src\game\Weapon.h(18,8):
+      'Archura::Weapon' bildirimine bak─▒n
+  
+C:\Users\4RCHURA\Desktop\Archura_game_engine\src\game\Weapon.cpp(102,31): error C2660: 'Archura::ProjectileSystem::SpawnProjectile': i┼ƒlev 7 ba─ƒ─▒ms─▒z de─ƒi┼ƒken alm─▒yor [C:\Users\4RCHURA\Desktop\Archura_game_engine\build\ArchuraEngine.vcxproj]
+      C:\Users\4RCHURA\Desktop\Archura_game_engine\src\game\Projectile.h(47,13):
+      'Archura::ProjectileSystem::SpawnProjectile' bildirimine bak─▒n
+      C:\Users\4RCHURA\Desktop\Archura_game_engine\src\game\Weapon.cpp(102,31):
+      '(Archura::Scene *, glm::vec3, glm::vec3, float, float, Archura::Entity *, Archura::Projectile::ProjectileType)' ba─ƒ─▒ms─▒z de─ƒi┼ƒken listesi e┼ƒlenmeye ├ºal─▒┼ƒ─▒l─▒rken
+  
+C:\Users\4RCHURA\Desktop\Archura_game_engine\src\game\Weapon.cpp(114,31): error C2660: 'Archura::ProjectileSystem::SpawnProjectile': i┼ƒlev 7 ba─ƒ─▒ms─▒z de─ƒi┼ƒken alm─▒yor [C:\Users\4RCHURA\Desktop\Archura_game_engine\build\ArchuraEngine.vcxproj]
+      C:\Users\4RCHURA\Desktop\Archura_game_engine\src\game\Projectile.h(47,13):
+      'Archura::ProjectileSystem::SpawnProjectile' bildirimine bak─▒n
+      C:\Users\4RCHURA\Desktop\Archura_game_engine\src\game\Weapon.cpp(114,31):
+      '(Archura::Scene *, glm::vec3, glm::vec3, float, float, Archura::Entity *, Archura::Projectile::ProjectileType)' ba─ƒ─▒ms─▒z de─ƒi┼ƒken listesi e┼ƒlenmeye ├ºal─▒┼ƒ─▒l─▒rken
+  
+  Kod ├£retiliyor...
