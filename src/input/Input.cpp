@@ -11,13 +11,13 @@ Input::Input(GLFWwindow* window)
     , m_FirstMouse(true)
     , m_CursorLocked(false)
 {
-    // Scroll callback ayarla
+    // Kaydirma geri cagrisini ayarla
     glfwSetWindowUserPointer(window, this);
     glfwSetScrollCallback(window, ScrollCallback);
 }
 
 void Input::Update() {
-    // Mouse pozisyonunu güncelle
+    // Fare pozisyonunu guncelle
     double xPos, yPos;
     glfwGetCursorPos(m_Window, &xPos, &yPos);
     
@@ -32,7 +32,7 @@ void Input::Update() {
     m_LastMousePosition = currentPos;
     m_MousePosition = currentPos;
     
-    // Scroll delta'yı sıfırla (her frame'de callback'ten gelir)
+    // Kaydirma degisimini sifirla (her karede geri cagridan gelir)
     m_ScrollDelta = 0.0f;
 }
 
@@ -71,7 +71,7 @@ void Input::SetCursorMode(int mode) {
     m_CursorLocked = (mode == GLFW_CURSOR_DISABLED);
     
     if (m_CursorLocked) {
-        m_FirstMouse = true; // Delta jump'ı önle
+        m_FirstMouse = true; // Ani degisim sicramasini onle
     }
 }
 
