@@ -318,32 +318,43 @@ int main() {
         // Giris guncellemesi
         input->Update();
 
-        // ESC tusu ile Konsol/Duraklatma
+        // F1 tusu ile Gelistirici Konsolu
+        if (input->IsKeyPressed(GLFW_KEY_F1)) {
+            DevConsole::Get().Toggle();
+            // Konsol acildiginda imleci serbest birak
+            if (DevConsole::Get().IsOpen()) {
+                input->SetCursorMode(GLFW_CURSOR_NORMAL);
+            } else if (!isPaused && !editor.IsEnabled()) {
+                // Konsol kapandiysa ve oyun duraklatilmadiysa imleci kilitle
+                input->SetCursorMode(GLFW_CURSOR_DISABLED);
+            }
+        }
+
+        // ESC tusu ile Duraklatma Menusu
         if (input->IsKeyPressed(GLFW_KEY_ESCAPE) && escCooldown <= 0.0f) {
             escCooldown = 0.2f; // 200ms bekleme suresi
             
+            // Eger konsol aciksa, once onu kapat
             if (DevConsole::Get().IsOpen()) {
-                DevConsole::Get().Toggle(); // Konsolu kapat
-                input->SetCursorMode(GLFW_CURSOR_DISABLED);
-            } else {
-                DevConsole::Get().Toggle(); // Konsolu ac
-                input->SetCursorMode(GLFW_CURSOR_NORMAL);
-            }
-            
-            /* Eski Pause Mantigi (Simdilik Konsol ile degistirildi)
-            if (isKeyBindingMode) {
-                // Tus atama iptal
-                isKeyBindingMode = false;
-                keyBindingTarget = nullptr;
-            } else {
-                isPaused = !isPaused;
-                if (isPaused) {
-                    input->SetCursorMode(GLFW_CURSOR_NORMAL);
-                } else {
+                DevConsole::Get().Toggle();
+                if (!isPaused && !editor.IsEnabled()) {
                     input->SetCursorMode(GLFW_CURSOR_DISABLED);
                 }
+            } else {
+                // Konsol kapaliysa normal duraklatma menusu
+                if (isKeyBindingMode) {
+                    // Tus atama iptal
+                    isKeyBindingMode = false;
+                    keyBindingTarget = nullptr;
+                } else {
+                    isPaused = !isPaused;
+                    if (isPaused) {
+                        input->SetCursorMode(GLFW_CURSOR_NORMAL);
+                    } else {
+                        input->SetCursorMode(GLFW_CURSOR_DISABLED);
+                    }
+                }
             }
-            */
         }
 
         // Tus Atama Modu
