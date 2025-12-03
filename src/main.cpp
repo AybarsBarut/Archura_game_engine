@@ -1,3 +1,4 @@
+#include "network/NetworkManager.h"
 #include "core/Engine.h"
 #include "core/Window.h"
 #include "input/Input.h"
@@ -17,6 +18,9 @@
 #include "editor/Editor.h"
 #include <iostream>
 #include <memory>
+#include <ctime>
+#include <cstdlib>
+#include <imgui.h>
 
 using namespace Archura;
 
@@ -181,14 +185,85 @@ int main() {
     std::cout << "  ESC: Exit" << std::endl;
     std::cout << "==================\n" << std::endl;
 
-    // Ana oyun dongusu - Engine.Run() yerine manuel dongu
+    // Network Manager Init
+    auto& network = NetworkManager::Get();
+    network.Init();
+
+    // Remote Players Map
+    std::unordered_map<uint32_t, Entity*> remotePlayers;
+
+    // Network Callback
+    network.SetOnPlayerUpdate([&](const PlayerUpdatePacket& packet) {
+        // Kendimizden gelen paketleri yoksay (Server isek)
+        // Basitlik icin ID kontrolu yapmiyoruz, her gelen paketi isliyoruz
+        // Gercek uygulamada Client ID kontrolu gerekir
+
+        auto it = remotePlayers.find(packet.id);
+        if (it == remotePlayers.end()) {
+            // Yeni oyuncu olustur
+            std::cout << "New remote player: " << packet.id << std::endl;
+            Entity* newPlayer = scene.CreateEntity("RemotePlayer_" + std::to_string(packet.id));
+            
+            auto* mesh = newPlayer->AddComponent<MeshRenderer>();
+            mesh->mesh = Mesh::CreateCube(1.0f); // Diger oyunculari kup olarak gor
+            mesh->color = glm::vec3(1.0f, 0.0f, 0.0f); // Kirmizi
+            
+            auto* transform = newPlayer->GetComponent<Transform>();
+            transform->scale = glm::vec3(1.0f, 2.0f, 1.0f); // Insan boyu
+            
+            remotePlayers[packet.id] = newPlayer;
+            it = remotePlayers.find(packet.id);
+        }
+
+        // Pozisyonu guncelle
+        if (it != remotePlayers.end()) {
+            auto* transform = it->second->GetComponent<Transform>();
+            transform->position = glm::vec3(packet.x, packet.y, packet.z);
+            transform->rotation = glm::vec3(packet.pitch, packet.yaw, 0.0f);
+        }
+    });
+
+    // Ana oyun dongusu
     auto* window = engine.GetWindow();
     auto* input = engine.GetInput();
     auto* renderer = engine.GetRenderer();
 
+    // Network Timer
+    float networkTimer = 0.0f;
+    const float networkTickRate = 0.05f; // 20 updates per second
+
+    // Random ID for this client
+    srand((unsigned int)time(0));
+    uint32_t myClientID = rand(); 
+
     while (!window->ShouldClose()) {
         float deltaTime = window->GetDeltaTime();
         
+        // Network Updates
+        if (network.IsServer()) {
+            network.UpdateServer();
+        } else {
+            network.UpdateClient();
+        }
+
+        // Send Player Update
+        if (network.IsConnected()) {
+            networkTimer += deltaTime;
+            if (networkTimer >= networkTickRate) {
+                PlayerUpdatePacket packet;
+                packet.id = myClientID;
+                glm::vec3 pos = camera.GetPosition();
+                packet.x = pos.x;
+                packet.y = pos.y - 1.8f; // Ayak pozisyonu (Kamera gozde)
+                packet.z = pos.z;
+                packet.yaw = camera.GetYaw();
+                packet.pitch = camera.GetPitch();
+                
+                network.SendPlayerUpdate(packet);
+                networkTimer = 0.0f;
+            }
+        }
+
         // Giris guncellemesi
         input->Update();
 
@@ -202,8 +277,6 @@ int main() {
             } else {
                 input->SetCursorMode(GLFW_CURSOR_DISABLED);
             }
-            
-            std::cout << "Editor: " << (newState ? "ON" : "OFF") << std::endl;
         }
 
         // FPS kontrolcusu guncellemesi
@@ -226,6 +299,32 @@ int main() {
         
         // Editor Arayuzu (ImGui) - HUD'dan once
         editor.BeginFrame();
+        
+        // Multiplayer UI
+        if (editor.IsEnabled()) {
+            ImGui::Begin("Multiplayer");
+            if (!network.IsConnected()) {
+                if (ImGui::Button("Host Server")) {
+                    network.StartServer(12345);
+                }
+                static char ipBuffer[128] = "127.0.0.1";
+                ImGui::InputText("IP Address", ipBuffer, IM_ARRAYSIZE(ipBuffer));
+                if (ImGui::Button("Connect")) {
+                    network.Connect(ipBuffer, 12345);
+                }
+            } else {
+                ImGui::Text("Status: %s", network.IsServer() ? "Server Hosting" : "Client Connected");
+                ImGui::Text("My ID: %u", myClientID);
+                ImGui::Text("Remote Players: %d", (int)remotePlayers.size());
+                if (ImGui::Button("Disconnect")) {
+                    network.Shutdown();
+                    network.Init(); // Re-init for next use
+                    remotePlayers.clear(); // Clear remote players
+                }
+            }
+            ImGui::End();
+        }
+
         editor.Update(&scene, deltaTime, window->GetFPS());
         
         // HUD Cizimi (2D katman)
@@ -271,6 +370,9 @@ int main() {
             fpsTimer = 0.0f;
         }
     }
+
+    // Network Cleanup
+    network.Shutdown();
 
     // Cleanup
     editor.Shutdown();

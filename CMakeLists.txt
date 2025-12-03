@@ -66,6 +66,7 @@ file(GLOB_RECURSE ENGINE_SOURCES
     "src/input/*.cpp"
     "src/game/*.cpp"
     "src/editor/*.cpp"
+    "src/network/*.cpp"
 )
 
 file(GLOB_RECURSE ENGINE_HEADERS 
@@ -75,6 +76,7 @@ file(GLOB_RECURSE ENGINE_HEADERS
     "src/input/*.h"
     "src/game/*.h"
     "src/editor/*.h"
+    "src/network/*.h"
 )
 
 # Ana executable
@@ -97,6 +99,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     glfw
     glad
     imgui
+    ws2_32
 )
 
 # Windows için özel ayarlar
