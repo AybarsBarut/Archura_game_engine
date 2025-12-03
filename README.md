@@ -58,42 +58,42 @@ archura_game_engine/
 │   ├── textures/       # Texture dosyaları
 │   └── models/         # 3D model dosyaları
 ├── src/
-│   ├── core/           # Motor çekirdeği
+│   ├── core/           # Motor cekirdegi
 │   ├── rendering/      # Render sistemi
 │   ├── ecs/            # Entity Component System
-│   ├── input/          # Input yönetimi
+│   ├── input/          # Input yonetimi
 │   ├── game/           # Oyun sistemleri
 │   ├── editor/         # Editor UI
-│   └── main.cpp        # Giriş noktası
-├── external/           # Harici kütüphaneler
-└── CMakeLists.txt      # Build konfigürasyonu
+│   └── main.cpp        # Giris noktasi
+├── external/           # Harici kutuphaneler
+└── CMakeLists.txt      # Build konfigurasyonu
 ```
 
-## Editor Kullanımı
+## Editor Kullanimi
 
-Motor çalıştırıldığında ImGui tabanlı editor arayüzü açılır:
+Motor calistirildiginda ImGui tabanli editor arayuzu acilir:
 
-- **Scene Hierarchy**: Entity'leri görüntüle ve düzenle
-- **Inspector**: Component özelliklerini değiştir
-- **Viewport**: 3D sahneyi etkileşimli görüntüle
-- **Asset Browser**: Proje dosyalarını yönet
-- **Console**: Log mesajlarını takip et
+- **Scene Hierarchy**: Entity'leri goruntule ve duzenle
+- **Inspector**: Component ozelliklerini degistir
+- **Viewport**: 3D sahneyi etkilesimli goruntule
+- **Asset Browser**: Proje dosyalarini yonet
+- **Console**: Log mesajlarini takip et
 
-### Editor Kısayolları
+### Editor Kisayollari
 
 - `W/A/S/D`: Kamera hareketi
-- `Q/E`: Yukarı/aşağı hareket
-- `Mouse Sağ Tık + Hareket`: Kamera döndürme
+- `Q/E`: Yukari/asagi hareket
+- `Mouse Sag Tik + Hareket`: Kamera dondurme
 - `Ctrl+S`: Sahneyi kaydet
-- `Ctrl+O`: Sahne aç
-- `F`: Seçili objeyi odakla
+- `Ctrl+O`: Sahne ac
+- `F`: Secili objeyi odakla
 
-## Teknoloji Yığını
+## Teknoloji Yigini
 
-- **C++17**: Modern C++ özellikleri
+- **C++17**: Modern C++ ozellikleri
 - **OpenGL 3.3+**: Grafik API
 - **GLFW**: Window ve input yönetimi
-- **GLM**: Matematik kütüphanesi
+- **GLM**: Matematik kutuphanesi
 - **Dear ImGui**: Editor UI
 - **stb_image**: Image loading
 
@@ -101,13 +101,13 @@ Motor çalıştırıldığında ImGui tabanlı editor arayüzü açılır:
 
 ## Lisans
 
-MIT License - Detaylar için LICENSE dosyasına bakınız.
+MIT License - Detaylar icin LICENSE dosyasina bakiniz.
 
-## Katkıda Bulunma
+## Katkida Bulunma
 
-Pull request'ler memnuniyetle karşılanır! Büyük değişiklikler için lütfen önce bir issue açın.
+Pull request'ler memnuniyetle karsilanir! Buyuk degisiklikler icin lutfen once bir issue acin.
 
-## İletişim
+## Iletisim
 
 - GitHub: [@archura](https://github.com/aybarsbarut)
 - Email: barutaybarsfahri@gmail.com

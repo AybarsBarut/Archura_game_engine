@@ -27,25 +27,25 @@ Editor::~Editor() {
 bool Editor::Init(Window* window) {
     m_Window = window;
 
-    // ImGui context olustur
+    // ImGui baglamini olustur
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO();
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
     // io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
-    // Style
+    // Stil
     ImGui::StyleColorsDark();
 
-    // Platform/Renderer bindings
+    // Platform/Renderer baglantilari
     ImGui_ImplGlfw_InitForOpenGL(window->GetNativeWindow(), true);
     ImGui_ImplOpenGL3_Init("#version 330");
     
-    // Redirect cout to Editor Console
+    // Ciktilari konsola yonlendir
     m_NewCoutBuf = std::make_unique<EditorStreamBuf>(this);
     m_OldCoutBuf = std::cout.rdbuf(m_NewCoutBuf.get());
 
-    // Initialize Project Directory
+    // Proje dizinini baslat
     m_BaseProjectDir = std::filesystem::current_path();
     if (std::filesystem::exists(m_BaseProjectDir / "assets")) {
         m_BaseProjectDir /= "assets";
@@ -57,7 +57,7 @@ bool Editor::Init(Window* window) {
 }
 
 void Editor::Shutdown() {
-    // Restore cout
+    // Ciktilari geri yukle
     if (m_OldCoutBuf) {
         std::cout.rdbuf(m_OldCoutBuf);
     }
@@ -74,7 +74,7 @@ void Editor::BeginFrame() {
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
-    // Dockspace (tum pencereyi kullan)
+    // Dockspace (tum pencere)
     // ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_PassthroughCentralNode;
     // ImGui::DockSpaceOverViewport(ImGui::GetMainViewport(), dockspace_flags);
 
@@ -88,28 +88,28 @@ void Editor::SetupLayout() {
     ImVec2 workPos = viewport->WorkPos;
     ImVec2 workSize = viewport->WorkSize; 
 
-    // Layout configuration
+    // Yerlesim ayari
     float leftPanelWidth = 300.0f;
     float rightPanelWidth = 300.0f;
     float bottomPanelHeight = 250.0f;
 
-    // 1. Toolbar (Removed)
+    // 1. Arac Cubugu (Kaldirildi)
     // ImGui::SetNextWindowPos(ImVec2(viewport->WorkPos.x, viewport->WorkPos.y + menuBarHeight));
     // ImGui::SetNextWindowSize(ImVec2(viewport->WorkSize.x, toolbarHeight));
 
-    // 2. Hierarchy (Left)
+    // 2. Hiyerarsi (Sol)
     if (m_ShowSceneHierarchy) {
         ImGui::SetNextWindowPos(workPos);
         ImGui::SetNextWindowSize(ImVec2(leftPanelWidth, workSize.y - bottomPanelHeight));
     }
 
-    // 3. Inspector (Right)
+    // 3. Denetci (Sag)
     if (m_ShowInspector) {
         ImGui::SetNextWindowPos(ImVec2(workPos.x + workSize.x - rightPanelWidth, workPos.y));
         ImGui::SetNextWindowSize(ImVec2(rightPanelWidth, workSize.y));
     }
 
-    // 4. Project/Console (Bottom)
+    // 4. Proje/Konsol (Alt)
     if (m_ShowProjectPanel || m_ShowConsole) {
         ImGui::SetNextWindowPos(ImVec2(workPos.x, workPos.y + workSize.y - bottomPanelHeight));
         ImGui::SetNextWindowSize(ImVec2(workSize.x - (m_ShowInspector ? rightPanelWidth : 0), bottomPanelHeight));
@@ -227,7 +227,7 @@ void Editor::DrawSceneHierarchy(Scene* scene) {
         return;
     }
 
-    // Entities listesini goster
+    // Varlik listesi
     const auto& entities = scene->GetEntities();
     
     ImGui::Text("Entities: %zu", entities.size());
@@ -272,12 +272,12 @@ void Editor::DrawInspector() {
         return;
     }
 
-    // Entity bilgileri
+    // Varlik bilgileri
     ImGui::Text("Entity: %s", m_SelectedEntity->GetName().c_str());
     ImGui::Text("ID: %u", m_SelectedEntity->GetID());
     ImGui::Separator();
 
-    // Transform component
+    // Donusum bileseni
     auto* transform = m_SelectedEntity->GetComponent<Transform>();
     if (transform && ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen)) {
         ImGui::DragFloat3("Position", &transform->position.x, 0.1f);
@@ -285,16 +285,16 @@ void Editor::DrawInspector() {
         ImGui::DragFloat3("Scale", &transform->scale.x, 0.1f);
     }
 
-    // MeshRenderer component
+    // Model isleyici bileseni
     auto* meshRenderer = m_SelectedEntity->GetComponent<MeshRenderer>();
     if (meshRenderer && ImGui::CollapsingHeader("Mesh Renderer")) {
         ImGui::Text("Mesh: %s", meshRenderer->mesh ? "Loaded" : "None");
         ImGui::ColorEdit3("Color", &meshRenderer->color.x);
     }
 
-    // Skin / Texture
+    // Kaplama / Doku
     if (meshRenderer && ImGui::CollapsingHeader("Skin / Texture")) {
-        // Scan for textures
+        // Dokulari tara
         static std::vector<std::string> textureFiles;
         static bool filesLoaded = false;
         
@@ -305,7 +305,7 @@ void Editor::DrawInspector() {
                 for (const auto& entry : std::filesystem::directory_iterator(texturesDir)) {
                     if (entry.is_regular_file()) {
                         std::string ext = entry.path().extension().string();
-                        // Simple extension check
+                        // Uzanti kontrolu
                         if (ext == ".jpg" || ext == ".png" || ext == ".tga" || ext == ".bmp" || ext == ".jpeg") {
                             textureFiles.push_back(entry.path().filename().string());
                         }
@@ -321,7 +321,7 @@ void Editor::DrawInspector() {
                 const bool isSelected = (selectedTextureIdx == i);
                 if (ImGui::Selectable(textureFiles[i].c_str(), isSelected)) {
                     selectedTextureIdx = i;
-                    // Load texture
+                    // Dokuyu yukle
                     std::string pathStr = "assets/textures/" + textureFiles[i];
                     std::string name = std::filesystem::path(pathStr).stem().string();
                     Texture* tex = TextureManager::Get().Load(name, pathStr);
@@ -348,7 +348,7 @@ void Editor::DrawInspector() {
         }
     }
 
-    // Weapon component
+    // Silah bileseni
     auto* weapon = m_SelectedEntity->GetComponent<Weapon>();
     if (weapon && ImGui::CollapsingHeader("Weapon")) {
         const char* weaponTypes[] = { "Rifle", "Pistol", "Knife", "Grenade", "Shotgun", "Sniper" };
@@ -360,7 +360,7 @@ void Editor::DrawInspector() {
         ImGui::DragFloat("Damage", &weapon->stats.damage, 1.0f, 0.0f, 200.0f);
         ImGui::DragFloat("Fire Rate", &weapon->stats.fireRate, 0.01f, 0.01f, 5.0f);
         ImGui::DragFloat("Range", &weapon->stats.range, 1.0f, 10.0f, 500.0f);
-        // Accuracy removed from stats for now, or add it back if needed
+        // Isabet orani simdilik kaldirildi
         
         ImGui::Separator();
         ImGui::Text("Ammo:");
@@ -369,7 +369,7 @@ void Editor::DrawInspector() {
         ImGui::Text("  Reloading: %s", weapon->isReloading ? "Yes" : "No");
     }
 
-    // Projectile component
+    // Mermi bileseni
     auto* projectile = m_SelectedEntity->GetComponent<Projectile>();
     if (projectile && ImGui::CollapsingHeader("Projectile")) {
         ImGui::Text("Speed: %.2f", projectile->speed);
@@ -390,7 +390,7 @@ void Editor::DrawPerformanceMetrics(float deltaTime, float fps) {
     
     ImGui::Separator();
     
-    // Frame time graph
+    // Kare suresi grafigi
     static float frameTimes[90] = {};
     static int frameTimeIdx = 0;
     frameTimes[frameTimeIdx] = deltaTime * 1000.0f;
@@ -398,7 +398,7 @@ void Editor::DrawPerformanceMetrics(float deltaTime, float fps) {
     
     ImGui::PlotLines("Frame Time (ms)", frameTimes, 90, 0, nullptr, 0.0f, 33.0f, ImVec2(0, 80));
 
-    // Memory kullanimi (tahmini)
+    // Bellek kullanimi (tahmini)
     ImGui::Separator();
     ImGui::Text("Memory (Estimate):");
     ImGui::Text("  Engine: ~930 MB");
@@ -411,7 +411,7 @@ void Editor::DrawDemoWindow() {
 }
 
 void Editor::DrawToolbar() {
-    // Toolbar removed by user request
+    // Arac cubugu kullanici istegiyle kaldirildi
 }
 
 void Editor::DrawProjectPanel() {
@@ -423,11 +423,11 @@ void Editor::DrawProjectPanel() {
         }
     }
 
-    // Current Path Display
+    // Gecerli yol
     ImGui::Text("Path: %s", m_CurrentProjectDir.string().c_str());
     ImGui::Separator();
 
-    // List Directories
+    // Klasorleri listele
     for (auto& directoryEntry : std::filesystem::directory_iterator(m_CurrentProjectDir)) {
         const auto& path = directoryEntry.path();
         auto relativePath = std::filesystem::relative(path, m_BaseProjectDir);
@@ -442,14 +442,14 @@ void Editor::DrawProjectPanel() {
         }
     }
 
-    // List Files
+    // Dosyalari listele
     for (auto& directoryEntry : std::filesystem::directory_iterator(m_CurrentProjectDir)) {
         const auto& path = directoryEntry.path();
         std::string filenameString = path.filename().string();
 
         if (!directoryEntry.is_directory()) {
             if (ImGui::Selectable(filenameString.c_str())) {
-                // Select file logic
+                // Dosya secimi
             }
         }   
     }
@@ -467,14 +467,14 @@ void Editor::DrawConsolePanel() {
     ImGui::Text("Logs: %zu", m_ConsoleLogs.size());
     ImGui::Separator();
 
-    // Reserve space for input at bottom
+    // Alt kisimda giris icin yer ayir
     float footerHeight = ImGui::GetStyle().ItemSpacing.y + ImGui::GetFrameHeightWithSpacing();
     ImGui::BeginChild("ScrollingRegion", ImVec2(0, -footerHeight), false, ImGuiWindowFlags_HorizontalScrollbar);
     for (const auto& log : m_ConsoleLogs) {
         ImGui::TextUnformatted(log.c_str());
     }
     
-    // Auto-scroll
+    // Otomatik kaydirma
     if (ImGui::GetScrollY() >= ImGui::GetScrollMaxY())
         ImGui::SetScrollHereY(1.0f);
 
@@ -482,7 +482,7 @@ void Editor::DrawConsolePanel() {
 
     ImGui::Separator();
     
-    // Command Input
+    // Komut girisi
     ImGui::PushItemWidth(-1);
     if (ImGui::InputText("##Input", m_InputBuf, IM_ARRAYSIZE(m_InputBuf), ImGuiInputTextFlags_EnterReturnsTrue)) {
         ExecuteCommand(m_InputBuf);

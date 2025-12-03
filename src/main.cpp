@@ -26,21 +26,21 @@
 
 using namespace Archura;
 
-// Dedicated GPU kullanimi icin ipucu (NVIDIA ve AMD)
+// Harici GPU kullanimi icin ipucu (NVIDIA ve AMD)
 extern "C" {
     __declspec(dllexport) unsigned long NvOptimusEnablement = 0x00000001;
     __declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
 }
 
 int main() {
-    // Motor konfigurasyonu
+    // Motor yapilandirmasi
     Engine::EngineConfig config;
     config.windowTitle = "Archura FPS Engine - Demo";
     config.windowWidth = 1920;
     config.windowHeight = 1080;
     config.vsync = false; // VSync kapali = sinirsiz FPS
     config.fullscreen = false;
-    config.editorMode = false; // Simdilik editor UI kapali
+    config.editorMode = false; // Simdilik editor arayuzu kapali
 
     // Motoru baslat
     auto& engine = Engine::Get();
@@ -51,7 +51,7 @@ int main() {
 
     std::cout << "\n=== Archura Engine Initialization ===" << std::endl;
     
-    // Print Version
+    // Surum bilgisini yazdir
     std::ifstream versionFile("version.txt");
     if (versionFile.is_open()) {
         std::string version;
@@ -72,7 +72,7 @@ int main() {
     camera.SetMovementSpeed(5.0f);
     FPSController fpsController(&camera);
 
-    // Render system
+    // Goruntu sistemi
     RenderSystem renderSystem(&camera);
     renderSystem.Init(&scene);
 
@@ -80,7 +80,7 @@ int main() {
     Skybox skybox;
     skybox.Init();
 
-    // HUD Renderer
+    // HUD Isleyici
     HUDRenderer hudRenderer;
     if (!hudRenderer.Init()) {
         std::cerr << "Failed to initialize HUD renderer!" << std::endl;
@@ -102,12 +102,12 @@ int main() {
     auto* weapon = player->AddComponent<Weapon>();
     weapon->InitInventory();
     
-    // Player Health
+    // Oyuncu cani
     auto* playerHealthComp = player->AddComponent<Health>();
     playerHealthComp->current = 100.0f;
     playerHealthComp->max = 100.0f;
     
-    // Player Collider (so enemies can hit us)
+    // Oyuncu carpisma kutusu (dusmanlarin vurabilmesi icin)
     auto* playerCollider = player->AddComponent<BoxCollider>();
     playerCollider->size = glm::vec3(0.8f, 1.8f, 0.8f); // Human size
 
@@ -117,7 +117,7 @@ int main() {
     // Mermi sistemi
     ProjectileSystem projectileSystem;
 
-    // Network Callback - Shoot
+    // Ag Geri Cagrisi - Ates Etme
 
 
     // ... (Existing Network Update Callback) ...
@@ -188,7 +188,7 @@ int main() {
         
         // Mesh
         auto* mesh = wall->AddComponent<MeshRenderer>();
-        mesh->mesh = Mesh::CreateCube(1.0f); // Temel kup, scale ile buyutecegiz
+        mesh->mesh = Mesh::CreateCube(1.0f); // Temel kup, olcek ile buyutecegiz
         mesh->color = def.color;
 
         // Transform
@@ -198,7 +198,7 @@ int main() {
 
         // Collider
         auto* collider = wall->AddComponent<BoxCollider>();
-        collider->size = glm::vec3(1.0f); // Mesh boyutu 1x1x1 oldugu icin collider da 1x1x1 (scale ile carpilacak)
+        collider->size = glm::vec3(1.0f); // Model boyutu 1x1x1 oldugu icin carpisma kutusu da 1x1x1 (olcek ile carpilacak)
     }
 
     std::cout << "Scene created with " << scene.GetEntities().size() << " entities." << std::endl;
@@ -215,18 +215,18 @@ int main() {
     std::cout << "  ESC: Exit" << std::endl;
     std::cout << "==================\n" << std::endl;
 
-    // Network Manager Init
+    // Ag Yoneticisi Baslatma
     auto& network = NetworkManager::Get();
     network.Init();
 
-    // Remote Players Map
+    // Uzak Oyuncular Haritasi
     std::unordered_map<uint32_t, Entity*> remotePlayers;
 
-    // Network Callback
+    // Ag Geri Cagrisi
     network.SetOnPlayerUpdate([&](const PlayerUpdatePacket& packet) {
-        // Kendimizden gelen paketleri yoksay (Server isek)
+        // Kendimizden gelen paketleri yoksay (Sunucu isek)
         // Basitlik icin ID kontrolu yapmiyoruz, her gelen paketi isliyoruz
-        // Gercek uygulamada Client ID kontrolu gerekir
+        // Gercek uygulamada istemci ID kontrolu gerekir
 
         auto it = remotePlayers.find(packet.id);
         if (it == remotePlayers.end()) {
@@ -242,10 +242,10 @@ int main() {
 
             if (charMesh) {
                 mesh->mesh = charMesh;
-                mesh->color = glm::vec3(1.0f); // Modelin kendi renklerini/texture'ini kullan (eger varsa)
-                transform->scale = glm::vec3(1.0f, 2.0f, 1.0f); // OBJ icin scale (tahmini)
+                mesh->color = glm::vec3(1.0f); // Modelin kendi renklerini/dokusunu kullan (eger varsa)
+                transform->scale = glm::vec3(1.0f, 2.0f, 1.0f); // OBJ icin olcek (tahmini)
             } else {
-                // Fallback: Kapsul (Insan boyutlarinda: r=0.4, h=1.8)
+                // Yedek: Kapsul (Insan boyutlarinda: r=0.4, h=1.8)
                 mesh->mesh = Mesh::CreateCapsule(0.4f, 1.8f); 
                 mesh->color = glm::vec3(0.0f, 0.5f, 1.0f); // Mavi renk
                 transform->scale = glm::vec3(1.0f); // Kapsul zaten dogru boyutta uretiliyor
@@ -268,7 +268,7 @@ int main() {
     auto* input = engine.GetInput();
     auto* renderer = engine.GetRenderer();
 
-    // Pause State
+    // Duraklatma Durumu
     bool isPaused = false;
     bool isKeyBindingMode = false;
     int* keyBindingTarget = nullptr;
@@ -276,11 +276,11 @@ int main() {
     float escCooldown = 0.0f;
     float tabCooldown = 0.0f;
 
-    // Network Timer
+    // Ag Zamanlayicisi
     float networkTimer = 0.0f;
     const float networkTickRate = 0.05f; // 20 updates per second
 
-    // Random ID for this client
+    // Bu istemci icin rastgele ID
     srand((unsigned int)time(0));
     uint32_t myClientID = rand(); 
     
@@ -307,19 +307,19 @@ int main() {
     while (!window->ShouldClose()) {
         float deltaTime = window->GetDeltaTime();
         
-        // Cooldown guncellemesi
+        // Bekleme suresi guncellemesi
         if (escCooldown > 0.0f) escCooldown -= deltaTime;
         if (tabCooldown > 0.0f) tabCooldown -= deltaTime;
         
         // Giris guncellemesi
         input->Update();
 
-        // ESC tusu ile Pause Menu ac/kapa (Cooldown kontrolu ile)
+        // ESC tusu ile Duraklatma Menusu ac/kapa (Bekleme suresi kontrolu ile)
         if (input->IsKeyPressed(GLFW_KEY_ESCAPE) && escCooldown <= 0.0f) {
             escCooldown = 0.2f; // 200ms bekleme suresi
             
             if (isKeyBindingMode) {
-                // Key binding iptal
+                // Tus atama iptal
                 isKeyBindingMode = false;
                 keyBindingTarget = nullptr;
             } else {
@@ -332,7 +332,7 @@ int main() {
             }
         }
 
-        // Key Binding Mode
+        // Tus Atama Modu
         if (isKeyBindingMode && keyBindingTarget) {
             // Herhangi bir tusa basildi mi?
             for (int key = GLFW_KEY_SPACE; key <= GLFW_KEY_LAST; ++key) {
@@ -345,16 +345,16 @@ int main() {
             }
         }
 
-        // Oyun mantigi (Pause degilse)
+        // Oyun mantigi (Duraklatilmadiysa)
         if (!isPaused) {
-            // Network Updates
+            // Ag Guncellemeleri
             if (network.IsServer()) {
                 network.UpdateServer();
             } else {
                 network.UpdateClient();
             }
 
-            // Send Player Update
+            // Oyuncu Guncellemesi Gonder
             if (network.IsConnected()) {
                 networkTimer += deltaTime;
                 if (networkTimer >= networkTickRate) {
@@ -372,12 +372,12 @@ int main() {
                 }
             }
 
-            // TAB tusu ile Editor ac/kapa (3 saniye cooldown)
+            // TAB tusu ile Editor ac/kapa (3 saniye bekleme suresi)
             if (input->IsKeyPressed(GLFW_KEY_TAB) && tabCooldown <= 0.0f) {
                 tabCooldown = 3.0f;
                 bool newState = !editor.IsEnabled();
                 editor.SetEnabled(newState);
-                // Editor acikken de cursor serbest olsun
+                // Editor acikken de imlec serbest olsun
                 if (newState) {
                     input->SetCursorMode(GLFW_CURSOR_NORMAL);
                 } else {
@@ -391,7 +391,7 @@ int main() {
             // Silah sistemi guncellemesi (mermi olusturma ile)
             if (input->IsMouseButtonDown(GLFW_MOUSE_BUTTON_LEFT) && !editor.IsEnabled()) {
                 if (weaponSystem.TryShoot(weapon, player, &scene, &camera, &projectileSystem)) {
-                    // Send Packet
+                    // Paketi Gonder
                     PlayerShootPacket packet;
                     packet.id = myClientID;
                     glm::vec3 pos = camera.GetPosition();
@@ -414,10 +414,10 @@ int main() {
             // Mermi sistemi guncellemesi
             projectileSystem.Update(&scene, deltaTime);
             
-            // Check Player Death
+            // Oyuncu Olum Kontrolu
             if (playerHealthComp->current <= 0.0f) {
-                // Respawn logic or Game Over
-                // For now, just reset
+                // Yeniden dogus mantigi veya Oyun Bitti
+                // Simdilik sadece sifirla
                 playerHealthComp->current = 100.0f;
                 camera.SetPosition(glm::vec3(0.0f, 2.0f, 0.0f));
                 std::cout << "YOU DIED! Respawning..." << std::endl;
@@ -427,7 +427,7 @@ int main() {
         // 3D sahne cizimi
         renderer->BeginFrame();
         
-        // Skybox Cizimi
+        // Gokyuzu Kutusu Cizimi
         skybox.Draw(camera, (float)config.windowWidth / (float)config.windowHeight);
 
         renderSystem.Update(deltaTime);
@@ -435,7 +435,7 @@ int main() {
         // Editor Arayuzu (ImGui)
         editor.BeginFrame();
         
-        // ... (Pause Menu Logic) ...
+        // Duraklatma Menusu Mantigi
         if (isPaused) {
             ImGui::SetNextWindowPos(ImVec2(window->GetWidth() * 0.5f, window->GetHeight() * 0.5f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
             ImGui::SetNextWindowSize(ImVec2(400, 500));
@@ -516,11 +516,11 @@ int main() {
 
             ImGui::End();
         } else {
-             // Raycast logic
+             // Isin izleme mantigi
              // ...
         }
 
-        // Raycast for Editor Highlight
+        // Editor Vurgusu icin Isin Izleme
         Entity* lookedAtEntity = nullptr;
         float closestDist = 1000.0f; // Max ray distance
         glm::vec3 rayOrigin = camera.GetPosition();
@@ -532,12 +532,12 @@ int main() {
             auto* transform = entity->GetComponent<Transform>();
 
             if (collider && transform) {
-                // Calculate AABB
+                // AABB Hesapla
                 glm::vec3 halfSize = collider->size * transform->scale * 0.5f;
                 glm::vec3 boxMin = transform->position - halfSize;
                 glm::vec3 boxMax = transform->position + halfSize;
 
-                // Ray-AABB Intersection (Slab Method)
+                // Isin-AABB Kesisimi (Slab Yontemi)
                 float tMin = (boxMin.x - rayOrigin.x) / rayDir.x;
                 float tMax = (boxMax.x - rayOrigin.x) / rayDir.x;
 
@@ -563,7 +563,7 @@ int main() {
                 if (tzMin > tMin) tMin = tzMin;
                 if (tzMax < tMax) tMax = tzMax;
 
-                // Check if valid intersection and closer than previous
+                // Gecerli kesisim ve oncekinden daha yakin mi kontrol et
                 if (tMin > 0 && tMin < closestDist) {
                     closestDist = tMin;
                     lookedAtEntity = entity;
@@ -610,15 +610,15 @@ int main() {
         }
     }
 
-    // Network Cleanup
+    // Ag Temizligi
     network.Shutdown();
 
-    // Cleanup
+    // Temizlik
     editor.Shutdown();
     hudRenderer.Shutdown();
     renderSystem.Shutdown();
     
-    // Mesh'leri temizle
+    // Modelleri temizle
     for (auto& entity : scene.GetEntities()) {
         auto* meshRenderer = entity->GetComponent<MeshRenderer>();
         if (meshRenderer && meshRenderer->mesh) {

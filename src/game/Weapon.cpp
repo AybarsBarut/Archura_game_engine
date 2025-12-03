@@ -16,14 +16,14 @@ void WeaponSystem::Update(Entity* entity, Input* input, Scene* scene, Camera* ca
     auto* weapon = entity->GetComponent<Weapon>();
     if (!weapon) return;
 
-    // Timer'ları güncelle
+    // Zamanlayicilari guncelle
     weapon->timeSinceLastShot += deltaTime;
 
-    // Reload durumu
+    // Sarjor degistirme durumu
     if (weapon->isReloading) {
         weapon->reloadTimer += deltaTime;
         if (weapon->reloadTimer >= weapon->stats.reloadTime) {
-            // Reload tamamlandı
+            // Sarjor degistirme tamamlandi
             int ammoNeeded = weapon->stats.magSize - weapon->stats.currentMag;
             int ammoToReload = std::min(ammoNeeded, weapon->stats.totalAmmo);
             
@@ -36,19 +36,19 @@ void WeaponSystem::Update(Entity* entity, Input* input, Scene* scene, Camera* ca
             std::cout << "Reload complete! Mag: " << weapon->stats.currentMag << "/" << weapon->stats.magSize 
                       << " | Total: " << weapon->stats.totalAmmo << std::endl;
         }
-        return; // Reload sırasında ateş edilemez
+        return; // Sarjor degistirme sirasinda ates edilemez
     }
 
 
 
-    // Manuel reload (R tuşu)
+    // Manuel sarjor degistirme (R tusu)
     if (input->IsKeyPressed(GLFW_KEY_R)) {
         if (weapon->stats.currentMag < weapon->stats.magSize && weapon->stats.totalAmmo > 0 && !weapon->isReloading) {
             Reload(weapon);
         }
     }
 
-    // Silah değiştirme (1-4 tuşları)
+    // Silah degistirme (1-4 tuslari)
     if (input->IsKeyPressed(GLFW_KEY_1)) weapon->SwitchWeapon(Weapon::WeaponType::Rifle);
     if (input->IsKeyPressed(GLFW_KEY_2)) weapon->SwitchWeapon(Weapon::WeaponType::Pistol);
     if (input->IsKeyPressed(GLFW_KEY_3)) weapon->SwitchWeapon(Weapon::WeaponType::Knife);
@@ -58,15 +58,15 @@ void WeaponSystem::Update(Entity* entity, Input* input, Scene* scene, Camera* ca
 bool WeaponSystem::TryShoot(Weapon* weapon, Entity* entity, Scene* scene, Camera* camera, ProjectileSystem* projectileSystem) {
     if (!weapon) return false;
 
-    // Ateş hızı kontrolü
+    // Ates hizi kontrolu
     if (weapon->timeSinceLastShot < weapon->stats.fireRate) {
         return false;
     }
 
-    // Mermi kontrolü (Bıçak hariç)
+    // Mermi kontrolu (Bicak haric)
     if (weapon->type != Weapon::WeaponType::Knife) {
         if (weapon->stats.currentMag <= 0) {
-            // Auto-reload (Bıçak ve Grenade hariç)
+            // Otomatik sarjor degistirme (Bicak ve El Bombasi haric)
             if (weapon->type != Weapon::WeaponType::Grenade && weapon->stats.totalAmmo > 0 && !weapon->isReloading) {
                 Reload(weapon);
             }
@@ -74,48 +74,48 @@ bool WeaponSystem::TryShoot(Weapon* weapon, Entity* entity, Scene* scene, Camera
         }
     }
 
-    // Ateş et
+    // Ates et
     if (weapon->type != Weapon::WeaponType::Knife) {
         weapon->stats.currentMag--;
     }
     
     weapon->timeSinceLastShot = 0.0f;
     
-    // Recoil ekle
+    // Geri tepme ekle
     weapon->currentRecoil = weapon->stats.recoilAmount;
 
-    // Projectile spawn et
+    // Mermi olustur
     if (projectileSystem && scene && camera) {
-        glm::vec3 spawnPos = camera->GetPosition() + camera->GetFront() * 0.5f; // Kamera önünde spawn
+        glm::vec3 spawnPos = camera->GetPosition() + camera->GetFront() * 0.5f; // Kamera onunde olustur
         glm::vec3 direction = camera->GetFront();
         
         if (weapon->type == Weapon::WeaponType::Knife) {
-            // Knife Logic (Short Range Raycast)
-            // TODO: Implement proper melee hit detection
+            // Bicak Mantigi (Kisa Menzilli Isin Izleme)
+            // YAPILACAK: Duzgun yakin dovus vurus tespiti uygula
             std::cout << "SWISH! Knife attack." << std::endl;
-            // For now, just simulate a short range "bullet" that dies instantly
-            // Or better, do a raycast here directly?
-            // Let's stick to projectile system for consistency for now, but invisible/short lived?
-            // Actually, let's just print for now as requested "Knife attack"
+            // Simdilik sadece aninda yok olan kisa menzilli bir "mermi" simule et
+            // Veya daha iyisi, burada dogrudan bir isin izleme mi yapilmali?
+            // Simdilik tutarlilik icin mermi sistemine sadik kalalim, ama gorunmez/kisa omurlu?
+            // Aslinda, simdilik sadece istendigi gibi "Bicak saldirisi" yazdiralim
         } 
         else if (weapon->type == Weapon::WeaponType::Grenade) {
             projectileSystem->SpawnProjectile(
                 scene,
                 spawnPos,
                 direction,
-                weapon->stats.range, // Throw speed
+                weapon->stats.range, // Firlatma hizi
                 weapon->stats.damage,
                 entity,
                 Projectile::ProjectileType::Grenade
             );
         }
         else {
-            // Guns
+            // Silahlar
             projectileSystem->SpawnProjectile(
                 scene,
                 spawnPos,
                 direction,
-                weapon->stats.range * 2.0f, // Bullet Speed
+                weapon->stats.range * 2.0f, // Mermi Hizi
                 weapon->stats.damage,
                 entity,
                 Projectile::ProjectileType::Bullet
@@ -147,9 +147,9 @@ void WeaponSystem::Reload(Weapon* weapon) {
 void WeaponSystem::UpdateRecoil(Weapon* weapon, Camera* camera, float deltaTime) {
     if (!weapon || !camera) return;
 
-    // Recoil recovery
+    // Geri tepme toparlanmasi
     if (weapon->currentRecoil > 0.0f) {
-        weapon->currentRecoil -= deltaTime * 10.0f; // Recovery hızı
+        weapon->currentRecoil -= deltaTime * 10.0f; // Toparlanma hizi
         weapon->currentRecoil = std::max(0.0f, weapon->currentRecoil);
     }
 }
@@ -157,7 +157,7 @@ void WeaponSystem::UpdateRecoil(Weapon* weapon, Camera* camera, float deltaTime)
 void WeaponSystem::ApplyRecoil(Weapon* weapon, Camera* camera) {
     if (!weapon || !camera) return;
 
-    // Kamerayı yukarı hareket ettir (recoil simülasyonu)
+    // Kamerayi yukari hareket ettir (geri tepme simulasyonu)
     float recoilPitch = weapon->currentRecoil * -1.0f;
     camera->ProcessMouseMovement(0.0f, recoilPitch);
 }

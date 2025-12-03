@@ -14,13 +14,13 @@ void ProjectileSystem::Update(Scene* scene, float deltaTime) {
     m_ProjectilesToDestroy.clear();
     m_ProjectilesToDestroy.reserve(10); // Pre-allocate for common case
 
-    // Tüm projectile'ları güncelle
+    // Tum mermileri guncelle
     for (auto& entityPtr : scene->GetEntities()) {
         auto* projectile = entityPtr->GetComponent<Projectile>();
         if (projectile) {
             UpdateProjectile(entityPtr.get(), projectile, deltaTime);
             
-            // Check collision with other entities
+            // Diger varliklarla carpismayi kontrol et
             if (CheckCollision(entityPtr.get(), scene)) {
                 projectile->hasHit = true;
                 m_ProjectilesToDestroy.push_back(entityPtr.get());
@@ -28,7 +28,7 @@ void ProjectileSystem::Update(Scene* scene, float deltaTime) {
         }
     }
 
-    // Vurmuş veya expired projectile'ları yok et
+    // Vurmus veya suresi dolmus mermileri yok et
     for (auto* entity : m_ProjectilesToDestroy) {
         scene->DestroyEntity(entity->GetID());
     }
@@ -38,49 +38,49 @@ void ProjectileSystem::UpdateProjectile(Entity* entity, Projectile* proj, float 
     auto* transform = entity->GetComponent<Transform>();
     if (!transform) return;
 
-    // Lifetime check
+    // Omur suresi kontrolu
     proj->lifetime -= deltaTime;
     if (proj->lifetime <= 0.0f) {
         m_ProjectilesToDestroy.push_back(entity);
         return;
     }
 
-    // Grenade Fuse
+    // El Bombasi Fitili
     if (proj->type == Projectile::ProjectileType::Grenade) {
         proj->fuseTimer -= deltaTime;
         if (proj->fuseTimer <= 0.0f) {
-            // Explode!
+            // Patla!
             std::cout << "BOOM! Grenade exploded." << std::endl;
-            // Area damage logic here (simplified: just destroy)
-            // In a real implementation, we would check distance to all entities
+            // Alan hasari mantigi burada (basitlestirilmis: sadece yok et)
+            // Gercek bir uygulamada, tum varliklara olan mesafeyi kontrol ederdik
             m_ProjectilesToDestroy.push_back(entity);
             return;
         }
     }
 
-    // Gravity
+    // Yercekimi
     if (proj->gravity != 0.0f) {
         proj->velocity.y += proj->gravity * deltaTime;
     }
 
-    // Movement
+    // Hareket
     glm::vec3 nextPos = transform->position + proj->velocity * deltaTime;
 
-    // Ground Collision (Simple)
-    if (nextPos.y < 0.2f) { // Ground level
+    // Zemin Carpismasi (Basit)
+    if (nextPos.y < 0.2f) { // Zemin seviyesi
         if (proj->type == Projectile::ProjectileType::Grenade) {
-            // Bounce
+            // Sekme
             nextPos.y = 0.2f;
-            proj->velocity.y = -proj->velocity.y * 0.5f; // Lose energy
-            proj->velocity.x *= 0.8f; // Friction
+            proj->velocity.y = -proj->velocity.y * 0.5f; // Enerji kaybi
+            proj->velocity.x *= 0.8f; // Surtunme
             proj->velocity.z *= 0.8f;
             
-            // Stop if too slow
+            // Cok yavassa dur
             if (glm::length(proj->velocity) < 0.5f) {
                 proj->velocity = glm::vec3(0.0f);
             }
         } else {
-            // Bullets destroy on ground hit
+            // Mermiler zemine carpinca yok olur
             m_ProjectilesToDestroy.push_back(entity);
             return;
         }
@@ -95,7 +95,7 @@ bool ProjectileSystem::CheckCollision(Entity* projectile, Scene* scene) {
     
     if (!proj || !projTransform) return false;
 
-    // Projectile AABB (kucuk bir kutu)
+    // Mermi AABB (kucuk bir kutu)
     glm::vec3 projMin = projTransform->position - glm::vec3(0.1f);
     glm::vec3 projMax = projTransform->position + glm::vec3(0.1f);
 
@@ -111,7 +111,7 @@ bool ProjectileSystem::CheckCollision(Entity* projectile, Scene* scene) {
         auto* health = target->GetComponent<Health>();
 
         if (collider && transform && health) {
-            // Target AABB
+            // Hedef AABB
             glm::vec3 halfSize = collider->size * transform->scale * 0.5f;
             glm::vec3 targetMin = transform->position - halfSize;
             glm::vec3 targetMax = transform->position + halfSize;
@@ -122,7 +122,7 @@ bool ProjectileSystem::CheckCollision(Entity* projectile, Scene* scene) {
             bool collisionZ = projMax.z >= targetMin.z && projMin.z <= targetMax.z;
 
             if (collisionX && collisionY && collisionZ) {
-                // Hit!
+                // Vurus!
                 health->current -= proj->damage;
                 if (health->current < 0) health->current = 0;
                 
@@ -145,10 +145,10 @@ Entity* ProjectileSystem::SpawnProjectile(
 ) {
     if (!scene) return nullptr;
 
-    // Projectile entity oluştur
+    // Mermi varligi olustur
     Entity* projectile = scene->CreateEntity("Projectile");
     
-    // Transform
+    // Donusum
     auto* transform = projectile->GetComponent<Transform>();
     transform->position = position;
     
@@ -156,24 +156,24 @@ Entity* ProjectileSystem::SpawnProjectile(
     
     if (type == Projectile::ProjectileType::Grenade) {
         meshRenderer->mesh = Mesh::CreateCube(1.0f); 
-        meshRenderer->color = glm::vec3(0.0f, 0.5f, 0.0f); // Green Grenade
+        meshRenderer->color = glm::vec3(0.0f, 0.5f, 0.0f); // Yesil El Bombasi
         transform->scale = glm::vec3(0.3f);
     } else {
-        // Bullet
+        // Mermi
         Mesh* bulletMesh = ResourceManager::Get().GetMesh("bullet");
         if (!bulletMesh) {
             bulletMesh = Mesh::CreateSphere(0.5f, 8);
             ResourceManager::Get().AddMesh("bullet", bulletMesh);
         }
         meshRenderer->mesh = bulletMesh;
-        meshRenderer->color = glm::vec3(1.0f, 1.0f, 0.0f); // Yellow Bullet
+        meshRenderer->color = glm::vec3(1.0f, 1.0f, 0.0f); // Sari Mermi
         transform->scale = glm::vec3(0.1f, 0.1f, 0.3f);
     }
 
-    // Direction'a göre rotation hesapla (Basit)
+    // Yone gore rotasyon hesapla (Basit)
     glm::vec3 normalizedDir = glm::normalize(direction);
     
-    // Projectile component
+    // Mermi bileseni
     auto* proj = projectile->AddComponent<Projectile>();
     proj->velocity = normalizedDir * speed;
     proj->speed = speed;
@@ -186,7 +186,7 @@ Entity* ProjectileSystem::SpawnProjectile(
         proj->lifetime = 10.0f;
         proj->fuseTimer = 5.0f;
     } else {
-        proj->gravity = 0.0f; // Bullets fly straight
+        proj->gravity = 0.0f; // Mermiler duz ucar
         proj->lifetime = 5.0f;
     }
 

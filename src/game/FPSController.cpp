@@ -10,7 +10,7 @@ namespace Archura {
 FPSController::FPSController(Camera* camera)
     : m_Camera(camera)
 {
-    // Default bindings
+    // Varsayilan tus atamalari
     m_Bindings.forward = GLFW_KEY_W;
     m_Bindings.backward = GLFW_KEY_S;
     m_Bindings.left = GLFW_KEY_A;
@@ -25,7 +25,7 @@ void FPSController::Update(Input* input, Scene* scene, float deltaTime) {
 }
 
 void FPSController::HandleMovement(Input* input, Scene* scene, float deltaTime) {
-    // Koşma kontrolü (Shift)
+    // Kosma kontrolu (Shift)
     m_IsRunning = input->IsKeyDown(m_Bindings.sprint);
     float currentSpeed = m_IsRunning ? m_RunSpeed : m_WalkSpeed;
 
@@ -55,7 +55,7 @@ void FPSController::HandleMovement(Input* input, Scene* scene, float deltaTime) 
         // X ekseninde hareket dene
         glm::vec3 nextPosX = currentPos;
         nextPosX.x += movement.x;
-        // Yatay harekette stepHeight kullanarak zemine takilmayi onle (0.2f)
+        // Yatay harekette adimYuksekligi kullanarak zemine takilmayi onle (0.2f)
         if (!CheckCollision(nextPosX, scene, nullptr, 0.2f)) {
             targetPos.x = nextPosX.x;
         }
@@ -71,7 +71,7 @@ void FPSController::HandleMovement(Input* input, Scene* scene, float deltaTime) 
     // Yercekimi ve Ziplama
     m_VerticalVelocity += m_Gravity * deltaTime;
 
-    // Ziplama (Space)
+    // Ziplama (Bosluk)
     if (input->IsKeyDown(m_Bindings.jump) && m_IsGrounded) {
         m_VerticalVelocity = sqrt(m_JumpHeight * -2.0f * m_Gravity);
         m_IsGrounded = false;
@@ -81,9 +81,9 @@ void FPSController::HandleMovement(Input* input, Scene* scene, float deltaTime) 
     glm::vec3 nextPosY = targetPos;
     nextPosY.y += m_VerticalVelocity * deltaTime;
     
-    float groundHeight = 0.0f; // Varsayilan zemin (Mesh plane y=0)
+    float groundHeight = 0.0f; // Varsayilan zemin (Model duzlemi y=0)
     float objectTopY = 0.0f;
-    // Dikey harekette stepHeight 0 olmali ki tam inis yapabilelim
+    // Dikey harekette adimYuksekligi 0 olmali ki tam inis yapabilelim
     bool hitObject = CheckCollision(nextPosY, scene, &objectTopY, 0.0f);
 
     // Zemin kontrolu (Basit duzlem carpismasi)
@@ -123,7 +123,7 @@ void FPSController::HandleMovement(Input* input, Scene* scene, float deltaTime) 
 
     m_Camera->SetPosition(targetPos);
 
-    // FOV kontrolü (mouse scroll)
+    // FOV kontrolu (fare tekerlegi)
     float scrollDelta = input->GetMouseScrollDelta();
     if (scrollDelta != 0.0f) {
         m_Camera->ProcessMouseScroll(scrollDelta);
@@ -131,7 +131,7 @@ void FPSController::HandleMovement(Input* input, Scene* scene, float deltaTime) 
 }
 
 bool FPSController::CheckCollision(const glm::vec3& position, Scene* scene, float* outGroundHeight, float stepHeight) {
-    // Oyuncu bounding box
+    // Oyuncu sinirlayici kutusu
     float playerRadius = 0.3f; // Yaricap (genislik/2)
     float playerHeight = 1.8f; // Gozden ayaklara mesafe
     
@@ -139,11 +139,11 @@ bool FPSController::CheckCollision(const glm::vec3& position, Scene* scene, floa
     glm::vec3 feetPos = position;
     feetPos.y -= playerHeight;
 
-    // stepHeight kadar yukaridan basla (kucuk engelleri/zemini yok saymak icin)
+    // adimYuksekligi kadar yukaridan basla (kucuk engelleri/zemini yok saymak icin)
     glm::vec3 playerMin = feetPos - glm::vec3(playerRadius, -stepHeight, playerRadius);
     glm::vec3 playerMax = feetPos + glm::vec3(playerRadius, 1.8f, playerRadius); // Boy 1.8m
 
-    // Sahnedeki tum entity'leri kontrol et
+    // Sahnedeki tum varliklari kontrol et
     for (auto& entity : scene->GetEntities()) {
         auto* collider = entity->GetComponent<BoxCollider>();
         auto* transform = entity->GetComponent<Transform>();
@@ -174,20 +174,20 @@ bool FPSController::CheckCollision(const glm::vec3& position, Scene* scene, floa
 }
 
 void FPSController::HandleMouseLook(Input* input, float deltaTime) {
-    // Cursor kilitli ise (FPS modu) kamerayi dondur
+    // Imlec kilitli ise (FPS modu) kamerayi dondur
     if (input->IsCursorLocked()) {
         glm::vec2 mouseDelta = input->GetMouseDelta();
         m_Camera->ProcessMouseMovement(mouseDelta.x * m_MouseSensitivity, 
-                                      -mouseDelta.y * m_MouseSensitivity); // Y eksenini ters çevir
+                                      -mouseDelta.y * m_MouseSensitivity); // Y eksenini ters cevir
     }
 
-    // Sol tik ile cursoru kilitle (Oyun moduna gir)
+    // Sol tik ile imleci kilitle (Oyun moduna gir)
     if (input->IsMouseButtonPressed(GLFW_MOUSE_BUTTON_LEFT) && !input->IsCursorLocked()) {
         input->SetCursorMode(GLFW_CURSOR_DISABLED);
     }
     
-    // ESC ile cursoru serbest birak (Gecici cikis)
-    // Not: Main loop'ta ESC cikis yapiyor olabilir, bunu kontrol etmeliyiz.
+    // ESC ile imleci serbest birak (Gecici cikis)
+    // Not: Ana dongude ESC cikis yapiyor olabilir, bunu kontrol etmeliyiz.
     // Simdilik sadece kilitli degilse serbest birakma mantigi kalsin.
 }
 

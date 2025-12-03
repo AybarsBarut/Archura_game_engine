@@ -19,7 +19,7 @@ RenderSystem::~RenderSystem() = default;
 void RenderSystem::Init(Scene* scene) {
     System::Init(scene);
     
-    // Default shader'ı yükle
+    // Varsayilan shader'i yukle
     m_DefaultShader = std::make_unique<Shader>();
     if (!m_DefaultShader->LoadFromFile("assets/shaders/basic.vert", "assets/shaders/basic.frag")) {
         std::cerr << "Failed to load default shader!" << std::endl;
@@ -31,7 +31,7 @@ void RenderSystem::Init(Scene* scene) {
 void RenderSystem::Update(float deltaTime) {
     if (!m_Scene || !m_Camera) return;
 
-    // Camera matrices
+    // Kamera matrisleri
     glm::mat4 view = m_Camera->GetViewMatrix();
     Window* window = Engine::Get().GetWindow();
     glm::mat4 projection = m_Camera->GetProjectionMatrix(window->GetAspectRatio());
@@ -39,19 +39,19 @@ void RenderSystem::Update(float deltaTime) {
     int renderedCount = 0;
     int culledCount = 0;
 
-    // Tüm entity'leri render et
+    // Tum varliklari isle
     for (const auto& entityPtr : m_Scene->GetEntities()) {
         auto* meshRenderer = entityPtr->GetComponent<MeshRenderer>();
         auto* transform = entityPtr->GetComponent<Transform>();
         
         if (meshRenderer && transform && meshRenderer->mesh) {
-            // Basit frustum culling - kamera görüş alanı dışındaysa render etme
+            // Basit frustum culling - kamera gorus alani disindaysa isleme
             glm::vec3 entityPos = transform->position;
             glm::vec3 camPos = m_Camera->GetPosition();
             glm::vec3 toEntity = entityPos - camPos;
             float distance = glm::length(toEntity);
             
-            // Çok uzaktaysa (100 birimden fazla) render etme
+            // Cok uzaktaysa (100 birimden fazla) isleme
             if (distance > 100.0f) {
                 culledCount++;
                 continue;
@@ -64,24 +64,24 @@ void RenderSystem::Update(float deltaTime) {
             if (shader) {
                 shader->Bind();
                 
-                // Matrices
+                // Matrisler
                 shader->SetMat4("uModel", transform->GetModelMatrix());
                 shader->SetMat4("uView", view);
                 shader->SetMat4("uProjection", projection);
                 
-                // Lighting
+                // Aydinlatma
                 shader->SetVec3("uLightPos", m_LightPos);
                 shader->SetVec3("uLightColor", m_LightColor);
                 shader->SetVec3("uViewPos", m_Camera->GetPosition());
                 
-                // Material (basit, sabit değerler)
+                // Materyal (basit, sabit degerler)
                 shader->SetVec3("uAmbient", glm::vec3(0.2f));
                 shader->SetVec3("uDiffuse", meshRenderer->color);
                 shader->SetVec3("uSpecular", glm::vec3(0.5f));
                 shader->SetVec3("uSpecular", glm::vec3(0.5f));
                 shader->SetFloat("uShininess", 32.0f);
                 
-                // Texture
+                // Doku
                 if (meshRenderer->texture) {
                     meshRenderer->texture->Bind(0);
                     shader->SetInt("uTexture", 0);
@@ -90,13 +90,13 @@ void RenderSystem::Update(float deltaTime) {
                     shader->SetInt("uUseTexture", 0);
                 }
                 
-                // Mesh'i çiz
+                // Modeli ciz
                 meshRenderer->mesh->Draw(shader);
             }
         }
     }
 
-    // Debug: her 60 frame'de bir culling stats yazdır
+    // Hata ayiklama: her 60 karede bir culling istatistiklerini yazdir
     static int frameCount = 0;
     if (++frameCount >= 60) {
         // std::cout << "Rendered: " << renderedCount << " | Culled: " << culledCount << std::endl;
