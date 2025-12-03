@@ -4,6 +4,7 @@
 #include "../ecs/Entity.h"
 #include "../ecs/Component.h"
 #include "../rendering/Mesh.h"
+#include "../rendering/Texture.h"
 #include <iostream>
 
 namespace Archura {
@@ -77,7 +78,17 @@ void RenderSystem::Update(float deltaTime) {
                 shader->SetVec3("uAmbient", glm::vec3(0.2f));
                 shader->SetVec3("uDiffuse", meshRenderer->color);
                 shader->SetVec3("uSpecular", glm::vec3(0.5f));
+                shader->SetVec3("uSpecular", glm::vec3(0.5f));
                 shader->SetFloat("uShininess", 32.0f);
+                
+                // Texture
+                if (meshRenderer->texture) {
+                    meshRenderer->texture->Bind(0);
+                    shader->SetInt("uTexture", 0);
+                    shader->SetInt("uUseTexture", 1);
+                } else {
+                    shader->SetInt("uUseTexture", 0);
+                }
                 
                 // Mesh'i çiz
                 meshRenderer->mesh->Draw(shader);

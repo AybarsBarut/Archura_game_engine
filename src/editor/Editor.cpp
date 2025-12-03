@@ -4,6 +4,7 @@
 #include "../ecs/Component.h"
 #include "../game/Weapon.h"
 #include "../game/Projectile.h"
+#include "../rendering/Texture.h"
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
@@ -291,6 +292,34 @@ void Editor::DrawInspector() {
         ImGui::ColorEdit3("Color", &meshRenderer->color.x);
     }
 
+    // Skin / Texture
+    if (meshRenderer && ImGui::CollapsingHeader("Skin / Texture")) {
+        static char texturePath[128] = "assets/textures/";
+        ImGui::InputText("Path", texturePath, IM_ARRAYSIZE(texturePath));
+        
+        if (ImGui::Button("Load Texture")) {
+            std::string pathStr = texturePath;
+            std::string name = std::filesystem::path(pathStr).stem().string();
+            
+            Texture* tex = TextureManager::Get().Load(name, pathStr);
+            if (tex) {
+                meshRenderer->texture = tex;
+                Log("Texture loaded: " + pathStr);
+            } else {
+                Log("Failed to load texture: " + pathStr);
+            }
+        }
+
+        if (meshRenderer->texture) {
+            ImGui::Text("Current ID: %u", meshRenderer->texture->GetID());
+            ImGui::Image((void*)(intptr_t)meshRenderer->texture->GetID(), ImVec2(100, 100));
+            
+            if (ImGui::Button("Remove Texture")) {
+                meshRenderer->texture = nullptr;
+            }
+        }
+    }
+
     // Weapon component
     auto* weapon = m_SelectedEntity->GetComponent<Weapon>();
     if (weapon && ImGui::CollapsingHeader("Weapon")) {
@@ -394,7 +423,7 @@ void Editor::DrawProjectPanel() {
             if (ImGui::Selectable(filenameString.c_str())) {
                 // Select file logic
             }
-        }
+        }   
     }
 
     ImGui::End();

@@ -37,6 +37,7 @@ struct Transform : public Component {
 struct MeshRenderer : public Component {
     class Mesh* mesh = nullptr;
     class Shader* shader = nullptr;
+    class Texture* texture = nullptr; // Skin/Texture
     glm::vec3 color = glm::vec3(1.0f);
 };
 
