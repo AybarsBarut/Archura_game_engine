@@ -8,7 +8,16 @@ $ErrorActionPreference = "Stop"
 
 Write-Host "=== Archura Engine Launcher ===" -ForegroundColor Cyan
 
-# 1. Guncelleme Kontrolu
+# 1. Baslangic Kontrolu (Ilk Kurulum mu?)
+$exePath = "build\bin\Release\ArchuraEngine.exe"
+$needsBuild = $false
+
+if (-not (Test-Path $exePath)) {
+    Write-Host "Oyun dosyasi bulunamadi. Ilk kurulum yapiliyor..." -ForegroundColor Yellow
+    $needsBuild = $true
+}
+
+# 2. Guncelleme Kontrolu
 Write-Host "Guncellemeler kontrol ediliyor..."
 try {
     git fetch origin
@@ -47,20 +56,38 @@ try {
     }
     else {
         Write-Host "Sistem guncel." -ForegroundColor Green
-        $needsBuild = $false
     }
 }
 catch {
     Write-Host "Guncelleme kontrolu sirasinda hata: $_" -ForegroundColor Red
     Write-Host "Internet baglantinizi kontrol edin." -ForegroundColor Red
-    $needsBuild = $false
+    # Eger exe yoksa ve internet de yoksa, build denemeliyiz (belki kodlar vardir)
+    if (-not (Test-Path $exePath)) {
+        $needsBuild = $true
+    }
 }
 
-# 2. Derleme (Gerekirse)
+# 3. Derleme (Gerekirse)
 if ($needsBuild) {
-    Write-Host "Yeni kodlar derleniyor..." -ForegroundColor Yellow
-    if (!(Test-Path "build")) { mkdir build }
-    Set-Location build
+    Write-Host "Derleme islemi baslatiliyor..." -ForegroundColor Yellow
+    
+    # Build klasoru yoksa olustur ve cmake configure yap
+    if (!(Test-Path "build")) { 
+        mkdir build 
+        Set-Location build
+        Write-Host "CMake konfigurasyonu yapiliyor..." -ForegroundColor Cyan
+        cmake ..
+        if ($LASTEXITCODE -ne 0) {
+            Write-Host "CMake Konfigurasyon Hatasi!" -ForegroundColor Red
+            Pause
+            exit
+        }
+    }
+    else {
+        Set-Location build
+    }
+
+    Write-Host "Kodlar derleniyor (Release)..." -ForegroundColor Cyan
     cmake --build . --config Release
     if ($LASTEXITCODE -ne 0) {
         Write-Host "Derleme Hatasi!" -ForegroundColor Red
@@ -70,7 +97,7 @@ if ($needsBuild) {
     Set-Location ..
 }
 
-# 3. Baslatma
+# 4. Baslatma
 $exePath = "build\bin\Release\ArchuraEngine.exe"
 if (Test-Path $exePath) {
     Write-Host "Oyun baslatiliyor..." -ForegroundColor Green
