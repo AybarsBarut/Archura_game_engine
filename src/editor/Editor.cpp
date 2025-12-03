@@ -294,20 +294,48 @@ void Editor::DrawInspector() {
 
     // Skin / Texture
     if (meshRenderer && ImGui::CollapsingHeader("Skin / Texture")) {
-        static char texturePath[128] = "assets/textures/";
-        ImGui::InputText("Path", texturePath, IM_ARRAYSIZE(texturePath));
+        // Scan for textures
+        static std::vector<std::string> textureFiles;
+        static bool filesLoaded = false;
         
-        if (ImGui::Button("Load Texture")) {
-            std::string pathStr = texturePath;
-            std::string name = std::filesystem::path(pathStr).stem().string();
-            
-            Texture* tex = TextureManager::Get().Load(name, pathStr);
-            if (tex) {
-                meshRenderer->texture = tex;
-                Log("Texture loaded: " + pathStr);
-            } else {
-                Log("Failed to load texture: " + pathStr);
+        if (!filesLoaded || ImGui::Button("Refresh List")) {
+            textureFiles.clear();
+            std::string texturesDir = "assets/textures";
+            if (std::filesystem::exists(texturesDir)) {
+                for (const auto& entry : std::filesystem::directory_iterator(texturesDir)) {
+                    if (entry.is_regular_file()) {
+                        std::string ext = entry.path().extension().string();
+                        // Simple extension check
+                        if (ext == ".jpg" || ext == ".png" || ext == ".tga" || ext == ".bmp" || ext == ".jpeg") {
+                            textureFiles.push_back(entry.path().filename().string());
+                        }
+                    }
+                }
             }
+            filesLoaded = true;
+        }
+
+        static int selectedTextureIdx = -1;
+        if (ImGui::BeginListBox("Available Textures")) {
+            for (int i = 0; i < textureFiles.size(); i++) {
+                const bool isSelected = (selectedTextureIdx == i);
+                if (ImGui::Selectable(textureFiles[i].c_str(), isSelected)) {
+                    selectedTextureIdx = i;
+                    // Load texture
+                    std::string pathStr = "assets/textures/" + textureFiles[i];
+                    std::string name = std::filesystem::path(pathStr).stem().string();
+                    Texture* tex = TextureManager::Get().Load(name, pathStr);
+                    if (tex) {
+                        meshRenderer->texture = tex;
+                        Log("Texture loaded: " + pathStr);
+                    }
+                }
+
+                if (isSelected) {
+                    ImGui::SetItemDefaultFocus();
+                }
+            }
+            ImGui::EndListBox();
         }
 
         if (meshRenderer->texture) {
