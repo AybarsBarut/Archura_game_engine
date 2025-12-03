@@ -3,6 +3,8 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <iostream>
+#include <streambuf>
 
 namespace Archura {
 
@@ -48,6 +50,8 @@ private:
     void DrawConsolePanel();
     void DrawPerformanceMetrics(float deltaTime, float fps);
     void DrawDemoWindow();
+    
+    void ExecuteCommand(const char* command);
 
 public:
     // Console logging
@@ -68,6 +72,35 @@ private:
     Window* m_Window = nullptr;
 
     std::vector<std::string> m_ConsoleLogs;
+    char m_InputBuf[256] = "";
+    
+    // Stream redirection
+    std::streambuf* m_OldCoutBuf = nullptr;
+    std::unique_ptr<std::streambuf> m_NewCoutBuf;
+};
+
+// Custom streambuf to redirect cout to Editor
+class EditorStreamBuf : public std::streambuf {
+public:
+    EditorStreamBuf(Editor* editor) : m_Editor(editor) {}
+
+protected:
+    virtual int_type overflow(int_type c) override {
+        if (c != EOF) {
+            char ch = static_cast<char>(c);
+            if (ch == '\n') {
+                m_Editor->Log(m_Buffer);
+                m_Buffer.clear();
+            } else {
+                m_Buffer += ch;
+            }
+        }
+        return c;
+    }
+
+private:
+    Editor* m_Editor;
+    std::string m_Buffer;
 };
 
 } // namespace Archura

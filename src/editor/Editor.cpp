@@ -39,12 +39,21 @@ bool Editor::Init(Window* window) {
     // Platform/Renderer bindings
     ImGui_ImplGlfw_InitForOpenGL(window->GetNativeWindow(), true);
     ImGui_ImplOpenGL3_Init("#version 330");
+    
+    // Redirect cout to Editor Console
+    m_NewCoutBuf = std::make_unique<EditorStreamBuf>(this);
+    m_OldCoutBuf = std::cout.rdbuf(m_NewCoutBuf.get());
 
     std::cout << "ImGui Editor initialized." << std::endl;
     return true;
 }
 
 void Editor::Shutdown() {
+    // Restore cout
+    if (m_OldCoutBuf) {
+        std::cout.rdbuf(m_OldCoutBuf);
+    }
+
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
@@ -373,7 +382,9 @@ void Editor::DrawConsolePanel() {
     ImGui::Text("Logs: %zu", m_ConsoleLogs.size());
     ImGui::Separator();
 
-    ImGui::BeginChild("ScrollingRegion", ImVec2(0, 0), false, ImGuiWindowFlags_HorizontalScrollbar);
+    // Reserve space for input at bottom
+    float footerHeight = ImGui::GetStyle().ItemSpacing.y + ImGui::GetFrameHeightWithSpacing();
+    ImGui::BeginChild("ScrollingRegion", ImVec2(0, -footerHeight), false, ImGuiWindowFlags_HorizontalScrollbar);
     for (const auto& log : m_ConsoleLogs) {
         ImGui::TextUnformatted(log.c_str());
     }
@@ -383,7 +394,32 @@ void Editor::DrawConsolePanel() {
         ImGui::SetScrollHereY(1.0f);
 
     ImGui::EndChild();
+
+    ImGui::Separator();
+    
+    // Command Input
+    ImGui::PushItemWidth(-1);
+    if (ImGui::InputText("##Input", m_InputBuf, IM_ARRAYSIZE(m_InputBuf), ImGuiInputTextFlags_EnterReturnsTrue)) {
+        ExecuteCommand(m_InputBuf);
+        m_InputBuf[0] = '\0';
+        ImGui::SetKeyboardFocusHere(-1); // Keep focus
+    }
+    ImGui::PopItemWidth();
+
     ImGui::End();
+}
+
+void Editor::ExecuteCommand(const char* command) {
+    Log("> " + std::string(command));
+    
+    std::string cmd = command;
+    if (cmd == "clear") {
+        ClearLogs();
+    } else if (cmd == "help") {
+        Log("Available commands: clear, help");
+    } else {
+        Log("Unknown command: " + cmd);
+    }
 }
 
 } // namespace Archura
