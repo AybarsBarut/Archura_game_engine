@@ -251,6 +251,7 @@ int main() {
     int* keyBindingTarget = nullptr;
     const char* keyBindingName = "";
     float escCooldown = 0.0f;
+    float tabCooldown = 0.0f;
 
     // Network Timer
     float networkTimer = 0.0f;
@@ -264,9 +265,8 @@ int main() {
         float deltaTime = window->GetDeltaTime();
         
         // Cooldown guncellemesi
-        if (escCooldown > 0.0f) {
-            escCooldown -= deltaTime;
-        }
+        if (escCooldown > 0.0f) escCooldown -= deltaTime;
+        if (tabCooldown > 0.0f) tabCooldown -= deltaTime;
         
         // Giris guncellemesi
         input->Update();
@@ -329,8 +329,9 @@ int main() {
                 }
             }
 
-            // TAB tusu ile Editor ac/kapa
-            if (input->IsKeyPressed(GLFW_KEY_TAB)) {
+            // TAB tusu ile Editor ac/kapa (3 saniye cooldown)
+            if (input->IsKeyPressed(GLFW_KEY_TAB) && tabCooldown <= 0.0f) {
+                tabCooldown = 3.0f;
                 bool newState = !editor.IsEnabled();
                 editor.SetEnabled(newState);
                 // Editor acikken de cursor serbest olsun
