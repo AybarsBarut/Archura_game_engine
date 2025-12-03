@@ -19,6 +19,12 @@ void ProjectileSystem::Update(Scene* scene, float deltaTime) {
         auto* projectile = entityPtr->GetComponent<Projectile>();
         if (projectile) {
             UpdateProjectile(entityPtr.get(), projectile, deltaTime);
+            
+            // Check collision with other entities
+            if (CheckCollision(entityPtr.get(), scene)) {
+                projectile->hasHit = true;
+                m_ProjectilesToDestroy.push_back(entityPtr.get());
+            }
         }
     }
 
@@ -52,16 +58,58 @@ void ProjectileSystem::UpdateProjectile(Entity* entity, Projectile* proj, float 
         // Zemine çarptı
         proj->hasHit = true;
         m_ProjectilesToDestroy.push_back(entity);
-        
-        std::cout << "Projectile hit ground at (" 
-                  << transform->position.x << ", " 
-                  << transform->position.z << ")" << std::endl;
+        return;
     }
+
+    // Entity Collision Check
+    // Not: Bu cok performansli degil (O(N*M)), spatial partition gerekir ama simdilik yeterli
+    // Scene'e erismek icin Update fonksiyonuna scene parametresi eklemistik ama burada yok
+    // Bu yuzden Update fonksiyonunda collision check yapmak daha dogru olurdu
+    // Ancak hizli cozum icin CheckCollision fonksiyonunu kullanacagiz
 }
 
 bool ProjectileSystem::CheckCollision(Entity* projectile, Scene* scene) {
-    // TODO: Implement proper AABB or sphere collision
-    // Şimdilik sadece zemin collision var (UpdateProjectile'da)
+    auto* proj = projectile->GetComponent<Projectile>();
+    auto* projTransform = projectile->GetComponent<Transform>();
+    
+    if (!proj || !projTransform) return false;
+
+    // Projectile AABB (kucuk bir kutu)
+    glm::vec3 projMin = projTransform->position - glm::vec3(0.1f);
+    glm::vec3 projMax = projTransform->position + glm::vec3(0.1f);
+
+    for (const auto& targetPtr : scene->GetEntities()) {
+        Entity* target = targetPtr.get();
+        
+        // Kendine carpma
+        if (target == proj->owner) continue;
+        if (target == projectile) continue;
+
+        auto* collider = target->GetComponent<BoxCollider>();
+        auto* transform = target->GetComponent<Transform>();
+        auto* health = target->GetComponent<Health>();
+
+        if (collider && transform && health) {
+            // Target AABB
+            glm::vec3 halfSize = collider->size * transform->scale * 0.5f;
+            glm::vec3 targetMin = transform->position - halfSize;
+            glm::vec3 targetMax = transform->position + halfSize;
+
+            // AABB vs AABB
+            bool collisionX = projMax.x >= targetMin.x && projMin.x <= targetMax.x;
+            bool collisionY = projMax.y >= targetMin.y && projMin.y <= targetMax.y;
+            bool collisionZ = projMax.z >= targetMin.z && projMin.z <= targetMax.z;
+
+            if (collisionX && collisionY && collisionZ) {
+                // Hit!
+                health->current -= proj->damage;
+                if (health->current < 0) health->current = 0;
+                
+                std::cout << "Hit Entity " << target->GetName() << "! Damage: " << proj->damage << " Health: " << health->current << std::endl;
+                return true;
+            }
+        }
+    }
     return false;
 }
 

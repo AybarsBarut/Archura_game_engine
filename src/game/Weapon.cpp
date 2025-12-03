@@ -38,13 +38,7 @@ void WeaponSystem::Update(Entity* entity, Input* input, Scene* scene, Camera* ca
         return; // Reload sırasında ateş edilemez
     }
 
-    // Ateş etme (Sol mouse)
-    if (input->IsMouseButtonDown(GLFW_MOUSE_BUTTON_LEFT)) {
-        if (TryShoot(weapon, entity, scene, camera, projectileSystem)) {
-            std::cout << "BANG! Ammo: " << weapon->currentMag << "/" << weapon->magSize 
-                      << " | Total: " << weapon->totalAmmo << std::endl;
-        }
-    }
+
 
     // Manuel reload (R tuşu)
     if (input->IsKeyPressed(GLFW_KEY_R)) {

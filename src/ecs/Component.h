@@ -48,4 +48,13 @@ struct BoxCollider : public Component {
     glm::vec3 center = glm::vec3(0.0f); // Merkez ofseti
 };
 
+/**
+ * @brief Health component - Can ve hasar durumu
+ */
+struct Health : public Component {
+    float current = 100.0f;
+    float max = 100.0f;
+    bool isDead = false;
+};
+
 } // namespace Archura

@@ -17,6 +17,7 @@ enum class PacketType : uint8_t {
     Connect = 0,
     Disconnect,
     PlayerUpdate,
+    PlayerShoot,
     WorldState
 };
 
@@ -30,6 +31,13 @@ struct PlayerUpdatePacket {
     uint32_t id;
     float x, y, z;      // Position
     float yaw, pitch;   // Rotation
+};
+
+struct PlayerShootPacket {
+    uint32_t id;        // Shooter ID
+    float originX, originY, originZ;
+    float dirX, dirY, dirZ;
+    int weaponType;
 };
 #pragma pack(pop)
 
@@ -51,11 +59,11 @@ public:
     bool Connect(const std::string& ip, int port);
     void UpdateClient();
     void SendPlayerUpdate(const PlayerUpdatePacket& packet);
-
-
+    void SendPlayerShoot(const PlayerShootPacket& packet);
 
     // Callbacks
     void SetOnPlayerUpdate(std::function<void(const PlayerUpdatePacket&)> callback);
+    void SetOnPlayerShoot(std::function<void(const PlayerShootPacket&)> callback);
 
 private:
     NetworkManager() = default;
@@ -69,6 +77,7 @@ private:
     std::vector<SOCKET> m_ClientSockets;
 
     std::function<void(const PlayerUpdatePacket&)> m_OnPlayerUpdate;
+    std::function<void(const PlayerShootPacket&)> m_OnPlayerShoot;
 };
 
 } // namespace Archura

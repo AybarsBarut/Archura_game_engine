@@ -83,6 +83,7 @@ int main() {
     editor.SetEnabled(true); // Editor aktif
 
     // Oyuncu varligi (silah tasiyicisi)
+    // Oyuncu varligi (silah tasiyicisi)
     Entity* player = scene.CreateEntity("Player");
     auto* weapon = player->AddComponent<Weapon>();
     weapon->type = Weapon::WeaponType::Rifle;
@@ -92,6 +93,15 @@ int main() {
     weapon->currentMag = 30;
     weapon->totalAmmo = 120;
     weapon->reloadTime = 2.0f;
+    
+    // Player Health
+    auto* playerHealthComp = player->AddComponent<Health>();
+    playerHealthComp->current = 100.0f;
+    playerHealthComp->max = 100.0f;
+    
+    // Player Collider (so enemies can hit us)
+    auto* playerCollider = player->AddComponent<BoxCollider>();
+    playerCollider->size = glm::vec3(0.8f, 1.8f, 0.8f); // Human size
 
     // Silah sistemi
     WeaponSystem weaponSystem;
@@ -99,9 +109,14 @@ int main() {
     // Mermi sistemi
     ProjectileSystem projectileSystem;
 
-    // Oyuncu cani (demo)
-    float playerHealth = 100.0f;
-    float maxHealth = 100.0f;
+    // Network Callback - Shoot
+
+
+    // ... (Existing Network Update Callback) ...
+
+    // ... (Inside Loop) ...
+
+
 
     // ==================== Demo Varliklar ====================
     
@@ -260,6 +275,26 @@ int main() {
     // Random ID for this client
     srand((unsigned int)time(0));
     uint32_t myClientID = rand(); 
+    
+    // Network Callback - Shoot
+    network.SetOnPlayerShoot([&](const PlayerShootPacket& packet) {
+        if (packet.id == myClientID) return;
+
+        Entity* owner = nullptr;
+        auto it = remotePlayers.find(packet.id);
+        if (it != remotePlayers.end()) {
+            owner = it->second;
+        }
+
+        projectileSystem.SpawnProjectile(
+            &scene,
+            glm::vec3(packet.originX, packet.originY, packet.originZ),
+            glm::vec3(packet.dirX, packet.dirY, packet.dirZ),
+            50.0f, 
+            10.0f, 
+            owner
+        );
+    }); 
 
     while (!window->ShouldClose()) {
         float deltaTime = window->GetDeltaTime();
@@ -346,11 +381,39 @@ int main() {
             fpsController.Update(input, &scene, deltaTime);
 
             // Silah sistemi guncellemesi (mermi olusturma ile)
+            if (input->IsMouseButtonDown(GLFW_MOUSE_BUTTON_LEFT) && !editor.IsEnabled()) {
+                if (weaponSystem.TryShoot(weapon, player, &scene, &camera, &projectileSystem)) {
+                    // Send Packet
+                    PlayerShootPacket packet;
+                    packet.id = myClientID;
+                    glm::vec3 pos = camera.GetPosition();
+                    glm::vec3 dir = camera.GetFront();
+                    packet.originX = pos.x;
+                    packet.originY = pos.y;
+                    packet.originZ = pos.z;
+                    packet.dirX = dir.x;
+                    packet.dirY = dir.y;
+                    packet.dirZ = dir.z;
+                    packet.weaponType = (int)weapon->type;
+                    
+                    network.SendPlayerShoot(packet);
+                }
+            }
+            
             weaponSystem.Update(player, input, &scene, &camera, &projectileSystem, deltaTime);
             weaponSystem.UpdateRecoil(weapon, &camera, deltaTime);
 
             // Mermi sistemi guncellemesi
             projectileSystem.Update(&scene, deltaTime);
+            
+            // Check Player Death
+            if (playerHealthComp->current <= 0.0f) {
+                // Respawn logic or Game Over
+                // For now, just reset
+                playerHealthComp->current = 100.0f;
+                camera.SetPosition(glm::vec3(0.0f, 2.0f, 0.0f));
+                std::cout << "YOU DIED! Respawning..." << std::endl;
+            }
         }
 
         // 3D sahne cizimi
@@ -364,7 +427,7 @@ int main() {
         // Editor Arayuzu (ImGui)
         editor.BeginFrame();
         
-        // Pause Menu
+        // ... (Pause Menu Logic) ...
         if (isPaused) {
             ImGui::SetNextWindowPos(ImVec2(window->GetWidth() * 0.5f, window->GetHeight() * 0.5f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
             ImGui::SetNextWindowSize(ImVec2(400, 500));
@@ -444,6 +507,9 @@ int main() {
             }
 
             ImGui::End();
+        } else {
+             // Raycast logic
+             // ...
         }
 
         // Raycast for Editor Highlight
@@ -508,11 +574,10 @@ int main() {
             hudRenderer.DrawCrosshair(20.0f, glm::vec4(0.0f, 1.0f, 0.0f, 0.8f));
             
             // Mermi sayaci (sag alt)
-            int totalLoadedAmmo = weapon->currentMag + weapon->totalAmmo;
             hudRenderer.DrawAmmoCounter(weapon->currentMag, weapon->magSize, 1680.0f, 50.0f);
             
             // Can bari (sol alt)
-            hudRenderer.DrawHealthBar(playerHealth, maxHealth, 40.0f, 50.0f, 300.0f, 30.0f);
+            hudRenderer.DrawHealthBar(playerHealthComp->current, playerHealthComp->max, 40.0f, 50.0f, 300.0f, 30.0f);
             
             hudRenderer.EndHUD();
         }

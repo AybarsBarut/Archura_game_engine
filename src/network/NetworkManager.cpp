@@ -110,6 +110,11 @@ void NetworkManager::UpdateServer() {
                         PlayerUpdatePacket* packet = (PlayerUpdatePacket*)(buffer + sizeof(PacketHeader));
                         m_OnPlayerUpdate(*packet);
                     }
+                } else if (header->type == PacketType::PlayerShoot) {
+                    if (m_OnPlayerShoot && bytesReceived >= sizeof(PacketHeader) + sizeof(PlayerShootPacket)) {
+                        PlayerShootPacket* packet = (PlayerShootPacket*)(buffer + sizeof(PacketHeader));
+                        m_OnPlayerShoot(*packet);
+                    }
                 }
             }
             ++it;
@@ -166,6 +171,11 @@ void NetworkManager::UpdateClient() {
                     PlayerUpdatePacket* packet = (PlayerUpdatePacket*)(buffer + sizeof(PacketHeader));
                     m_OnPlayerUpdate(*packet);
                 }
+            } else if (header->type == PacketType::PlayerShoot) {
+                if (m_OnPlayerShoot && bytesReceived >= sizeof(PacketHeader) + sizeof(PlayerShootPacket)) {
+                    PlayerShootPacket* packet = (PlayerShootPacket*)(buffer + sizeof(PacketHeader));
+                    m_OnPlayerShoot(*packet);
+                }
             }
         }
     }
@@ -204,6 +214,31 @@ void NetworkManager::SendPlayerUpdate(const PlayerUpdatePacket& packet) {
 
 void NetworkManager::SetOnPlayerUpdate(std::function<void(const PlayerUpdatePacket&)> callback) {
     m_OnPlayerUpdate = callback;
+}
+
+void NetworkManager::SendPlayerShoot(const PlayerShootPacket& packet) {
+    if (!m_IsConnected) return;
+
+    std::vector<char> buffer;
+    PacketHeader header;
+    header.type = PacketType::PlayerShoot;
+    header.size = sizeof(PlayerShootPacket);
+
+    buffer.resize(sizeof(PacketHeader) + sizeof(PlayerShootPacket));
+    memcpy(buffer.data(), &header, sizeof(PacketHeader));
+    memcpy(buffer.data() + sizeof(PacketHeader), &packet, sizeof(PlayerShootPacket));
+
+    if (m_IsServer) {
+        for (SOCKET client : m_ClientSockets) {
+            send(client, buffer.data(), (int)buffer.size(), 0);
+        }
+    } else {
+        send(m_Socket, buffer.data(), (int)buffer.size(), 0);
+    }
+}
+
+void NetworkManager::SetOnPlayerShoot(std::function<void(const PlayerShootPacket&)> callback) {
+    m_OnPlayerShoot = callback;
 }
 
 } // namespace Archura
