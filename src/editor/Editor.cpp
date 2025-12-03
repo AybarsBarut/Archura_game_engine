@@ -44,6 +44,13 @@ bool Editor::Init(Window* window) {
     m_NewCoutBuf = std::make_unique<EditorStreamBuf>(this);
     m_OldCoutBuf = std::cout.rdbuf(m_NewCoutBuf.get());
 
+    // Initialize Project Directory
+    m_BaseProjectDir = std::filesystem::current_path();
+    if (std::filesystem::exists(m_BaseProjectDir / "assets")) {
+        m_BaseProjectDir /= "assets";
+    }
+    m_CurrentProjectDir = m_BaseProjectDir;
+
     std::cout << "ImGui Editor initialized." << std::endl;
     return true;
 }
@@ -76,21 +83,18 @@ void Editor::BeginFrame() {
 void Editor::SetupLayout() {
     ImGuiViewport* viewport = ImGui::GetMainViewport();
     float menuBarHeight = ImGui::GetFrameHeight();
-    float toolbarHeight = 30.0f;
     
     ImVec2 workPos = viewport->WorkPos;
-    ImVec2 workSize = viewport->WorkSize;
-    workPos.y += toolbarHeight; // Toolbar icin yer ac
-    workSize.y -= toolbarHeight;
+    ImVec2 workSize = viewport->WorkSize; 
 
     // Layout configuration
     float leftPanelWidth = 300.0f;
     float rightPanelWidth = 300.0f;
     float bottomPanelHeight = 250.0f;
 
-    // 1. Toolbar (Top)
-    ImGui::SetNextWindowPos(ImVec2(viewport->WorkPos.x, viewport->WorkPos.y));
-    ImGui::SetNextWindowSize(ImVec2(viewport->WorkSize.x, toolbarHeight));
+    // 1. Toolbar (Removed)
+    // ImGui::SetNextWindowPos(ImVec2(viewport->WorkPos.x, viewport->WorkPos.y + menuBarHeight));
+    // ImGui::SetNextWindowSize(ImVec2(viewport->WorkSize.x, toolbarHeight));
 
     // 2. Hierarchy (Left)
     if (m_ShowSceneHierarchy) {
@@ -122,7 +126,7 @@ void Editor::Update(Scene* scene, float deltaTime, float fps) {
     if (!m_Enabled) return;
 
     DrawMenuBar();
-    DrawToolbar();
+    // DrawToolbar();
 
     if (m_ShowSceneHierarchy) {
         DrawSceneHierarchy(scene);
@@ -152,19 +156,28 @@ void Editor::Update(Scene* scene, float deltaTime, float fps) {
 void Editor::DrawMenuBar() {
     if (ImGui::BeginMainMenuBar()) {
         if (ImGui::BeginMenu("File")) {
-            if (ImGui::MenuItem("New Scene")) {
-                // TODO: New scene
-            }
-            if (ImGui::MenuItem("Open Scene")) {
-                // TODO: Load scene
-            }
-            if (ImGui::MenuItem("Save Scene")) {
-                // TODO: Save scene
-            }
+            if (ImGui::MenuItem("New Scene", "Ctrl+N")) {}
+            if (ImGui::MenuItem("Open Scene", "Ctrl+O")) {}
             ImGui::Separator();
-            if (ImGui::MenuItem("Exit")) {
-                // TODO: Exit application
-            }
+            if (ImGui::MenuItem("Save", "Ctrl+S")) {}
+            if (ImGui::MenuItem("Save As...", "Ctrl+Shift+S")) {}
+            ImGui::Separator();
+            if (ImGui::MenuItem("Exit", "Alt+F4")) {}
+            ImGui::EndMenu();
+        }
+
+        if (ImGui::BeginMenu("Edit")) {
+            if (ImGui::MenuItem("Undo", "Ctrl+Z")) {}
+            if (ImGui::MenuItem("Redo", "Ctrl+Y")) {}
+            ImGui::Separator();
+            if (ImGui::MenuItem("Cut", "Ctrl+X")) {}
+            if (ImGui::MenuItem("Copy", "Ctrl+C")) {}
+            if (ImGui::MenuItem("Paste", "Ctrl+V")) {}
+            ImGui::EndMenu();
+        }
+
+        if (ImGui::BeginMenu("Selection")) {
+            if (ImGui::MenuItem("Select All", "Ctrl+A")) {}
             ImGui::EndMenu();
         }
 
@@ -173,9 +186,30 @@ void Editor::DrawMenuBar() {
             ImGui::MenuItem("Inspector", nullptr, &m_ShowInspector);
             ImGui::MenuItem("Project", nullptr, &m_ShowProjectPanel);
             ImGui::MenuItem("Console", nullptr, &m_ShowConsole);
-            ImGui::MenuItem("Performance", nullptr, &m_ShowPerformance);
             ImGui::Separator();
-            ImGui::MenuItem("ImGui Demo", nullptr, &m_ShowDemoWindow);
+            ImGui::MenuItem("Performance Metrics", nullptr, &m_ShowPerformance);
+            ImGui::MenuItem("ImGui Demo Window", nullptr, &m_ShowDemoWindow);
+            ImGui::EndMenu();
+        }
+
+        if (ImGui::BeginMenu("Go")) {
+            if (ImGui::MenuItem("Go to File...", "Ctrl+P")) {}
+            ImGui::EndMenu();
+        }
+
+        if (ImGui::BeginMenu("Run")) {
+            if (ImGui::MenuItem("Start Debugging", "F5")) {}
+            if (ImGui::MenuItem("Run Without Debugging", "Ctrl+F5")) {}
+            ImGui::EndMenu();
+        }
+
+        if (ImGui::BeginMenu("Terminal")) {
+            if (ImGui::MenuItem("New Terminal")) { m_ShowConsole = true; }
+            ImGui::EndMenu();
+        }
+
+        if (ImGui::BeginMenu("Help")) {
+            if (ImGui::MenuItem("About Archura Engine")) {}
             ImGui::EndMenu();
         }
 
@@ -320,52 +354,46 @@ void Editor::DrawDemoWindow() {
 }
 
 void Editor::DrawToolbar() {
-    ImGui::Begin("Toolbar", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
-    
-    // Center the buttons
-    float width = ImGui::GetWindowWidth();
-    float buttonWidth = 32.0f;
-    ImGui::SetCursorPosX((width - buttonWidth * 3) * 0.5f);
-
-    if (ImGui::Button("Play", ImVec2(buttonWidth, 0))) {
-        // TODO: Play logic
-        Log("Play pressed");
-    }
-    ImGui::SameLine();
-    if (ImGui::Button("Pause", ImVec2(buttonWidth, 0))) {
-        // TODO: Pause logic
-        Log("Pause pressed");
-    }
-    ImGui::SameLine();
-    if (ImGui::Button("Stop", ImVec2(buttonWidth, 0))) {
-        // TODO: Stop logic
-        Log("Stop pressed");
-    }
-
-    ImGui::End();
+    // Toolbar removed by user request
 }
 
 void Editor::DrawProjectPanel() {
     ImGui::Begin("Project");
 
-    // Simple file list simulation
-    static std::vector<std::string> files = {
-        "Assets/",
-        "  Models/",
-        "    character.obj",
-        "    cube.obj",
-        "  Textures/",
-        "    grass.jpg",
-        "    wall.jpg",
-        "  Scripts/",
-        "    PlayerController.cpp"
-    };
+    if (m_CurrentProjectDir != m_BaseProjectDir) {
+        if (ImGui::Button("..")) {
+            m_CurrentProjectDir = m_CurrentProjectDir.parent_path();
+        }
+    }
 
-    // Split view: Tree on left, Content on right
-    // For now, just a list
-    for (const auto& file : files) {
-        if (ImGui::Selectable(file.c_str())) {
-            // Select file
+    // Current Path Display
+    ImGui::Text("Path: %s", m_CurrentProjectDir.string().c_str());
+    ImGui::Separator();
+
+    // List Directories
+    for (auto& directoryEntry : std::filesystem::directory_iterator(m_CurrentProjectDir)) {
+        const auto& path = directoryEntry.path();
+        auto relativePath = std::filesystem::relative(path, m_BaseProjectDir);
+        std::string filenameString = path.filename().string();
+
+        if (directoryEntry.is_directory()) {
+            if (ImGui::Selectable((filenameString + "/").c_str(), false, ImGuiSelectableFlags_AllowDoubleClick)) {
+                if (ImGui::IsMouseDoubleClicked(0)) {
+                    m_CurrentProjectDir /= path.filename();
+                }
+            }
+        }
+    }
+
+    // List Files
+    for (auto& directoryEntry : std::filesystem::directory_iterator(m_CurrentProjectDir)) {
+        const auto& path = directoryEntry.path();
+        std::string filenameString = path.filename().string();
+
+        if (!directoryEntry.is_directory()) {
+            if (ImGui::Selectable(filenameString.c_str())) {
+                // Select file logic
+            }
         }
     }
 

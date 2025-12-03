@@ -5,6 +5,7 @@
 #include <vector>
 #include <iostream>
 #include <streambuf>
+#include <filesystem>
 
 namespace Archura {
 
@@ -74,6 +75,10 @@ private:
     std::vector<std::string> m_ConsoleLogs;
     char m_InputBuf[256] = "";
     
+    // Project Browser
+    std::filesystem::path m_BaseProjectDir;
+    std::filesystem::path m_CurrentProjectDir;
+
     // Stream redirection
     std::streambuf* m_OldCoutBuf = nullptr;
     std::unique_ptr<std::streambuf> m_NewCoutBuf;
