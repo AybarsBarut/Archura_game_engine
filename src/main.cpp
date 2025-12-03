@@ -17,6 +17,7 @@
 #include "game/Projectile.h"
 #include "editor/Editor.h"
 #include "game/DevConsole.h"
+#include "core/AudioSystem.h"
 #include <iostream>
 #include <memory>
 #include <ctime>
@@ -120,6 +121,11 @@ int main() {
 
     // Dev Console Baslat
     DevConsole::Get().Init();
+
+    // Ses Sistemi Baslat
+    AudioSystem::Get().Init();
+    // Ornek: Arkaplan muzigi (dosya varsa calar)
+    AudioSystem::Get().PlayMusic("bgm.mp3");
 
     // Ag Geri Cagrisi - Ates Etme
 
@@ -645,6 +651,7 @@ int main() {
     editor.Shutdown();
     hudRenderer.Shutdown();
     renderSystem.Shutdown();
+    AudioSystem::Get().Shutdown();
     
     // Modelleri temizle
     for (auto& entity : scene.GetEntities()) {

@@ -1,5 +1,6 @@
 #include "DevConsole.h"
 #include "CommandRegistry.h"
+#include "../core/AudioSystem.h"
 #include <iostream>
 
 namespace Archura {
@@ -24,6 +25,15 @@ namespace Archura {
         CommandRegistry::Get().RegisterCommand("noclip", [this](const std::vector<std::string>& args) {
             if (!m_DevMode) { Log("Error: Developer Mode required."); return; }
             Log("Noclip Toggled");
+        });
+
+        CommandRegistry::Get().RegisterCommand("playsound", [this](const std::vector<std::string>& args) {
+            if (args.empty()) {
+                Log("Usage: /playsound <filename>");
+                return;
+            }
+            AudioSystem::Get().PlayOneShot(args[0]);
+            Log("Playing sound: " + args[0]);
         });
 
         Log("Archura DevConsole Initialized. Type /dev to enable developer mode.");

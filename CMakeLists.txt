@@ -99,7 +99,9 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     glfw
     glad
     imgui
+    imgui
     ws2_32
+    winmm
 )
 
 # Windows için özel ayarlar
