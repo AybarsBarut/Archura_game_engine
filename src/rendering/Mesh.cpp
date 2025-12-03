@@ -3,6 +3,10 @@
 #include <glad/glad.h>
 #include <glm/glm.hpp>
 #include <cmath>
+#include <fstream>
+#include <sstream>
+#include <string>
+#include <iostream>
 
 namespace Archura {
 
@@ -188,6 +192,87 @@ Mesh* Mesh::CreateSphere(float radius, int segments) {
         }
     }
     
+    return new Mesh(vertices, indices);
+}
+
+Mesh* Mesh::LoadFromOBJ(const std::string& path) {
+    std::vector<glm::vec3> temp_positions;
+    std::vector<glm::vec3> temp_normals;
+    std::vector<glm::vec2> temp_texCoords;
+    
+    std::vector<Vertex> vertices;
+    std::vector<unsigned int> indices;
+    
+    std::ifstream file(path);
+    if (!file.is_open()) {
+        std::cerr << "Failed to open OBJ file: " << path << std::endl;
+        return nullptr;
+    }
+    
+    std::string line;
+    while (std::getline(file, line)) {
+        std::stringstream ss(line);
+        std::string prefix;
+        ss >> prefix;
+        
+        if (prefix == "v") {
+            glm::vec3 pos;
+            ss >> pos.x >> pos.y >> pos.z;
+            temp_positions.push_back(pos);
+        }
+        else if (prefix == "vt") {
+            glm::vec2 tex;
+            ss >> tex.x >> tex.y;
+            temp_texCoords.push_back(tex);
+        }
+        else if (prefix == "vn") {
+            glm::vec3 norm;
+            ss >> norm.x >> norm.y >> norm.z;
+            temp_normals.push_back(norm);
+        }
+        else if (prefix == "f") {
+            std::string vertexStr;
+            int vertexCount = 0;
+            
+            while (ss >> vertexStr) {
+                if (vertexCount >= 3) continue;
+
+                unsigned int vIndex = 0, vtIndex = 0, vnIndex = 0;
+                
+                size_t firstSlash = vertexStr.find('/');
+                size_t secondSlash = vertexStr.find('/', firstSlash + 1);
+                
+                if (firstSlash != std::string::npos) {
+                    try { vIndex = std::stoi(vertexStr.substr(0, firstSlash)); } catch (...) { vIndex = 0; }
+                    
+                    if (secondSlash != std::string::npos) {
+                        if (secondSlash > firstSlash + 1) {
+                            try { vtIndex = std::stoi(vertexStr.substr(firstSlash + 1, secondSlash - firstSlash - 1)); } catch (...) { vtIndex = 0; }
+                        }
+                        try { vnIndex = std::stoi(vertexStr.substr(secondSlash + 1)); } catch (...) { vnIndex = 0; }
+                    } else {
+                        try { vtIndex = std::stoi(vertexStr.substr(firstSlash + 1)); } catch (...) { vtIndex = 0; }
+                    }
+                } else {
+                    try { vIndex = std::stoi(vertexStr); } catch (...) { vIndex = 0; }
+                }
+                
+                Vertex vertex;
+                if (vIndex > 0 && vIndex <= temp_positions.size()) vertex.position = temp_positions[vIndex - 1];
+                if (vtIndex > 0 && vtIndex <= temp_texCoords.size()) vertex.texCoords = temp_texCoords[vtIndex - 1];
+                if (vnIndex > 0 && vnIndex <= temp_normals.size()) vertex.normal = temp_normals[vnIndex - 1];
+                
+                vertices.push_back(vertex);
+                indices.push_back((unsigned int)vertices.size() - 1);
+                
+                vertexCount++;
+            }
+        }
+    }
+    
+    if (vertices.empty()) return nullptr;
+    
+    std::cout << "Loaded OBJ: " << path << " (" << vertices.size() << " vertices)" << std::endl;
     return new Mesh(vertices, indices);
 }
 

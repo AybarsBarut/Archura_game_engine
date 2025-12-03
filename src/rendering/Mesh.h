@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <string>
 #include <glm/glm.hpp>
 
 namespace Archura {
@@ -44,6 +45,9 @@ public:
     static Mesh* CreateCube(float size = 1.0f);
     static Mesh* CreatePlane(float width = 10.0f, float height = 10.0f);
     static Mesh* CreateSphere(float radius = 1.0f, int segments = 32);
+    
+    // Model Loader
+    static Mesh* LoadFromOBJ(const std::string& path);
 
 private:
     void SetupMesh();

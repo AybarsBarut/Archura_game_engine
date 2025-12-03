@@ -212,8 +212,18 @@ int main() {
             Entity* newPlayer = scene.CreateEntity("RemotePlayer_" + std::to_string(packet.id));
             
             auto* mesh = newPlayer->AddComponent<MeshRenderer>();
-            mesh->mesh = Mesh::CreateCube(1.0f); // Diger oyunculari kup olarak gor
-            mesh->color = glm::vec3(1.0f, 0.0f, 0.0f); // Kirmizi
+            
+            // Karakter modelini yuklemeyi dene
+            Mesh* charMesh = Mesh::LoadFromOBJ("character.obj");
+            if (charMesh) {
+                mesh->mesh = charMesh;
+                mesh->color = glm::vec3(1.0f); // Modelin kendi renklerini/texture'ini kullan (eger varsa)
+                // OBJ yuklendiyse scale ayarlamasi gerekebilir, simdilik 1.0
+            } else {
+                // Fallback: Kirmizi Kup
+                mesh->mesh = Mesh::CreateCube(1.0f); 
+                mesh->color = glm::vec3(1.0f, 0.0f, 0.0f);
+            }
             
             auto* transform = newPlayer->GetComponent<Transform>();
             transform->scale = glm::vec3(1.0f, 2.0f, 1.0f); // Insan boyu
@@ -240,6 +250,7 @@ int main() {
     bool isKeyBindingMode = false;
     int* keyBindingTarget = nullptr;
     const char* keyBindingName = "";
+    float escCooldown = 0.0f;
 
     // Network Timer
     float networkTimer = 0.0f;
@@ -252,11 +263,18 @@ int main() {
     while (!window->ShouldClose()) {
         float deltaTime = window->GetDeltaTime();
         
+        // Cooldown guncellemesi
+        if (escCooldown > 0.0f) {
+            escCooldown -= deltaTime;
+        }
+        
         // Giris guncellemesi
         input->Update();
 
-        // ESC tusu ile Pause Menu ac/kapa
-        if (input->IsKeyPressed(GLFW_KEY_ESCAPE)) {
+        // ESC tusu ile Pause Menu ac/kapa (Cooldown kontrolu ile)
+        if (input->IsKeyPressed(GLFW_KEY_ESCAPE) && escCooldown <= 0.0f) {
+            escCooldown = 0.2f; // 200ms bekleme suresi
+            
             if (isKeyBindingMode) {
                 // Key binding iptal
                 isKeyBindingMode = false;
