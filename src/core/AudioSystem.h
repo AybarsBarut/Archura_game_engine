@@ -40,12 +40,27 @@ public:
     // Muziği durdur
     void StopMusic();
 
+    // Ses Ayarlari (0.0f - 1.0f)
+    void SetMasterVolume(float volume);
+    void SetMusicVolume(float volume);
+    void SetSFXVolume(float volume);
+
+    float GetMasterVolume() const { return m_MasterVolume; }
+    float GetMusicVolume() const { return m_MusicVolume; }
+    float GetSFXVolume() const { return m_SFXVolume; }
+
 private:
-    AudioSystem() = default;
+    AudioSystem();
     ~AudioSystem() = default;
+
+    void ApplyVolume(const std::string& alias, float volume);
 
     std::string m_CurrentMusicAlias;
     int m_NextSoundID = 0;
+
+    float m_MasterVolume = 1.0f;
+    float m_MusicVolume = 1.0f;
+    float m_SFXVolume = 1.0f;
 };
 
 } // namespace Archura

@@ -478,6 +478,24 @@ int main() {
             }
 
             ImGui::Separator();
+            ImGui::Text("Audio Settings");
+            
+            float masterVol = AudioSystem::Get().GetMasterVolume();
+            if (ImGui::SliderFloat("Master Volume", &masterVol, 0.0f, 1.0f)) {
+                AudioSystem::Get().SetMasterVolume(masterVol);
+            }
+
+            float musicVol = AudioSystem::Get().GetMusicVolume();
+            if (ImGui::SliderFloat("Music Volume", &musicVol, 0.0f, 1.0f)) {
+                AudioSystem::Get().SetMusicVolume(musicVol);
+            }
+
+            float sfxVol = AudioSystem::Get().GetSFXVolume();
+            if (ImGui::SliderFloat("SFX Volume", &sfxVol, 0.0f, 1.0f)) {
+                AudioSystem::Get().SetSFXVolume(sfxVol);
+            }
+
+            ImGui::Separator();
             ImGui::Text("Graphics");
             
             bool fullscreen = window->IsFullscreen();

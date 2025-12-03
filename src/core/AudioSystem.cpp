@@ -8,6 +8,13 @@
 
 namespace Archura {
 
+AudioSystem::AudioSystem() {
+    // Varsayilan ses seviyeleri
+    m_MasterVolume = 1.0f;
+    m_MusicVolume = 1.0f;
+    m_SFXVolume = 1.0f;
+}
+
 void AudioSystem::Init() {
     std::cout << "AudioSystem initialized (Windows MCI)." << std::endl;
 }
@@ -44,6 +51,9 @@ void AudioSystem::PlayMusic(const std::string& filename, bool loop) {
         cmdPlay += " repeat";
     }
 
+    // Ses seviyesini ayarla
+    ApplyVolume(alias, m_MusicVolume);
+
     mciSendString(cmdPlay.c_str(), NULL, 0, NULL);
     m_CurrentMusicAlias = alias;
     
@@ -74,9 +84,10 @@ void AudioSystem::PlayOneShot(const std::string& filename) {
     
     // Pratik cozum: Cal ve kapat komutunu ayni anda veremeyiz.
     // Bu yuzden sadece "play" diyoruz. 
-    // NOT: Bu basit implementasyon, binlerce ses calinirsa MCI tablosunu doldurabilir.
-    // Demo icin yeterli.
     
+    // Ses seviyesini ayarla
+    ApplyVolume(alias, m_SFXVolume);
+
     std::string cmdPlay = "play " + alias;
     mciSendString(cmdPlay.c_str(), NULL, 0, NULL);
 }
@@ -87,6 +98,35 @@ void AudioSystem::StopMusic() {
         mciSendString(cmd.c_str(), NULL, 0, NULL);
         m_CurrentMusicAlias.clear();
     }
+}
+
+void AudioSystem::SetMasterVolume(float volume) {
+    m_MasterVolume = volume;
+    // Muzik sesini guncelle
+    if (!m_CurrentMusicAlias.empty()) {
+        ApplyVolume(m_CurrentMusicAlias, m_MusicVolume);
+    }
+}
+
+void AudioSystem::SetMusicVolume(float volume) {
+    m_MusicVolume = volume;
+    if (!m_CurrentMusicAlias.empty()) {
+        ApplyVolume(m_CurrentMusicAlias, m_MusicVolume);
+    }
+}
+
+void AudioSystem::SetSFXVolume(float volume) {
+    m_SFXVolume = volume;
+}
+
+void AudioSystem::ApplyVolume(const std::string& alias, float channelVolume) {
+    // MCI volume range: 0 to 1000
+    int finalVol = static_cast<int>(m_MasterVolume * channelVolume * 1000.0f);
+    if (finalVol < 0) finalVol = 0;
+    if (finalVol > 1000) finalVol = 1000;
+
+    std::string cmd = "setaudio " + alias + " volume to " + std::to_string(finalVol);
+    mciSendString(cmd.c_str(), NULL, 0, NULL);
 }
 
 } // namespace Archura
