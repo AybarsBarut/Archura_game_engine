@@ -25,13 +25,19 @@
 
 using namespace Archura;
 
+// Dedicated GPU kullanimi icin ipucu (NVIDIA ve AMD)
+extern "C" {
+    __declspec(dllexport) unsigned long NvOptimusEnablement = 0x00000001;
+    __declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
+}
+
 int main() {
     // Motor konfigurasyonu
     Engine::EngineConfig config;
     config.windowTitle = "Archura FPS Engine - Demo";
     config.windowWidth = 1920;
     config.windowHeight = 1080;
-    config.vsync = true; // VSync acik = 60/144 FPS sabitleme
+    config.vsync = false; // VSync kapali = sinirsiz FPS
     config.fullscreen = false;
     config.editorMode = false; // Simdilik editor UI kapali
 
@@ -386,35 +392,38 @@ int main() {
             KeyButton("Sprint", bindings.sprint);
 
             ImGui::Separator();
+            if (ImGui::CollapsingHeader("Multiplayer")) {
+                static int serverPort = 12345;
+                static char ipBuffer[128] = "127.0.0.1";
+
+                if (!network.IsConnected()) {
+                    ImGui::InputText("IP Address", ipBuffer, IM_ARRAYSIZE(ipBuffer));
+                    ImGui::InputInt("Port", &serverPort);
+                    
+                    if (ImGui::Button("Host Server", ImVec2(-1, 30))) {
+                        network.StartServer(serverPort);
+                    }
+                    if (ImGui::Button("Connect", ImVec2(-1, 30))) {
+                        network.Connect(ipBuffer, serverPort);
+                    }
+                } else {
+                    ImGui::TextColored(ImVec4(0, 1, 0, 1), "Status: %s", network.IsServer() ? "Hosting" : "Connected");
+                    ImGui::Text("My ID: %u", myClientID);
+                    ImGui::Text("Remote Players: %d", (int)remotePlayers.size());
+                    
+                    if (ImGui::Button("Disconnect", ImVec2(-1, 30))) {
+                        network.Shutdown();
+                        network.Init(); // Re-init
+                        remotePlayers.clear();
+                    }
+                }
+            }
+
+            ImGui::Separator();
             if (ImGui::Button("Exit Game", ImVec2(-1, 40))) {
                 break;
             }
 
-            ImGui::End();
-        }
-
-        // Multiplayer UI (Sadece pause degilken ve editor aciksa)
-        if (!isPaused && editor.IsEnabled()) {
-            ImGui::Begin("Multiplayer");
-            if (!network.IsConnected()) {
-                if (ImGui::Button("Host Server")) {
-                    network.StartServer(12345);
-                }
-                static char ipBuffer[128] = "127.0.0.1";
-                ImGui::InputText("IP Address", ipBuffer, IM_ARRAYSIZE(ipBuffer));
-                if (ImGui::Button("Connect")) {
-                    network.Connect(ipBuffer, 12345);
-                }
-            } else {
-                ImGui::Text("Status: %s", network.IsServer() ? "Server Hosting" : "Client Connected");
-                ImGui::Text("My ID: %u", myClientID);
-                ImGui::Text("Remote Players: %d", (int)remotePlayers.size());
-                if (ImGui::Button("Disconnect")) {
-                    network.Shutdown();
-                    network.Init(); // Re-init for next use
-                    remotePlayers.clear(); // Clear remote players
-                }
-            }
             ImGui::End();
         }
 
@@ -454,17 +463,6 @@ int main() {
                       << camera.GetPosition().y << ", " << camera.GetPosition().z << ")"
                       << std::endl;
             fpsTimer = 0.0f;
-        }
-
-        // Manual FPS Cap (Fallback)
-        // Eger VSync calismazsa GPU'yu yakmamak icin 144 FPS siniri
-        float targetFrameTime = 1.0f / 144.0f;
-        float frameTime = (float)glfwGetTime() - (float)window->GetLastFrameTime();
-        if (frameTime < targetFrameTime) {
-            double sleepTime = targetFrameTime - frameTime;
-            // Basit busy-wait (daha hassas zamanlama icin)
-            double startWait = glfwGetTime();
-            while (glfwGetTime() - startWait < sleepTime);
         }
     }
 
