@@ -123,3 +123,15 @@ if(MSVC)
 else()
     target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra -Wpedantic)
 endif()
+
+# Launcher Executable
+add_executable(ArchuraLauncher src/launcher/Launcher.cpp)
+target_link_libraries(ArchuraLauncher PRIVATE ws2_32)
+
+# Çıktı dizinlerini ayarla
+set_target_properties(${PROJECT_NAME} PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/${CMAKE_BUILD_TYPE}"
+)
+set_target_properties(ArchuraLauncher PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/${CMAKE_BUILD_TYPE}"
+)
