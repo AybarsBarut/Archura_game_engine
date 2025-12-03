@@ -5,6 +5,7 @@
 #include "../game/Weapon.h"
 #include "../game/Projectile.h"
 #include "../rendering/Texture.h"
+#include "../rendering/Mesh.h"
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
@@ -241,6 +242,21 @@ void Editor::DrawSceneHierarchy(Scene* scene) {
     const auto& entities = scene->GetEntities();
     
     ImGui::Text("Entities: %zu", entities.size());
+    
+    // + Entity Button
+    if (ImGui::Button("+ Entity", ImVec2(-1, 0))) {
+        ImGui::OpenPopup("AddEntityPopup");
+    }
+
+    if (ImGui::BeginPopup("AddEntityPopup")) {
+        if (ImGui::MenuItem("Cube")) SpawnEntity(scene, "Cube");
+        if (ImGui::MenuItem("Sphere")) SpawnEntity(scene, "Sphere");
+        if (ImGui::MenuItem("Capsule")) SpawnEntity(scene, "Capsule");
+        if (ImGui::MenuItem("Stairs")) SpawnEntity(scene, "Stairs");
+        if (ImGui::MenuItem("Ramp")) SpawnEntity(scene, "Ramp");
+        ImGui::EndPopup();
+    }
+
     ImGui::Separator();
 
     for (const auto& entityPtr : entities) {
@@ -515,6 +531,41 @@ void Editor::ExecuteCommand(const char* command) {
     } else {
         Log("Unknown command: " + cmd);
     }
+}
+
+void Editor::SpawnEntity(Scene* scene, const std::string& type) {
+    if (!scene) return;
+
+    static int entityCounter = 0;
+    std::string name = type + "_" + std::to_string(++entityCounter);
+    
+    Entity* entity = scene->CreateEntity(name);
+    auto* transform = entity->GetComponent<Transform>();
+    transform->position = m_SpawnPosition;
+
+    auto* meshRenderer = entity->AddComponent<MeshRenderer>();
+    meshRenderer->color = glm::vec3(1.0f); // White default
+
+    auto* collider = entity->AddComponent<BoxCollider>();
+    collider->size = glm::vec3(1.0f);
+
+    if (type == "Cube") {
+        meshRenderer->mesh = Mesh::CreateCube(1.0f);
+    } else if (type == "Sphere") {
+        meshRenderer->mesh = Mesh::CreateSphere(0.5f); // Radius 0.5 = Diameter 1.0
+    } else if (type == "Capsule") {
+        meshRenderer->mesh = Mesh::CreateCapsule(0.5f, 2.0f);
+        collider->size = glm::vec3(1.0f, 2.0f, 1.0f);
+    } else if (type == "Stairs") {
+        meshRenderer->mesh = Mesh::CreateStairs(1.0f, 1.0f, 2.0f, 5); // 5 basamak
+        collider->size = glm::vec3(1.0f, 1.0f, 2.0f);
+    } else if (type == "Ramp") {
+        meshRenderer->mesh = Mesh::CreateRamp(1.0f, 1.0f, 2.0f);
+        collider->size = glm::vec3(1.0f, 1.0f, 2.0f);
+    }
+
+    Log("Spawned " + type + " at " + std::to_string(m_SpawnPosition.x) + ", " + std::to_string(m_SpawnPosition.y) + ", " + std::to_string(m_SpawnPosition.z));
+    m_SelectedEntity = entity;
 }
 
 } // namespace Archura

@@ -621,6 +621,17 @@ int main() {
         }
         editor.SetLookedAtEntity(lookedAtEntity);
 
+        // Spawn pozisyonunu belirle
+        glm::vec3 spawnPos;
+        if (lookedAtEntity) {
+            // Bir seye bakiyorsak, baktigimiz yerin uzerine koyalim
+            spawnPos = rayOrigin + rayDir * closestDist;
+        } else {
+            // Bosluga bakiyorsak, onumuzde 5 birim ileriye koyalim
+            spawnPos = rayOrigin + rayDir * 5.0f;
+        }
+        editor.SetSpawnPosition(spawnPos);
+
         editor.Update(&scene, deltaTime, window->GetFPS());
         
         // HUD Cizimi (2D katman) - Sadece oyun sirasinda

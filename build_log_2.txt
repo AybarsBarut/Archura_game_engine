@@ -1,0 +1,6 @@
+.NET Framework i├ºin MSBuild s├╝r├╝m 17.14.14+a129329f1
+
+  glad.vcxproj -> C:\Users\4RCHURA\Desktop\Archura_game_engine\build\lib\Release\glad.lib
+  glfw.vcxproj -> C:\Users\4RCHURA\Desktop\Archura_game_engine\build\lib\Release\glfw3.lib
+  imgui.vcxproj -> C:\Users\4RCHURA\Desktop\Archura_game_engine\build\lib\Release\imgui.lib
+LINK : fatal error LNK1104: 'C:\Users\4RCHURA\Desktop\Archura_game_engine\build\bin\Release\ArchuraEngine.exe' dosyas─▒ a├º─▒lam─▒yor [C:\Users\4RCHURA\Desktop\Archura_game_engine\build\ArchuraEngine.vcxproj]

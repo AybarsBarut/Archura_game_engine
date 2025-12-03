@@ -346,6 +346,169 @@ Mesh* Mesh::CreateCapsule(float radius, float height) {
     return new Mesh(vertices, indices);
 }
 
+Mesh* Mesh::CreateStairs(float width, float height, float depth, int steps) {
+    std::vector<Vertex> vertices;
+    std::vector<unsigned int> indices;
+
+    float stepHeight = height / steps;
+    float stepDepth = depth / steps;
+    float halfWidth = width * 0.5f;
+
+    // Her basamak bir kutu (cube) gibidir
+    // Basitlik icin her basamagi ayri ayri olusturalim
+    // Optimize edilebilir ama bu yeterli
+    
+    int vertexOffset = 0;
+
+    for (int i = 0; i < steps; ++i) {
+        // Basamak boyutlari
+        float yBottom = 0.0f; // Hepsi yerden baslasin (dolu merdiven)
+        float yTop = (i + 1) * stepHeight;
+        float zFront = (i) * stepDepth - (depth * 0.5f);
+        float zBack = (i + 1) * stepDepth - (depth * 0.5f);
+        
+        // 8 Kose
+        glm::vec3 p0(-halfWidth, yBottom, zBack);
+        glm::vec3 p1( halfWidth, yBottom, zBack);
+        glm::vec3 p2( halfWidth, yTop,    zBack);
+        glm::vec3 p3(-halfWidth, yTop,    zBack);
+        glm::vec3 p4(-halfWidth, yBottom, zFront);
+        glm::vec3 p5( halfWidth, yBottom, zFront);
+        glm::vec3 p6( halfWidth, yTop,    zFront);
+        glm::vec3 p7(-halfWidth, yTop,    zFront);
+
+        // Yuzeyler (Normaller ile)
+        // On (Front) - p4, p5, p6, p7
+        vertices.push_back({p4, {0,0,1}, {0,0}, {1,1,1}});
+        vertices.push_back({p5, {0,0,1}, {1,0}, {1,1,1}});
+        vertices.push_back({p6, {0,0,1}, {1,1}, {1,1,1}});
+        vertices.push_back({p7, {0,0,1}, {0,1}, {1,1,1}});
+        
+        // Ust (Top) - p7, p6, p2, p3
+        vertices.push_back({p7, {0,1,0}, {0,0}, {1,1,1}});
+        vertices.push_back({p6, {0,1,0}, {1,0}, {1,1,1}});
+        vertices.push_back({p2, {0,1,0}, {1,1}, {1,1,1}});
+        vertices.push_back({p3, {0,1,0}, {0,1}, {1,1,1}});
+
+        // Yanlar (Left/Right)
+        // Sag - p5, p1, p2, p6
+        vertices.push_back({p5, {1,0,0}, {0,0}, {1,1,1}});
+        vertices.push_back({p1, {1,0,0}, {1,0}, {1,1,1}});
+        vertices.push_back({p2, {1,0,0}, {1,1}, {1,1,1}});
+        vertices.push_back({p6, {1,0,0}, {0,1}, {1,1,1}});
+
+        // Sol - p0, p4, p7, p3
+        vertices.push_back({p0, {-1,0,0}, {0,0}, {1,1,1}});
+        vertices.push_back({p4, {-1,0,0}, {1,0}, {1,1,1}});
+        vertices.push_back({p7, {-1,0,0}, {1,1}, {1,1,1}});
+        vertices.push_back({p3, {-1,0,0}, {0,1}, {1,1,1}});
+
+        // Arka ve Alt (Genellikle gorunmez ama ekleyelim)
+        // Arka - p1, p0, p3, p2
+        vertices.push_back({p1, {0,0,-1}, {0,0}, {1,1,1}});
+        vertices.push_back({p0, {0,0,-1}, {1,0}, {1,1,1}});
+        vertices.push_back({p3, {0,0,-1}, {1,1}, {1,1,1}});
+        vertices.push_back({p2, {0,0,-1}, {0,1}, {1,1,1}});
+
+        // Alt - p0, p1, p5, p4
+        vertices.push_back({p0, {0,-1,0}, {0,0}, {1,1,1}});
+        vertices.push_back({p1, {0,-1,0}, {1,0}, {1,1,1}});
+        vertices.push_back({p5, {0,-1,0}, {1,1}, {1,1,1}});
+        vertices.push_back({p4, {0,-1,0}, {0,1}, {1,1,1}});
+
+        // Indeksler (Her yuzey icin 2 ucgen)
+        for (int f = 0; f < 6; ++f) {
+            int base = vertexOffset + f * 4;
+            indices.push_back(base + 0);
+            indices.push_back(base + 1);
+            indices.push_back(base + 2);
+            indices.push_back(base + 0);
+            indices.push_back(base + 2);
+            indices.push_back(base + 3);
+        }
+        vertexOffset += 24;
+    }
+
+    return new Mesh(vertices, indices);
+}
+
+Mesh* Mesh::CreateRamp(float width, float height, float depth) {
+    std::vector<Vertex> vertices;
+    std::vector<unsigned int> indices;
+
+    float w = width * 0.5f;
+    float h = height; // Rampanin yuksekligi
+    float d = depth * 0.5f;
+
+    // Wedge (Kama) Sekli
+    // 6 Kose (Prizma)
+    // Taban dikdortgen, ust kenar cizgi
+    
+    // Arka Yuz (Dikdortgen)
+    glm::vec3 p0(-w, 0, -d);
+    glm::vec3 p1( w, 0, -d);
+    glm::vec3 p2( w, h, -d);
+    glm::vec3 p3(-w, h, -d);
+
+    // On Yuz (Cizgi - Yerde)
+    glm::vec3 p4(-w, 0, d);
+    glm::vec3 p5( w, 0, d);
+
+    // Egimli Yuzey (Rampa) - p4, p5, p2, p3
+    // Normali hesapla
+    glm::vec3 rampVec = glm::vec3(0, h, -2*d);
+    glm::vec3 rampNormal = glm::normalize(glm::cross(rampVec, glm::vec3(1,0,0))); // Basitce
+
+    vertices.push_back({p4, rampNormal, {0,0}, {1,1,1}});
+    vertices.push_back({p5, rampNormal, {1,0}, {1,1,1}});
+    vertices.push_back({p2, rampNormal, {1,1}, {1,1,1}});
+    vertices.push_back({p3, rampNormal, {0,1}, {1,1,1}});
+
+    // Arka Yuz
+    vertices.push_back({p1, {0,0,-1}, {0,0}, {1,1,1}});
+    vertices.push_back({p0, {0,0,-1}, {1,0}, {1,1,1}});
+    vertices.push_back({p3, {0,0,-1}, {1,1}, {1,1,1}});
+    vertices.push_back({p2, {0,0,-1}, {0,1}, {1,1,1}});
+
+    // Alt Yuz
+    vertices.push_back({p0, {0,-1,0}, {0,0}, {1,1,1}});
+    vertices.push_back({p1, {0,-1,0}, {1,0}, {1,1,1}});
+    vertices.push_back({p5, {0,-1,0}, {1,1}, {1,1,1}});
+    vertices.push_back({p4, {0,-1,0}, {0,1}, {1,1,1}});
+
+    // Yan Yuzler (Ucgen)
+    // Sag - p5, p1, p2
+    vertices.push_back({p5, {1,0,0}, {0,0}, {1,1,1}});
+    vertices.push_back({p1, {1,0,0}, {1,0}, {1,1,1}});
+    vertices.push_back({p2, {1,0,0}, {0,1}, {1,1,1}});
+
+    // Sol - p0, p4, p3
+    vertices.push_back({p0, {-1,0,0}, {0,0}, {1,1,1}});
+    vertices.push_back({p4, {-1,0,0}, {1,0}, {1,1,1}});
+    vertices.push_back({p3, {-1,0,0}, {0,1}, {1,1,1}});
+
+    // Indeksler
+    // Rampa (Quad)
+    indices.push_back(0); indices.push_back(1); indices.push_back(2);
+    indices.push_back(0); indices.push_back(2); indices.push_back(3);
+
+    // Arka (Quad)
+    indices.push_back(4); indices.push_back(5); indices.push_back(6);
+    indices.push_back(4); indices.push_back(6); indices.push_back(7);
+
+    // Alt (Quad)
+    indices.push_back(8); indices.push_back(9); indices.push_back(10);
+    indices.push_back(8); indices.push_back(10); indices.push_back(11);
+
+    // Sag (Tri)
+    indices.push_back(12); indices.push_back(13); indices.push_back(14);
+
+    // Sol (Tri)
+    indices.push_back(15); indices.push_back(16); indices.push_back(17);
+
+    return new Mesh(vertices, indices);
+}
+
 Mesh* Mesh::LoadFromOBJ(const std::string& path) {
     std::vector<glm::vec3> temp_positions;
     std::vector<glm::vec3> temp_normals;

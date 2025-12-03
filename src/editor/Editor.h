@@ -6,6 +6,7 @@
 #include <iostream>
 #include <streambuf>
 #include <filesystem>
+#include <glm/glm.hpp>
 
 namespace Archura {
 
@@ -39,9 +40,15 @@ public:
     void SetSelectedEntity(Entity* entity) { m_SelectedEntity = entity; }
 
     // Looked at entity (Debug)
+    // Looked at entity (Debug)
     void SetLookedAtEntity(Entity* entity) { m_LookedAtEntity = entity; }
+    
+    // Spawn Position (from Raycast)
+    void SetSpawnPosition(const glm::vec3& pos) { m_SpawnPosition = pos; }
 
 private:
+    void SpawnEntity(Scene* scene, const std::string& type);
+
     void SetupLayout();
     void DrawMenuBar(Scene* scene);
     void DrawToolbar();
@@ -70,6 +77,7 @@ private:
 
     Entity* m_SelectedEntity = nullptr;
     Entity* m_LookedAtEntity = nullptr;
+    glm::vec3 m_SpawnPosition = glm::vec3(0.0f);
     Window* m_Window = nullptr;
 
     std::vector<std::string> m_ConsoleLogs;
