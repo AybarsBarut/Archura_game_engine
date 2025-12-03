@@ -11,6 +11,15 @@ class Input;
  * 
  * WASD hareket, mouse look, koşma, zıplama
  */
+struct KeyBindings {
+    int forward;
+    int backward;
+    int left;
+    int right;
+    int jump;
+    int sprint;
+};
+
 class FPSController {
 public:
     FPSController(Camera* camera);
@@ -23,11 +32,13 @@ public:
     void SetRunSpeed(float speed) { m_RunSpeed = speed; }
     void SetJumpHeight(float height) { m_JumpHeight = height; }
     void SetMouseSensitivity(float sensitivity) { m_MouseSensitivity = sensitivity; }
+    void SetKeyBindings(const KeyBindings& bindings) { m_Bindings = bindings; }
 
     float GetWalkSpeed() const { return m_WalkSpeed; }
     float GetRunSpeed() const { return m_RunSpeed; }
     float GetJumpHeight() const { return m_JumpHeight; }
     float GetMouseSensitivity() const { return m_MouseSensitivity; }
+    KeyBindings& GetKeyBindings() { return m_Bindings; }
 
     // State
     bool IsGrounded() const { return m_IsGrounded; }
@@ -47,6 +58,7 @@ private:
     float m_JumpHeight = 2.0f;
     float m_MouseSensitivity = 0.1f;
     float m_Gravity = -9.81f;
+    KeyBindings m_Bindings;
 
     // State
     bool m_IsGrounded = true;

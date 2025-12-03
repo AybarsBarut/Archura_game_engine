@@ -21,6 +21,7 @@
 #include <ctime>
 #include <cstdlib>
 #include <imgui.h>
+#include <string>
 
 using namespace Archura;
 
@@ -30,7 +31,7 @@ int main() {
     config.windowTitle = "Archura FPS Engine - Demo";
     config.windowWidth = 1920;
     config.windowHeight = 1080;
-    config.vsync = false; // VSync kapali = sinirsiz FPS (120+ hedef)
+    config.vsync = true; // VSync acik = 60/144 FPS sabitleme
     config.fullscreen = false;
     config.editorMode = false; // Simdilik editor UI kapali
 
@@ -228,6 +229,12 @@ int main() {
     auto* input = engine.GetInput();
     auto* renderer = engine.GetRenderer();
 
+    // Pause State
+    bool isPaused = false;
+    bool isKeyBindingMode = false;
+    int* keyBindingTarget = nullptr;
+    const char* keyBindingName = "";
+
     // Network Timer
     float networkTimer = 0.0f;
     const float networkTickRate = 0.05f; // 20 updates per second
@@ -239,55 +246,87 @@ int main() {
     while (!window->ShouldClose()) {
         float deltaTime = window->GetDeltaTime();
         
-        // Network Updates
-        if (network.IsServer()) {
-            network.UpdateServer();
-        } else {
-            network.UpdateClient();
-        }
-
-        // Send Player Update
-        if (network.IsConnected()) {
-            networkTimer += deltaTime;
-            if (networkTimer >= networkTickRate) {
-                PlayerUpdatePacket packet;
-                packet.id = myClientID;
-                glm::vec3 pos = camera.GetPosition();
-                packet.x = pos.x;
-                packet.y = pos.y - 1.8f; // Ayak pozisyonu (Kamera gozde)
-                packet.z = pos.z;
-                packet.yaw = camera.GetYaw();
-                packet.pitch = camera.GetPitch();
-                
-                network.SendPlayerUpdate(packet);
-                networkTimer = 0.0f;
-            }
-        }
-
         // Giris guncellemesi
         input->Update();
 
-        // TAB tusu ile Editor ac/kapa
-        if (input->IsKeyPressed(GLFW_KEY_TAB)) {
-            bool newState = !editor.IsEnabled();
-            editor.SetEnabled(newState);
-            
-            if (newState) {
-                input->SetCursorMode(GLFW_CURSOR_NORMAL);
+        // ESC tusu ile Pause Menu ac/kapa
+        if (input->IsKeyPressed(GLFW_KEY_ESCAPE)) {
+            if (isKeyBindingMode) {
+                // Key binding iptal
+                isKeyBindingMode = false;
+                keyBindingTarget = nullptr;
             } else {
-                input->SetCursorMode(GLFW_CURSOR_DISABLED);
+                isPaused = !isPaused;
+                if (isPaused) {
+                    input->SetCursorMode(GLFW_CURSOR_NORMAL);
+                } else {
+                    input->SetCursorMode(GLFW_CURSOR_DISABLED);
+                }
             }
         }
 
-        // FPS kontrolcusu guncellemesi
-        fpsController.Update(input, &scene, deltaTime);
+        // Key Binding Mode
+        if (isKeyBindingMode && keyBindingTarget) {
+            // Herhangi bir tusa basildi mi?
+            for (int key = GLFW_KEY_SPACE; key <= GLFW_KEY_LAST; ++key) {
+                if (input->IsKeyPressed(key) && key != GLFW_KEY_ESCAPE) {
+                    *keyBindingTarget = key;
+                    isKeyBindingMode = false;
+                    keyBindingTarget = nullptr;
+                    break;
+                }
+            }
+        }
 
-        // Silah sistemi guncellemesi (mermi olusturma ile)
-        weaponSystem.Update(player, input, &scene, &camera, &projectileSystem, deltaTime);
-        weaponSystem.UpdateRecoil(weapon, &camera, deltaTime);
+        // Oyun mantigi (Pause degilse)
+        if (!isPaused) {
+            // Network Updates
+            if (network.IsServer()) {
+                network.UpdateServer();
+            } else {
+                network.UpdateClient();
+            }
 
-        // Mermi sistemi guncellemesi
-        projectileSystem.Update(&scene, deltaTime);
+            // Send Player Update
+            if (network.IsConnected()) {
+                networkTimer += deltaTime;
+                if (networkTimer >= networkTickRate) {
+                    PlayerUpdatePacket packet;
+                    packet.id = myClientID;
+                    glm::vec3 pos = camera.GetPosition();
+                    packet.x = pos.x;
+                    packet.y = pos.y - 1.8f; // Ayak pozisyonu (Kamera gozde)
+                    packet.z = pos.z;
+                    packet.yaw = camera.GetYaw();
+                    packet.pitch = camera.GetPitch();
+                    
+                    network.SendPlayerUpdate(packet);
+                    networkTimer = 0.0f;
+                }
+            }
+
+            // TAB tusu ile Editor ac/kapa
+            if (input->IsKeyPressed(GLFW_KEY_TAB)) {
+                bool newState = !editor.IsEnabled();
+                editor.SetEnabled(newState);
+                // Editor acikken de cursor serbest olsun
+                if (newState) {
+                    input->SetCursorMode(GLFW_CURSOR_NORMAL);
+                } else {
+                    input->SetCursorMode(GLFW_CURSOR_DISABLED);
+                }
+            }
+
+            // FPS kontrolcusu guncellemesi
+            fpsController.Update(input, &scene, deltaTime);
+
+            // Silah sistemi guncellemesi (mermi olusturma ile)
+            weaponSystem.Update(player, input, &scene, &camera, &projectileSystem, deltaTime);
+            weaponSystem.UpdateRecoil(weapon, &camera, deltaTime);
+
+            // Mermi sistemi guncellemesi
+            projectileSystem.Update(&scene, deltaTime);
+        }
 
         // 3D sahne cizimi
         renderer->BeginFrame();
@@ -297,11 +336,65 @@ int main() {
 
         renderSystem.Update(deltaTime);
         
-        // Editor Arayuzu (ImGui) - HUD'dan once
+        // Editor Arayuzu (ImGui)
         editor.BeginFrame();
         
-        // Multiplayer UI
-        if (editor.IsEnabled()) {
+        // Pause Menu
+        if (isPaused) {
+            ImGui::SetNextWindowPos(ImVec2(window->GetWidth() * 0.5f, window->GetHeight() * 0.5f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+            ImGui::SetNextWindowSize(ImVec2(400, 500));
+            ImGui::Begin("Pause Menu", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
+            
+            if (ImGui::Button("Resume Game", ImVec2(-1, 40))) {
+                isPaused = false;
+                input->SetCursorMode(GLFW_CURSOR_DISABLED);
+            }
+
+            ImGui::Separator();
+            ImGui::Text("Graphics");
+            
+            bool fullscreen = window->IsFullscreen();
+            if (ImGui::Checkbox("Fullscreen", &fullscreen)) {
+                window->SetFullscreen(fullscreen);
+            }
+
+            ImGui::Separator();
+            ImGui::Text("Controls");
+
+            float sensitivity = fpsController.GetMouseSensitivity();
+            if (ImGui::SliderFloat("Mouse Sensitivity", &sensitivity, 0.01f, 1.0f)) {
+                fpsController.SetMouseSensitivity(sensitivity);
+            }
+
+            ImGui::Text("Key Bindings:");
+            KeyBindings& bindings = fpsController.GetKeyBindings();
+
+            auto KeyButton = [&](const char* label, int& key) {
+                std::string btnLabel = std::string(label) + ": " + (isKeyBindingMode && keyBindingTarget == &key ? "Press Key..." : std::to_string(key));
+                if (ImGui::Button(btnLabel.c_str(), ImVec2(-1, 30))) {
+                    isKeyBindingMode = true;
+                    keyBindingTarget = &key;
+                    keyBindingName = label;
+                }
+            };
+
+            KeyButton("Forward", bindings.forward);
+            KeyButton("Backward", bindings.backward);
+            KeyButton("Left", bindings.left);
+            KeyButton("Right", bindings.right);
+            KeyButton("Jump", bindings.jump);
+            KeyButton("Sprint", bindings.sprint);
+
+            ImGui::Separator();
+            if (ImGui::Button("Exit Game", ImVec2(-1, 40))) {
+                break;
+            }
+
+            ImGui::End();
+        }
+
+        // Multiplayer UI (Sadece pause degilken ve editor aciksa)
+        if (!isPaused && editor.IsEnabled()) {
             ImGui::Begin("Multiplayer");
             if (!network.IsConnected()) {
                 if (ImGui::Button("Host Server")) {
@@ -327,20 +420,22 @@ int main() {
 
         editor.Update(&scene, deltaTime, window->GetFPS());
         
-        // HUD Cizimi (2D katman)
-        hudRenderer.BeginHUD();
-        
-        // Nisangah
-        hudRenderer.DrawCrosshair(20.0f, glm::vec4(0.0f, 1.0f, 0.0f, 0.8f));
-        
-        // Mermi sayaci (sag alt)
-        int totalLoadedAmmo = weapon->currentMag + weapon->totalAmmo;
-        hudRenderer.DrawAmmoCounter(weapon->currentMag, weapon->magSize, 1680.0f, 50.0f);
-        
-        // Can bari (sol alt)
-        hudRenderer.DrawHealthBar(playerHealth, maxHealth, 40.0f, 50.0f, 300.0f, 30.0f);
-        
-        hudRenderer.EndHUD();
+        // HUD Cizimi (2D katman) - Sadece oyun sirasinda
+        if (!isPaused) {
+            hudRenderer.BeginHUD();
+            
+            // Nisangah
+            hudRenderer.DrawCrosshair(20.0f, glm::vec4(0.0f, 1.0f, 0.0f, 0.8f));
+            
+            // Mermi sayaci (sag alt)
+            int totalLoadedAmmo = weapon->currentMag + weapon->totalAmmo;
+            hudRenderer.DrawAmmoCounter(weapon->currentMag, weapon->magSize, 1680.0f, 50.0f);
+            
+            // Can bari (sol alt)
+            hudRenderer.DrawHealthBar(playerHealth, maxHealth, 40.0f, 50.0f, 300.0f, 30.0f);
+            
+            hudRenderer.EndHUD();
+        }
         
         editor.EndFrame();
         
@@ -348,15 +443,6 @@ int main() {
 
         // Pencere guncellemesi
         window->Update();
-
-        // ESC tusu ile cikis veya cursor serbest birakma
-        if (input->IsKeyPressed(GLFW_KEY_ESCAPE)) {
-            if (input->IsCursorLocked()) {
-                input->SetCursorMode(GLFW_CURSOR_NORMAL);
-            } else {
-                break; // Zaten serbestse cikis yap
-            }
-        }
 
         // FPS bilgisini goster (1 saniyede bir)
         static float fpsTimer = 0.0f;
@@ -368,6 +454,17 @@ int main() {
                       << camera.GetPosition().y << ", " << camera.GetPosition().z << ")"
                       << std::endl;
             fpsTimer = 0.0f;
+        }
+
+        // Manual FPS Cap (Fallback)
+        // Eger VSync calismazsa GPU'yu yakmamak icin 144 FPS siniri
+        float targetFrameTime = 1.0f / 144.0f;
+        float frameTime = (float)glfwGetTime() - (float)window->GetLastFrameTime();
+        if (frameTime < targetFrameTime) {
+            double sleepTime = targetFrameTime - frameTime;
+            // Basit busy-wait (daha hassas zamanlama icin)
+            double startWait = glfwGetTime();
+            while (glfwGetTime() - startWait < sleepTime);
         }
     }
 

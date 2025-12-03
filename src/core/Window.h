@@ -45,6 +45,9 @@ public:
     void SetVSync(bool enabled);
     bool IsVSync() const { return m_VSync; }
 
+    void SetFullscreen(bool enabled);
+    bool IsFullscreen() const { return m_Fullscreen; }
+
     unsigned int GetWidth() const { return m_Width; }
     unsigned int GetHeight() const { return m_Height; }
     float GetAspectRatio() const { return (float)m_Width / (float)m_Height; }
@@ -52,8 +55,10 @@ public:
     GLFWwindow* GetNativeWindow() const { return m_Window; }
 
     // FPS tracking
+    // FPS tracking
     float GetDeltaTime() const { return m_DeltaTime; }
     float GetFPS() const { return m_FPS; }
+    float GetLastFrameTime() const { return m_LastFrameTime; }
 
 private:
     void Init(const WindowProps& props);
@@ -65,6 +70,7 @@ private:
     std::string m_Title;
     unsigned int m_Width, m_Height;
     bool m_VSync;
+    bool m_Fullscreen;
 
     // Performans tracking
     float m_DeltaTime;

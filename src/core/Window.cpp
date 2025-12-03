@@ -21,6 +21,7 @@ Window::Window(const WindowProps& props)
     , m_FPS(0.0f)
     , m_FPSTimer(0.0f)
     , m_FrameCount(0)
+    , m_Fullscreen(props.fullscreen)
 {
     Init(props);
 }
@@ -135,6 +136,34 @@ bool Window::ShouldClose() const {
 void Window::SetVSync(bool enabled) {
     m_VSync = enabled;
     glfwSwapInterval(enabled ? 1 : 0);
+}
+
+void Window::SetFullscreen(bool enabled) {
+    if (m_Fullscreen == enabled) return;
+
+    m_Fullscreen = enabled;
+    if (enabled) {
+        GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+        const GLFWvidmode* mode = glfwGetVideoMode(monitor);
+        
+        // Borderless Windowed Mode (Daha stabil)
+        glfwSetWindowAttrib(m_Window, GLFW_DECORATED, GLFW_FALSE);
+        glfwSetWindowMonitor(m_Window, nullptr, 0, 0, mode->width, mode->height, mode->refreshRate);
+        
+        m_Width = mode->width;
+        m_Height = mode->height;
+    } else {
+        // Windowed Mode
+        glfwSetWindowAttrib(m_Window, GLFW_DECORATED, GLFW_TRUE);
+        glfwSetWindowMonitor(m_Window, nullptr, 100, 100, 1280, 720, 0);
+        
+        m_Width = 1280;
+        m_Height = 720;
+    }
+    glViewport(0, 0, m_Width, m_Height);
+    
+    // VSync ayarini tekrar uygula
+    SetVSync(m_VSync);
 }
 
 } // namespace Archura

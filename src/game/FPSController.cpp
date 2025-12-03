@@ -10,6 +10,13 @@ namespace Archura {
 FPSController::FPSController(Camera* camera)
     : m_Camera(camera)
 {
+    // Default bindings
+    m_Bindings.forward = GLFW_KEY_W;
+    m_Bindings.backward = GLFW_KEY_S;
+    m_Bindings.left = GLFW_KEY_A;
+    m_Bindings.right = GLFW_KEY_D;
+    m_Bindings.jump = GLFW_KEY_SPACE;
+    m_Bindings.sprint = GLFW_KEY_LEFT_SHIFT;
 }
 
 void FPSController::Update(Input* input, Scene* scene, float deltaTime) {
@@ -19,7 +26,7 @@ void FPSController::Update(Input* input, Scene* scene, float deltaTime) {
 
 void FPSController::HandleMovement(Input* input, Scene* scene, float deltaTime) {
     // Koşma kontrolü (Shift)
-    m_IsRunning = input->IsKeyDown(GLFW_KEY_LEFT_SHIFT);
+    m_IsRunning = input->IsKeyDown(m_Bindings.sprint);
     float currentSpeed = m_IsRunning ? m_RunSpeed : m_WalkSpeed;
 
     glm::vec3 currentPos = m_Camera->GetPosition();
@@ -35,12 +42,12 @@ void FPSController::HandleMovement(Input* input, Scene* scene, float deltaTime) 
     if (glm::length(front) > 0.001f) front = glm::normalize(front);
     if (glm::length(right) > 0.001f) right = glm::normalize(right);
 
-    // WASD hareketi - Her ekseni ayri ayri kontrol et (kayma hareketi icin)
+    // Hareket tuslari
     glm::vec3 movement = glm::vec3(0.0f);
-    if (input->IsKeyDown(GLFW_KEY_W)) movement += front;
-    if (input->IsKeyDown(GLFW_KEY_S)) movement -= front;
-    if (input->IsKeyDown(GLFW_KEY_A)) movement -= right;
-    if (input->IsKeyDown(GLFW_KEY_D)) movement += right;
+    if (input->IsKeyDown(m_Bindings.forward)) movement += front;
+    if (input->IsKeyDown(m_Bindings.backward)) movement -= front;
+    if (input->IsKeyDown(m_Bindings.left)) movement -= right;
+    if (input->IsKeyDown(m_Bindings.right)) movement += right;
 
     if (glm::length(movement) > 0.001f) {
         movement = glm::normalize(movement) * currentSpeed * deltaTime;
@@ -65,7 +72,7 @@ void FPSController::HandleMovement(Input* input, Scene* scene, float deltaTime) 
     m_VerticalVelocity += m_Gravity * deltaTime;
 
     // Ziplama (Space)
-    if (input->IsKeyDown(GLFW_KEY_SPACE) && m_IsGrounded) {
+    if (input->IsKeyDown(m_Bindings.jump) && m_IsGrounded) {
         m_VerticalVelocity = sqrt(m_JumpHeight * -2.0f * m_Gravity);
         m_IsGrounded = false;
     }
