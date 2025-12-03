@@ -2,6 +2,7 @@
 #include "Shader.h"
 #include <glad/glad.h>
 #include <glm/glm.hpp>
+#include <glm/gtc/constants.hpp>
 #include <cmath>
 #include <fstream>
 #include <sstream>
@@ -192,6 +193,156 @@ Mesh* Mesh::CreateSphere(float radius, int segments) {
         }
     }
     
+    return new Mesh(vertices, indices);
+}
+
+Mesh* Mesh::CreateCapsule(float radius, float height) {
+    std::vector<Vertex> vertices;
+    std::vector<unsigned int> indices;
+
+    int segments = 16;
+    int rings = 8;
+    float cylinderHeight = height - 2 * radius;
+    if (cylinderHeight < 0) cylinderHeight = 0;
+    float halfHeight = cylinderHeight * 0.5f;
+
+    // Top Hemisphere
+    for (int r = 0; r <= rings; ++r) {
+        float phi = glm::half_pi<float>() * (float)r / (float)rings; // 0 to PI/2
+        
+        for (int s = 0; s <= segments; ++s) {
+            float theta = glm::two_pi<float>() * (float)s / (float)segments;
+
+            float x = radius * cos(phi) * cos(theta);
+            float y = radius * sin(phi);
+            float z = radius * cos(phi) * sin(theta);
+
+            Vertex v;
+            v.position = glm::vec3(x, y + halfHeight, z);
+            v.normal = glm::normalize(glm::vec3(x, y, z)); // Normal is relative to sphere center
+            v.texCoords = glm::vec2((float)s / segments, (float)r / (rings * 2 + 1)); // Simplified UV
+            v.color = glm::vec3(1.0f);
+            vertices.push_back(v);
+        }
+    }
+
+    // Cylinder Body
+    // Top ring of cylinder matches bottom ring of top hemisphere
+    // Bottom ring of cylinder matches top ring of bottom hemisphere
+    // We can just add vertices for the cylinder body to ensure sharp normals if we wanted, 
+    // but for a smooth capsule, we can share vertices or just continue the generation.
+    // Let's generate specific cylinder vertices for simplicity in UV mapping and structure.
+    
+    for (int s = 0; s <= segments; ++s) {
+        float theta = glm::two_pi<float>() * (float)s / (float)segments;
+        float x = radius * cos(theta);
+        float z = radius * sin(theta);
+
+        // Top of cylinder
+        Vertex vTop;
+        vTop.position = glm::vec3(x, halfHeight, z);
+        vTop.normal = glm::normalize(glm::vec3(x, 0, z));
+        vTop.texCoords = glm::vec2((float)s / segments, 0.5f);
+        vTop.color = glm::vec3(1.0f);
+        vertices.push_back(vTop);
+
+        // Bottom of cylinder
+        Vertex vBottom;
+        vBottom.position = glm::vec3(x, -halfHeight, z);
+        vBottom.normal = glm::normalize(glm::vec3(x, 0, z));
+        vBottom.texCoords = glm::vec2((float)s / segments, 0.5f);
+        vBottom.color = glm::vec3(1.0f);
+        vertices.push_back(vBottom);
+    }
+
+    // Bottom Hemisphere
+    for (int r = 0; r <= rings; ++r) {
+        float phi = glm::half_pi<float>() * (float)r / (float)rings; // 0 to PI/2 (inverted later)
+        
+        for (int s = 0; s <= segments; ++s) {
+            float theta = glm::two_pi<float>() * (float)s / (float)segments;
+
+            float x = radius * cos(phi) * cos(theta);
+            float y = -radius * sin(phi); // Negative y for bottom
+            float z = radius * cos(phi) * sin(theta);
+
+            Vertex v;
+            v.position = glm::vec3(x, y - halfHeight, z);
+            v.normal = glm::normalize(glm::vec3(x, y, z));
+            v.texCoords = glm::vec2((float)s / segments, 0.5f + (float)r / (rings * 2 + 1));
+            v.color = glm::vec3(1.0f);
+            vertices.push_back(v);
+        }
+    }
+
+    // Indices Generation
+    // This is a bit complex due to the multi-part generation. 
+    // For simplicity and robustness, let's use a standard Sphere generation but stretch the middle.
+    // Re-implementation with "Stretched Sphere" approach:
+    
+    vertices.clear();
+    indices.clear();
+    
+    int totalRings = rings * 2 + 2; // Top cap + cylinder (2 rings) + bottom cap
+    // Actually, let's do: Top Cap (rings), Cylinder (2 rings), Bottom Cap (rings)
+    // But to make it one smooth mesh:
+    // 0 to rings: Top Hemisphere
+    // rings to rings+1: Cylinder
+    // rings+1 to 2*rings+1: Bottom Hemisphere
+    
+    for (int r = 0; r <= rings; ++r) { // Top Hemisphere
+        float phi = glm::half_pi<float>() * (1.0f - (float)r / rings); // PI/2 to 0
+        for (int s = 0; s <= segments; ++s) {
+            float theta = glm::two_pi<float>() * (float)s / segments;
+            float x = radius * cos(phi) * cos(theta);
+            float y = radius * sin(phi);
+            float z = radius * cos(phi) * sin(theta);
+            
+            Vertex v;
+            v.position = glm::vec3(x, y + halfHeight, z);
+            v.normal = glm::normalize(glm::vec3(x, y, z));
+            v.texCoords = glm::vec2((float)s / segments, (float)r / (totalRings)); 
+            v.color = glm::vec3(1.0f);
+            vertices.push_back(v);
+        }
+    }
+    
+    for (int r = 0; r <= rings; ++r) { // Bottom Hemisphere
+        float phi = glm::half_pi<float>() * ((float)r / rings); // 0 to PI/2 (going down)
+        for (int s = 0; s <= segments; ++s) {
+            float theta = glm::two_pi<float>() * (float)s / segments;
+            float x = radius * cos(phi) * cos(theta);
+            float y = -radius * sin(phi);
+            float z = radius * cos(phi) * sin(theta);
+            
+            Vertex v;
+            v.position = glm::vec3(x, y - halfHeight, z);
+            v.normal = glm::normalize(glm::vec3(x, y, z));
+            v.texCoords = glm::vec2((float)s / segments, (float)(r + rings) / (totalRings));
+            v.color = glm::vec3(1.0f);
+            vertices.push_back(v);
+        }
+    }
+    
+    // Indices
+    int verticesPerRing = segments + 1;
+    int ringCount = vertices.size() / verticesPerRing;
+    
+    for (int r = 0; r < ringCount - 1; ++r) {
+        for (int s = 0; s < segments; ++s) {
+            int current = r * verticesPerRing + s;
+            int next = current + verticesPerRing;
+            
+            indices.push_back(current);
+            indices.push_back(next);
+            indices.push_back(current + 1);
+            
+            indices.push_back(current + 1);
+            indices.push_back(next);
+            indices.push_back(next + 1);
+        }
+    }
+
     return new Mesh(vertices, indices);
 }
 

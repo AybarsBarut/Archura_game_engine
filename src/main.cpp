@@ -215,18 +215,18 @@ int main() {
             
             // Karakter modelini yuklemeyi dene
             Mesh* charMesh = Mesh::LoadFromOBJ("character.obj");
+            auto* transform = newPlayer->GetComponent<Transform>();
+
             if (charMesh) {
                 mesh->mesh = charMesh;
                 mesh->color = glm::vec3(1.0f); // Modelin kendi renklerini/texture'ini kullan (eger varsa)
-                // OBJ yuklendiyse scale ayarlamasi gerekebilir, simdilik 1.0
+                transform->scale = glm::vec3(1.0f, 2.0f, 1.0f); // OBJ icin scale (tahmini)
             } else {
-                // Fallback: Kirmizi Kup
-                mesh->mesh = Mesh::CreateCube(1.0f); 
-                mesh->color = glm::vec3(1.0f, 0.0f, 0.0f);
+                // Fallback: Kapsul (Insan boyutlarinda: r=0.4, h=1.8)
+                mesh->mesh = Mesh::CreateCapsule(0.4f, 1.8f); 
+                mesh->color = glm::vec3(0.0f, 0.5f, 1.0f); // Mavi renk
+                transform->scale = glm::vec3(1.0f); // Kapsul zaten dogru boyutta uretiliyor
             }
-            
-            auto* transform = newPlayer->GetComponent<Transform>();
-            transform->scale = glm::vec3(1.0f, 2.0f, 1.0f); // Insan boyu
             
             remotePlayers[packet.id] = newPlayer;
             it = remotePlayers.find(packet.id);

@@ -74,7 +74,7 @@ private:
     float m_MouseSensitivity = 0.1f;
     float m_FOV = 75.0f; // FPS oyunlar için ideal
     float m_NearPlane = 0.1f;
-    float m_FarPlane = 1000.0f;
+    float m_FarPlane = 2000.0f;
 };
 
 } // namespace Archura
