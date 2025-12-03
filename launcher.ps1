@@ -12,9 +12,35 @@ Write-Host "=== Archura Engine Launcher ===" -ForegroundColor Cyan
 Write-Host "Guncellemeler kontrol ediliyor..."
 try {
     git fetch origin
-    $status = git status -uno
     
-    if ($status -match "Your branch is behind") {
+    # Yerel versiyonu oku
+    if (Test-Path "version.txt") {
+        $localVersion = Get-Content "version.txt" -Raw
+        $localVersion = $localVersion.Trim()
+    }
+    else {
+        $localVersion = "0.0.0"
+    }
+
+    # Uzak versiyonu oku (GitHub'dan)
+    try {
+        $remoteVersion = git show origin/main:version.txt
+        if ($remoteVersion) {
+            $remoteVersion = $remoteVersion.Trim()
+        }
+    }
+    catch {
+        $remoteVersion = $null
+    }
+
+    Write-Host "Yerel Versiyon: $localVersion" -ForegroundColor Gray
+    Write-Host "Uzak Versiyon:  $(if ($remoteVersion) { $remoteVersion } else { 'Bilinmiyor' })" -ForegroundColor Gray
+
+    $status = git status -uno
+    $isBehind = $status -match "Your branch is behind"
+    $versionMismatch = ($remoteVersion -ne $null) -and ($localVersion -ne $remoteVersion)
+
+    if ($isBehind -or $versionMismatch) {
         Write-Host "Yeni guncelleme bulundu! Indiriliyor..." -ForegroundColor Yellow
         git pull
         $needsBuild = $true
@@ -25,7 +51,8 @@ try {
     }
 }
 catch {
-    Write-Host "Guncelleme kontrolu sirasinda hata (Internet yok mu?)" -ForegroundColor Red
+    Write-Host "Guncelleme kontrolu sirasinda hata: $_" -ForegroundColor Red
+    Write-Host "Internet baglantinizi kontrol edin." -ForegroundColor Red
     $needsBuild = $false
 }
 
