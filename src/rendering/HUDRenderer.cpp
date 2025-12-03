@@ -80,9 +80,9 @@ void HUDRenderer::Shutdown() {
 }
 
 void HUDRenderer::BeginHUD() {
-    // 2D rendering için depth test'i kapat
+    // 2D cizim icin derinlik testini kapat
     glDisable(GL_DEPTH_TEST);
-    glDisable(GL_CULL_FACE); // HUD cizimi icin culling'i kapat
+    glDisable(GL_CULL_FACE); // HUD cizimi icin kirpmayi kapat
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
@@ -93,10 +93,10 @@ void HUDRenderer::EndHUD() {
 }
 
 void HUDRenderer::DrawRect(float x, float y, float width, float height, const glm::vec4& color) {
-    // Orthographic projection (screen space)
+    // Ortografik projeksiyon (ekran uzayi)
     glm::mat4 projection = glm::ortho(0.0f, m_ScreenWidth, 0.0f, m_ScreenHeight);
     
-    // Model matrix (position ve scale)
+    // Model matrisi (pozisyon ve olcek)
     glm::mat4 model = glm::mat4(1.0f);
     model = glm::translate(model, glm::vec3(x, y, 0.0f));
     model = glm::scale(model, glm::vec3(width, height, 1.0f));
@@ -139,38 +139,38 @@ void HUDRenderer::DrawCrosshair(float size, const glm::vec4& color) {
     float centerY = m_ScreenHeight * 0.5f;
     float thickness = 2.0f;
     
-    // Horizontal line
+    // Yatay cizgi
     DrawRect(centerX - size * 0.5f, centerY - thickness * 0.5f, size, thickness, color);
     
-    // Vertical line
+    // Dikey cizgi
     DrawRect(centerX - thickness * 0.5f, centerY - size * 0.5f, thickness, size, color);
 }
 
 void HUDRenderer::DrawAmmoCounter(int current, int total, float x, float y) {
-    // Basit ammo display (şimdilik text rendering yok, sadece bar)
+    // Basit mermi gostergesi (simdilik metin cizimi yok, sadece cubuk)
     float barWidth = 200.0f;
     float barHeight = 20.0f;
     
-    // Background
+    // Arkaplan
     DrawRect(x, y, barWidth, barHeight, glm::vec4(0.2f, 0.2f, 0.2f, 0.8f));
     
-    // Current ammo bar
+    // Mevcut mermi cubugu
     float fillRatio = (float)current / (float)total;
     glm::vec4 ammoColor = fillRatio > 0.3f ? glm::vec4(0.3f, 0.8f, 0.3f, 0.9f) : glm::vec4(0.8f, 0.2f, 0.2f, 0.9f);
     DrawRect(x + 2, y + 2, (barWidth - 4) * fillRatio, barHeight - 4, ammoColor);
 }
 
 void HUDRenderer::DrawHealthBar(float health, float maxHealth, float x, float y, float width, float height) {
-    // Background
+    // Arkaplan
     DrawRect(x, y, width, height, glm::vec4(0.2f, 0.2f, 0.2f, 0.8f));
     
-    // Health bar
+    // Can cubugu
     float fillRatio = health / maxHealth;
     glm::vec4 healthColor;
     
-    if (fillRatio > 0.6f) healthColor = glm::vec4(0.2f, 0.8f, 0.2f, 0.9f); // Yeşil
-    else if (fillRatio > 0.3f) healthColor = glm::vec4(0.8f, 0.8f, 0.2f, 0.9f); // Sarı
-    else healthColor = glm::vec4(0.8f, 0.2f, 0.2f, 0.9f); // Kırmızı
+    if (fillRatio > 0.6f) healthColor = glm::vec4(0.2f, 0.8f, 0.2f, 0.9f); // Yesil
+    else if (fillRatio > 0.3f) healthColor = glm::vec4(0.8f, 0.8f, 0.2f, 0.9f); // Sari
+    else healthColor = glm::vec4(0.8f, 0.2f, 0.2f, 0.9f); // Kirmizi
     
     DrawRect(x + 2, y + 2, (width - 4) * fillRatio, height - 4, healthColor);
 }
@@ -181,9 +181,9 @@ void HUDRenderer::SetScreenSize(float width, float height) {
 }
 
 void HUDRenderer::CreateQuadMesh() {
-    // Basit quad (screen-space coordinates 0-1)
+    // Basit dortgen (ekran uzayi koordinatlari 0-1)
     float vertices[] = {
-        // Pos      // TexCoords
+        // Poz      // TexCoords
         0.0f, 1.0f, 0.0f, 1.0f,
         1.0f, 0.0f, 1.0f, 0.0f,
         0.0f, 0.0f, 0.0f, 0.0f,

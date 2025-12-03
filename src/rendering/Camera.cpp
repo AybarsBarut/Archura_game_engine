@@ -53,7 +53,7 @@ void Camera::ProcessMouseMovement(float xOffset, float yOffset, bool constrainPi
     m_Yaw += xOffset;
     m_Pitch += yOffset;
 
-    // Pitch'i sınırla (baş aşağı bakışı önle)
+    // Pitch'i sinirla (bas asagi bakisi onle)
     if (constrainPitch) {
         m_Pitch = std::clamp(m_Pitch, -89.0f, 89.0f);
     }
@@ -67,14 +67,14 @@ void Camera::ProcessMouseScroll(float yOffset) {
 }
 
 void Camera::UpdateCameraVectors() {
-    // Yeni Front vektörünü hesapla
+    // Yeni On vektorunu hesapla
     glm::vec3 front;
     front.x = cos(glm::radians(m_Yaw)) * cos(glm::radians(m_Pitch));
     front.y = sin(glm::radians(m_Pitch));
     front.z = sin(glm::radians(m_Yaw)) * cos(glm::radians(m_Pitch));
     m_Front = glm::normalize(front);
 
-    // Right ve Up vektörlerini yeniden hesapla
+    // Sag ve Yukari vektorlerini yeniden hesapla
     m_Right = glm::normalize(glm::cross(m_Front, m_WorldUp));
     m_Up = glm::normalize(glm::cross(m_Right, m_Front));
 }

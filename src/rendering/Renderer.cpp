@@ -7,19 +7,19 @@ namespace Archura {
 bool Renderer::Init() {
     std::cout << "Renderer initializing..." << std::endl;
     
-    // OpenGL state ayarları
+    // OpenGL durum ayarlari
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
     
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     
-    // Face culling - performans için
+    // Yuz kirpma - performans icin
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
     glFrontFace(GL_CCW);
     
-    // MSAA - GTX 1050'de sorunsuz çalışır
+    // MSAA - GTX 1050'de sorunsuz calisir
     glEnable(GL_MULTISAMPLE);
     
     SetClearColor(m_ClearColor);
@@ -38,9 +38,9 @@ void Renderer::BeginFrame() {
 }
 
 void Renderer::EndFrame() {
-    // Frame sonu işlemleri
+    // Kare sonu islemleri
     // - UI rendering (ImGui)
-    // - Post-processing efektleri
+    // - Son isleme efektleri
     // vs...
 }
 

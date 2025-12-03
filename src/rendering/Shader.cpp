@@ -28,7 +28,7 @@ bool Shader::LoadFromSource(const std::string& vertexSrc, const std::string& fra
     // Program link
     bool success = LinkProgram(vertexShader, fragmentShader);
 
-    // Shader'ları temizle (artık program'a link edildi)
+    // Shader'lari temizle (artik programa baglandi)
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
 
@@ -36,7 +36,7 @@ bool Shader::LoadFromSource(const std::string& vertexSrc, const std::string& fra
 }
 
 bool Shader::LoadFromFile(const std::string& vertexPath, const std::string& fragmentPath) {
-    // Vertex shader dosyasını oku
+    // Vertex shader dosyasini oku
     std::ifstream vertexFile(vertexPath);
     if (!vertexFile.is_open()) {
         std::cerr << "Failed to open vertex shader: " << vertexPath << std::endl;
@@ -46,7 +46,7 @@ bool Shader::LoadFromFile(const std::string& vertexPath, const std::string& frag
     vertexStream << vertexFile.rdbuf();
     std::string vertexSrc = vertexStream.str();
 
-    // Fragment shader dosyasını oku
+    // Fragment shader dosyasini oku
     std::ifstream fragmentFile(fragmentPath);
     if (!fragmentFile.is_open()) {
         std::cerr << "Failed to open fragment shader: " << fragmentPath << std::endl;
@@ -101,7 +101,7 @@ unsigned int Shader::CompileShader(unsigned int type, const std::string& source)
     glShaderSource(shader, 1, &src, nullptr);
     glCompileShader(shader);
 
-    // Compile hatasını kontrol et
+    // Derleme hatasini kontrol et
     int success;
     glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
     if (!success) {
@@ -123,7 +123,7 @@ bool Shader::LinkProgram(unsigned int vertexShader, unsigned int fragmentShader)
     glAttachShader(m_ProgramID, fragmentShader);
     glLinkProgram(m_ProgramID);
 
-    // Link hatasını kontrol et
+    // Baglama hatasini kontrol et
     int success;
     glGetProgramiv(m_ProgramID, GL_LINK_STATUS, &success);
     if (!success) {
@@ -139,12 +139,12 @@ bool Shader::LinkProgram(unsigned int vertexShader, unsigned int fragmentShader)
 }
 
 int Shader::GetUniformLocation(const std::string& name) {
-    // Cache'de var mı kontrol et
+    // Onbellekte var mi kontrol et
     if (m_UniformLocationCache.find(name) != m_UniformLocationCache.end()) {
         return m_UniformLocationCache[name];
     }
 
-    // OpenGL'den location al ve cache'le
+    // OpenGL'den konumu al ve onbellege al
     int location = glGetUniformLocation(m_ProgramID, name.c_str());
     if (location == -1) {
         std::cerr << "Warning: uniform '" << name << "' not found!" << std::endl;

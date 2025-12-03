@@ -28,7 +28,7 @@ Mesh::~Mesh() {
 }
 
 void Mesh::SetupMesh() {
-    // VAO oluştur
+    // VAO olustur
     glGenVertexArrays(1, &m_VAO);
     glGenBuffers(1, &m_VBO);
     glGenBuffers(1, &m_EBO);
@@ -73,43 +73,43 @@ void Mesh::Draw(Shader* shader) {
     glBindVertexArray(0);
 }
 
-// ==================== Procedural Mesh Generators ====================
+// ==================== Prosedurel Model Olusturucular ====================
 
 Mesh* Mesh::CreateCube(float size) {
     float s = size * 0.5f;
     
     std::vector<Vertex> vertices = {
-        // Front face
+        // On yuz
         {{-s, -s,  s}, { 0,  0,  1}, {0, 0}, {1, 1, 1}},
         {{ s, -s,  s}, { 0,  0,  1}, {1, 0}, {1, 1, 1}},
         {{ s,  s,  s}, { 0,  0,  1}, {1, 1}, {1, 1, 1}},
         {{-s,  s,  s}, { 0,  0,  1}, {0, 1}, {1, 1, 1}},
         
-        // Back face
+        // Arka yuz
         {{ s, -s, -s}, { 0,  0, -1}, {0, 0}, {1, 1, 1}},
         {{-s, -s, -s}, { 0,  0, -1}, {1, 0}, {1, 1, 1}},
         {{-s,  s, -s}, { 0,  0, -1}, {1, 1}, {1, 1, 1}},
         {{ s,  s, -s}, { 0,  0, -1}, {0, 1}, {1, 1, 1}},
         
-        // Top face
+        // Ust yuz
         {{-s,  s,  s}, { 0,  1,  0}, {0, 0}, {1, 1, 1}},
         {{ s,  s,  s}, { 0,  1,  0}, {1, 0}, {1, 1, 1}},
         {{ s,  s, -s}, { 0,  1,  0}, {1, 1}, {1, 1, 1}},
         {{-s,  s, -s}, { 0,  1,  0}, {0, 1}, {1, 1, 1}},
         
-        // Bottom face
+        // Alt yuz
         {{-s, -s, -s}, { 0, -1,  0}, {0, 0}, {1, 1, 1}},
         {{ s, -s, -s}, { 0, -1,  0}, {1, 0}, {1, 1, 1}},
         {{ s, -s,  s}, { 0, -1,  0}, {1, 1}, {1, 1, 1}},
         {{-s, -s,  s}, { 0, -1,  0}, {0, 1}, {1, 1, 1}},
         
-        // Right face
+        // Sag yuz
         {{ s, -s,  s}, { 1,  0,  0}, {0, 0}, {1, 1, 1}},
         {{ s, -s, -s}, { 1,  0,  0}, {1, 0}, {1, 1, 1}},
         {{ s,  s, -s}, { 1,  0,  0}, {1, 1}, {1, 1, 1}},
         {{ s,  s,  s}, { 1,  0,  0}, {0, 1}, {1, 1, 1}},
         
-        // Left face
+        // Sol yuz
         {{-s, -s, -s}, {-1,  0,  0}, {0, 0}, {1, 1, 1}},
         {{-s, -s,  s}, {-1,  0,  0}, {1, 0}, {1, 1, 1}},
         {{-s,  s,  s}, {-1,  0,  0}, {1, 1}, {1, 1, 1}},
@@ -157,7 +157,7 @@ Mesh* Mesh::CreateSphere(float radius, int segments) {
     const int rings = segments / 2;
     const int sectors = segments;
     
-    // Vertices
+    // Koseler
     for (int r = 0; r <= rings; ++r) {
         float phi = PI * (float)r / (float)rings;
         
@@ -177,7 +177,7 @@ Mesh* Mesh::CreateSphere(float radius, int segments) {
         }
     }
     
-    // Indices
+    // Indeksler
     for (int r = 0; r < rings; ++r) {
         for (int s = 0; s < sectors; ++s) {
             unsigned int current = r * (sectors + 1) + s;
@@ -206,7 +206,7 @@ Mesh* Mesh::CreateCapsule(float radius, float height) {
     if (cylinderHeight < 0) cylinderHeight = 0;
     float halfHeight = cylinderHeight * 0.5f;
 
-    // Top Hemisphere
+    // Ust Yarikure
     for (int r = 0; r <= rings; ++r) {
         float phi = glm::half_pi<float>() * (float)r / (float)rings; // 0 to PI/2
         
@@ -226,19 +226,19 @@ Mesh* Mesh::CreateCapsule(float radius, float height) {
         }
     }
 
-    // Cylinder Body
-    // Top ring of cylinder matches bottom ring of top hemisphere
-    // Bottom ring of cylinder matches top ring of bottom hemisphere
-    // We can just add vertices for the cylinder body to ensure sharp normals if we wanted, 
-    // but for a smooth capsule, we can share vertices or just continue the generation.
-    // Let's generate specific cylinder vertices for simplicity in UV mapping and structure.
+    // Silindir Govdesi
+    // Silindirin ust halkasi ust yarikurenin alt halkasiyla eslesir
+    // Silindirin alt halkasi alt yarikurenin ust halkasiyla eslesir
+    // Keskin normaller isteseydik silindir govdesi icin koseler ekleyebilirdik,
+    // ancak puruzsuz bir kapsul icin koseleri paylasabilir veya uretime devam edebiliriz.
+    // UV haritalama ve yapi basitligi icin ozel silindir koseleri uretelim.
     
     for (int s = 0; s <= segments; ++s) {
         float theta = glm::two_pi<float>() * (float)s / (float)segments;
         float x = radius * cos(theta);
         float z = radius * sin(theta);
 
-        // Top of cylinder
+        // Silindirin ustu
         Vertex vTop;
         vTop.position = glm::vec3(x, halfHeight, z);
         vTop.normal = glm::normalize(glm::vec3(x, 0, z));
@@ -246,7 +246,7 @@ Mesh* Mesh::CreateCapsule(float radius, float height) {
         vTop.color = glm::vec3(1.0f);
         vertices.push_back(vTop);
 
-        // Bottom of cylinder
+        // Silindirin alti
         Vertex vBottom;
         vBottom.position = glm::vec3(x, -halfHeight, z);
         vBottom.normal = glm::normalize(glm::vec3(x, 0, z));
@@ -255,7 +255,7 @@ Mesh* Mesh::CreateCapsule(float radius, float height) {
         vertices.push_back(vBottom);
     }
 
-    // Bottom Hemisphere
+    // Alt Yarikure
     for (int r = 0; r <= rings; ++r) {
         float phi = glm::half_pi<float>() * (float)r / (float)rings; // 0 to PI/2 (inverted later)
         
@@ -263,7 +263,7 @@ Mesh* Mesh::CreateCapsule(float radius, float height) {
             float theta = glm::two_pi<float>() * (float)s / (float)segments;
 
             float x = radius * cos(phi) * cos(theta);
-            float y = -radius * sin(phi); // Negative y for bottom
+            float y = -radius * sin(phi); // Alt icin negatif y
             float z = radius * cos(phi) * sin(theta);
 
             Vertex v;
@@ -275,20 +275,20 @@ Mesh* Mesh::CreateCapsule(float radius, float height) {
         }
     }
 
-    // Indices Generation
-    // This is a bit complex due to the multi-part generation. 
-    // For simplicity and robustness, let's use a standard Sphere generation but stretch the middle.
-    // Re-implementation with "Stretched Sphere" approach:
+    // Indeks Uretimi
+    // Cok parcali uretim nedeniyle bu biraz karmasik.
+    // Basitlik ve saglamlik icin standart Kure uretimini kullanalim ancak ortayi uzatalim.
+    // "Uzatilmis Kure" yaklasimiyla yeniden uygulama:
     
     vertices.clear();
     indices.clear();
     
-    int totalRings = rings * 2 + 2; // Top cap + cylinder (2 rings) + bottom cap
-    // Actually, let's do: Top Cap (rings), Cylinder (2 rings), Bottom Cap (rings)
-    // But to make it one smooth mesh:
-    // 0 to rings: Top Hemisphere
-    // rings to rings+1: Cylinder
-    // rings+1 to 2*rings+1: Bottom Hemisphere
+    int totalRings = rings * 2 + 2; // Ust Kapak + silindir (2 halka) + alt kapak
+    // Aslinda, soyle yapalim: Ust Kapak (halkalar), Silindir (2 halka), Alt Kapak (halkalar)
+    // Ancak tek bir puruzsuz model yapmak icin:
+    // 0'dan halkalara: Ust Yarikure
+    // halkalardan halkalar+1'e: Silindir
+    // halkalar+1'den 2*halkalar+1'e: Alt Yarikure
     
     for (int r = 0; r <= rings; ++r) { // Top Hemisphere
         float phi = glm::half_pi<float>() * (1.0f - (float)r / rings); // PI/2 to 0

@@ -13,7 +13,7 @@ Skybox::~Skybox() {
 
 void Skybox::Init() {
     float skyboxVertices[] = {
-        // positions          
+        // pozisyonlar          
         -1.0f,  1.0f, -1.0f,
         -1.0f, -1.0f, -1.0f,
          1.0f, -1.0f, -1.0f,
@@ -92,18 +92,18 @@ void Skybox::Init() {
         {
             vec3 dir = normalize(TexCoords);
             
-            // Simple gradient sky
-            vec3 topColor = vec3(0.2, 0.5, 0.9); // Sky blue
-            vec3 bottomColor = vec3(0.8, 0.9, 1.0); // Horizon white/blue
+            // Basit gradyan gokyuzu
+            vec3 topColor = vec3(0.2, 0.5, 0.9); // Gokyuzu mavisi
+            vec3 bottomColor = vec3(0.8, 0.9, 1.0); // Ufuk beyazi/mavisi
             
             float t = 0.5 * (dir.y + 1.0);
             t = clamp(t, 0.0, 1.0);
             
-            // More intense blue at top
+            // Ustte daha yogun mavi
             vec3 color = mix(bottomColor, topColor, max(dir.y, 0.0));
             
             if (dir.y < 0.0) {
-                 color = vec3(0.3, 0.3, 0.3); // Darker below horizon
+                 color = vec3(0.3, 0.3, 0.3); // Ufuk altinda daha koyu
             }
 
             FragColor = vec4(color, 1.0);

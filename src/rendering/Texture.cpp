@@ -16,7 +16,7 @@ Texture::~Texture() {
 bool Texture::LoadFromFile(const std::string& path, bool generateMipmaps) {
     m_Path = path;
 
-    // stb_image ile image yükle
+    // stb_image ile resim yukle
     stbi_set_flip_vertically_on_load(true);
     unsigned char* data = stbi_load(path.c_str(), &m_Width, &m_Height, &m_Channels, 0);
     
@@ -26,30 +26,30 @@ bool Texture::LoadFromFile(const std::string& path, bool generateMipmaps) {
         return false;
     }
 
-    // OpenGL texture oluştur
+    // OpenGL dokusu olustur
     glGenTextures(1, &m_TextureID);
     glBindTexture(GL_TEXTURE_2D, m_TextureID);
 
-    // Texture parametreleri
+    // Doku parametreleri
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, generateMipmaps ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-    // Format belirle
+    // Bicim belirle
     GLenum format = GL_RGB;
     if (m_Channels == 1) format = GL_RED;
     else if (m_Channels == 3) format = GL_RGB;
     else if (m_Channels == 4) format = GL_RGBA;
 
-    // Texture data'yı GPU'ya yükle
+    // Doku verisini GPU'ya yukle
     glTexImage2D(GL_TEXTURE_2D, 0, format, m_Width, m_Height, 0, format, GL_UNSIGNED_BYTE, data);
     
     if (generateMipmaps) {
         glGenerateMipmap(GL_TEXTURE_2D);
     }
 
-    // Memory'yi serbest bırak
+    // Bellegi serbest birak
     stbi_image_free(data);
 
     std::cout << "Loaded texture: " << path << " (" << m_Width << "x" << m_Height << ", " << m_Channels << " channels)" << std::endl;
@@ -96,13 +96,13 @@ TextureManager& TextureManager::Get() {
 }
 
 Texture* TextureManager::Load(const std::string& name, const std::string& path, bool generateMipmaps) {
-    // Zaten var mı kontrol et
+    // Zaten var mi kontrol et
     auto it = m_Textures.find(name);
     if (it != m_Textures.end()) {
         return it->second;
     }
 
-    // Yeni texture oluştur
+    // Yeni doku olustur
     Texture* texture = new Texture();
     if (texture->LoadFromFile(path, generateMipmaps)) {
         m_Textures[name] = texture;

@@ -6,7 +6,7 @@ namespace Archura {
 Entity::Entity(EntityID id, const std::string& name)
     : m_ID(id), m_Name(name)
 {
-    // Her entity otomatik olarak Transform component'ine sahip
+    // Her varlik otomatik olarak Donusum bilesenine sahip
     AddComponent<Transform>();
 }
 
