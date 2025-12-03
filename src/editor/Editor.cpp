@@ -58,7 +58,48 @@ void Editor::BeginFrame() {
     ImGui::NewFrame();
 
     // Dockspace (tum pencereyi kullan)
-    // ImGui::DockSpaceOverViewport(ImGui::GetMainViewport());
+    // ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_PassthroughCentralNode;
+    // ImGui::DockSpaceOverViewport(ImGui::GetMainViewport(), dockspace_flags);
+
+    SetupLayout();
+}
+
+void Editor::SetupLayout() {
+    ImGuiViewport* viewport = ImGui::GetMainViewport();
+    float menuBarHeight = ImGui::GetFrameHeight();
+    float toolbarHeight = 30.0f;
+    
+    ImVec2 workPos = viewport->WorkPos;
+    ImVec2 workSize = viewport->WorkSize;
+    workPos.y += toolbarHeight; // Toolbar icin yer ac
+    workSize.y -= toolbarHeight;
+
+    // Layout configuration
+    float leftPanelWidth = 300.0f;
+    float rightPanelWidth = 300.0f;
+    float bottomPanelHeight = 250.0f;
+
+    // 1. Toolbar (Top)
+    ImGui::SetNextWindowPos(ImVec2(viewport->WorkPos.x, viewport->WorkPos.y));
+    ImGui::SetNextWindowSize(ImVec2(viewport->WorkSize.x, toolbarHeight));
+
+    // 2. Hierarchy (Left)
+    if (m_ShowSceneHierarchy) {
+        ImGui::SetNextWindowPos(workPos);
+        ImGui::SetNextWindowSize(ImVec2(leftPanelWidth, workSize.y - bottomPanelHeight));
+    }
+
+    // 3. Inspector (Right)
+    if (m_ShowInspector) {
+        ImGui::SetNextWindowPos(ImVec2(workPos.x + workSize.x - rightPanelWidth, workPos.y));
+        ImGui::SetNextWindowSize(ImVec2(rightPanelWidth, workSize.y));
+    }
+
+    // 4. Project/Console (Bottom)
+    if (m_ShowProjectPanel || m_ShowConsole) {
+        ImGui::SetNextWindowPos(ImVec2(workPos.x, workPos.y + workSize.y - bottomPanelHeight));
+        ImGui::SetNextWindowSize(ImVec2(workSize.x - (m_ShowInspector ? rightPanelWidth : 0), bottomPanelHeight));
+    }
 }
 
 void Editor::EndFrame() {
@@ -72,6 +113,7 @@ void Editor::Update(Scene* scene, float deltaTime, float fps) {
     if (!m_Enabled) return;
 
     DrawMenuBar();
+    DrawToolbar();
 
     if (m_ShowSceneHierarchy) {
         DrawSceneHierarchy(scene);
@@ -79,6 +121,14 @@ void Editor::Update(Scene* scene, float deltaTime, float fps) {
 
     if (m_ShowInspector) {
         DrawInspector();
+    }
+
+    if (m_ShowProjectPanel) {
+        DrawProjectPanel();
+    }
+
+    if (m_ShowConsole) {
+        DrawConsolePanel();
     }
 
     if (m_ShowPerformance) {
@@ -112,6 +162,8 @@ void Editor::DrawMenuBar() {
         if (ImGui::BeginMenu("View")) {
             ImGui::MenuItem("Scene Hierarchy", nullptr, &m_ShowSceneHierarchy);
             ImGui::MenuItem("Inspector", nullptr, &m_ShowInspector);
+            ImGui::MenuItem("Project", nullptr, &m_ShowProjectPanel);
+            ImGui::MenuItem("Console", nullptr, &m_ShowConsole);
             ImGui::MenuItem("Performance", nullptr, &m_ShowPerformance);
             ImGui::Separator();
             ImGui::MenuItem("ImGui Demo", nullptr, &m_ShowDemoWindow);
@@ -256,6 +308,82 @@ void Editor::DrawPerformanceMetrics(float deltaTime, float fps) {
 
 void Editor::DrawDemoWindow() {
     ImGui::ShowDemoWindow(&m_ShowDemoWindow);
+}
+
+void Editor::DrawToolbar() {
+    ImGui::Begin("Toolbar", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+    
+    // Center the buttons
+    float width = ImGui::GetWindowWidth();
+    float buttonWidth = 32.0f;
+    ImGui::SetCursorPosX((width - buttonWidth * 3) * 0.5f);
+
+    if (ImGui::Button("Play", ImVec2(buttonWidth, 0))) {
+        // TODO: Play logic
+        Log("Play pressed");
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Pause", ImVec2(buttonWidth, 0))) {
+        // TODO: Pause logic
+        Log("Pause pressed");
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Stop", ImVec2(buttonWidth, 0))) {
+        // TODO: Stop logic
+        Log("Stop pressed");
+    }
+
+    ImGui::End();
+}
+
+void Editor::DrawProjectPanel() {
+    ImGui::Begin("Project");
+
+    // Simple file list simulation
+    static std::vector<std::string> files = {
+        "Assets/",
+        "  Models/",
+        "    character.obj",
+        "    cube.obj",
+        "  Textures/",
+        "    grass.jpg",
+        "    wall.jpg",
+        "  Scripts/",
+        "    PlayerController.cpp"
+    };
+
+    // Split view: Tree on left, Content on right
+    // For now, just a list
+    for (const auto& file : files) {
+        if (ImGui::Selectable(file.c_str())) {
+            // Select file
+        }
+    }
+
+    ImGui::End();
+}
+
+void Editor::DrawConsolePanel() {
+    ImGui::Begin("Console");
+
+    if (ImGui::Button("Clear")) {
+        ClearLogs();
+    }
+    ImGui::SameLine();
+    ImGui::Text("Logs: %zu", m_ConsoleLogs.size());
+    ImGui::Separator();
+
+    ImGui::BeginChild("ScrollingRegion", ImVec2(0, 0), false, ImGuiWindowFlags_HorizontalScrollbar);
+    for (const auto& log : m_ConsoleLogs) {
+        ImGui::TextUnformatted(log.c_str());
+    }
+    
+    // Auto-scroll
+    if (ImGui::GetScrollY() >= ImGui::GetScrollMaxY())
+        ImGui::SetScrollHereY(1.0f);
+
+    ImGui::EndChild();
+    ImGui::End();
 }
 
 } // namespace Archura
