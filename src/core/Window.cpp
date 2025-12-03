@@ -33,7 +33,7 @@ Window::~Window() {
 void Window::Init(const WindowProps& props) {
     m_Title = props.title;
 
-    // GLFW'yi sadece bir kez initialize et
+    // GLFW'yi sadece bir kez baslat
     if (!s_GLFWInitialized) {
         int success = glfwInit();
         if (!success) {
@@ -44,17 +44,17 @@ void Window::Init(const WindowProps& props) {
         s_GLFWInitialized = true;
     }
 
-    // OpenGL 3.3 Core Profile - GTX 1050 için optimize
+    // OpenGL 3.3 Cekirdek Profili - GTX 1050 icin optimize
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    glfwWindowHint(GLFW_SAMPLES, 4); // 4x MSAA - GTX 1050 performansı için ideal
+    glfwWindowHint(GLFW_SAMPLES, 4); // 4x MSAA - GTX 1050 performansi icin ideal
 
 #ifdef __APPLE__
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
 
-    // Window oluştur
+    // Pencere olustur
     GLFWmonitor* monitor = props.fullscreen ? glfwGetPrimaryMonitor() : nullptr;
     m_Window = glfwCreateWindow(m_Width, m_Height, m_Title.c_str(), monitor, nullptr);
     
@@ -64,16 +64,16 @@ void Window::Init(const WindowProps& props) {
         return;
     }
 
-    // OpenGL context'i aktif et
+    // OpenGL baglamini aktif et
     glfwMakeContextCurrent(m_Window);
 
-    // GLAD ile OpenGL fonksiyonlarını yükle
+    // GLAD ile OpenGL fonksiyonlarini yukle
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
         std::cerr << "Failed to initialize GLAD!" << std::endl;
         return;
     }
 
-    // OpenGL bilgilerini yazdır
+    // OpenGL bilgilerini yazdir
     std::cout << "OpenGL Info:" << std::endl;
     std::cout << "  Vendor: " << glGetString(GL_VENDOR) << std::endl;
     std::cout << "  Renderer: " << glGetString(GL_RENDERER) << std::endl;
@@ -82,17 +82,17 @@ void Window::Init(const WindowProps& props) {
     // VSync ayarla
     SetVSync(m_VSync);
 
-    // OpenGL ayarları - GTX 1050 için optimize
+    // OpenGL ayarlari - GTX 1050 icin optimize
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_MULTISAMPLE); // MSAA aktif
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
     glFrontFace(GL_CCW);
 
-    // Viewport ayarla
+    // Gorus alani ayarla
     glViewport(0, 0, m_Width, m_Height);
 
-    // Framebuffer resize callback
+    // Cerceve bellegi yeniden boyutlandirma geri cagrisi
     glfwSetFramebufferSizeCallback(m_Window, [](GLFWwindow* window, int width, int height) {
         glViewport(0, 0, width, height);
     });
@@ -146,14 +146,14 @@ void Window::SetFullscreen(bool enabled) {
         GLFWmonitor* monitor = glfwGetPrimaryMonitor();
         const GLFWvidmode* mode = glfwGetVideoMode(monitor);
         
-        // Borderless Windowed Mode (Daha stabil)
+        // Cercevesiz Pencere Modu (Daha kararli)
         glfwSetWindowAttrib(m_Window, GLFW_DECORATED, GLFW_FALSE);
         glfwSetWindowMonitor(m_Window, nullptr, 0, 0, mode->width, mode->height, mode->refreshRate);
         
         m_Width = mode->width;
         m_Height = mode->height;
     } else {
-        // Windowed Mode
+        // Pencere Modu
         glfwSetWindowAttrib(m_Window, GLFW_DECORATED, GLFW_TRUE);
         glfwSetWindowMonitor(m_Window, nullptr, 100, 100, 1280, 720, 0);
         
