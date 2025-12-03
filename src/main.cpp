@@ -446,6 +446,58 @@ int main() {
             ImGui::End();
         }
 
+        // Raycast for Editor Highlight
+        Entity* lookedAtEntity = nullptr;
+        float closestDist = 1000.0f; // Max ray distance
+        glm::vec3 rayOrigin = camera.GetPosition();
+        glm::vec3 rayDir = camera.GetFront();
+
+        for (const auto& entityPtr : scene.GetEntities()) {
+            Entity* entity = entityPtr.get();
+            auto* collider = entity->GetComponent<BoxCollider>();
+            auto* transform = entity->GetComponent<Transform>();
+
+            if (collider && transform) {
+                // Calculate AABB
+                glm::vec3 halfSize = collider->size * transform->scale * 0.5f;
+                glm::vec3 boxMin = transform->position - halfSize;
+                glm::vec3 boxMax = transform->position + halfSize;
+
+                // Ray-AABB Intersection (Slab Method)
+                float tMin = (boxMin.x - rayOrigin.x) / rayDir.x;
+                float tMax = (boxMax.x - rayOrigin.x) / rayDir.x;
+
+                if (tMin > tMax) std::swap(tMin, tMax);
+
+                float tyMin = (boxMin.y - rayOrigin.y) / rayDir.y;
+                float tyMax = (boxMax.y - rayOrigin.y) / rayDir.y;
+
+                if (tyMin > tyMax) std::swap(tyMin, tyMax);
+
+                if ((tMin > tyMax) || (tyMin > tMax)) continue;
+
+                if (tyMin > tMin) tMin = tyMin;
+                if (tyMax < tMax) tMax = tyMax;
+
+                float tzMin = (boxMin.z - rayOrigin.z) / rayDir.z;
+                float tzMax = (boxMax.z - rayOrigin.z) / rayDir.z;
+
+                if (tzMin > tzMax) std::swap(tzMin, tzMax);
+
+                if ((tMin > tzMax) || (tzMin > tMax)) continue;
+
+                if (tzMin > tMin) tMin = tzMin;
+                if (tzMax < tMax) tMax = tzMax;
+
+                // Check if valid intersection and closer than previous
+                if (tMin > 0 && tMin < closestDist) {
+                    closestDist = tMin;
+                    lookedAtEntity = entity;
+                }
+            }
+        }
+        editor.SetLookedAtEntity(lookedAtEntity);
+
         editor.Update(&scene, deltaTime, window->GetFPS());
         
         // HUD Cizimi (2D katman) - Sadece oyun sirasinda

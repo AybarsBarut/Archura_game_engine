@@ -145,9 +145,19 @@ void Editor::DrawSceneHierarchy(Scene* scene) {
             flags |= ImGuiTreeNodeFlags_Selected;
         }
 
-        ImGui::TreeNodeEx(entity, flags, "%s (ID: %u)", 
+        bool isLookedAt = (entity == m_LookedAtEntity);
+        if (isLookedAt) {
+            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 1.0f, 0.0f, 1.0f)); // Yesil
+        }
+
+        ImGui::TreeNodeEx(entity, flags, "%s (ID: %u)%s", 
                          entity->GetName().c_str(), 
-                         entity->GetID());
+                         entity->GetID(),
+                         isLookedAt ? " <--" : "");
+
+        if (isLookedAt) {
+            ImGui::PopStyleColor();
+        }
 
         if (ImGui::IsItemClicked()) {
             m_SelectedEntity = entity;

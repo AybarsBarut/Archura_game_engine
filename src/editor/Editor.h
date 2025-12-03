@@ -34,6 +34,9 @@ public:
     Entity* GetSelectedEntity() const { return m_SelectedEntity; }
     void SetSelectedEntity(Entity* entity) { m_SelectedEntity = entity; }
 
+    // Looked at entity (Debug)
+    void SetLookedAtEntity(Entity* entity) { m_LookedAtEntity = entity; }
+
 private:
     void DrawMenuBar();
     void DrawSceneHierarchy(Scene* scene);
@@ -49,6 +52,7 @@ private:
     bool m_ShowPerformance = true;
 
     Entity* m_SelectedEntity = nullptr;
+    Entity* m_LookedAtEntity = nullptr;
     Window* m_Window = nullptr;
 };
 
