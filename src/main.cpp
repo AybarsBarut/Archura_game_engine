@@ -16,6 +16,7 @@
 #include "game/Weapon.h"
 #include "game/Projectile.h"
 #include "editor/Editor.h"
+#include "game/DevConsole.h"
 #include <iostream>
 #include <memory>
 #include <ctime>
@@ -116,6 +117,9 @@ int main() {
 
     // Mermi sistemi
     ProjectileSystem projectileSystem;
+
+    // Dev Console Baslat
+    DevConsole::Get().Init();
 
     // Ag Geri Cagrisi - Ates Etme
 
@@ -314,10 +318,19 @@ int main() {
         // Giris guncellemesi
         input->Update();
 
-        // ESC tusu ile Duraklatma Menusu ac/kapa (Bekleme suresi kontrolu ile)
+        // ESC tusu ile Konsol/Duraklatma
         if (input->IsKeyPressed(GLFW_KEY_ESCAPE) && escCooldown <= 0.0f) {
             escCooldown = 0.2f; // 200ms bekleme suresi
             
+            if (DevConsole::Get().IsOpen()) {
+                DevConsole::Get().Toggle(); // Konsolu kapat
+                input->SetCursorMode(GLFW_CURSOR_DISABLED);
+            } else {
+                DevConsole::Get().Toggle(); // Konsolu ac
+                input->SetCursorMode(GLFW_CURSOR_NORMAL);
+            }
+            
+            /* Eski Pause Mantigi (Simdilik Konsol ile degistirildi)
             if (isKeyBindingMode) {
                 // Tus atama iptal
                 isKeyBindingMode = false;
@@ -330,6 +343,7 @@ int main() {
                     input->SetCursorMode(GLFW_CURSOR_DISABLED);
                 }
             }
+            */
         }
 
         // Tus Atama Modu
@@ -591,6 +605,9 @@ int main() {
         }
         
         editor.EndFrame();
+        
+        // Dev Console Cizimi (En ust katman)
+        DevConsole::Get().Render();
         
         renderer->EndFrame();
 

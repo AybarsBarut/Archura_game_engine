@@ -10,6 +10,7 @@
 #include <imgui_impl_opengl3.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
+#include "../core/ProjectSerializer.h"
 
 namespace Archura {
 
@@ -126,7 +127,7 @@ void Editor::EndFrame() {
 void Editor::Update(Scene* scene, float deltaTime, float fps) {
     if (!m_Enabled) return;
 
-    DrawMenuBar();
+    DrawMenuBar(scene);
     // DrawToolbar();
 
     if (m_ShowSceneHierarchy) {
@@ -154,13 +155,22 @@ void Editor::Update(Scene* scene, float deltaTime, float fps) {
     }
 }
 
-void Editor::DrawMenuBar() {
+// ... (inside DrawMenuBar)
+void Editor::DrawMenuBar(Scene* scene) {
     if (ImGui::BeginMainMenuBar()) {
         if (ImGui::BeginMenu("File")) {
             if (ImGui::MenuItem("New Scene", "Ctrl+N")) {}
             if (ImGui::MenuItem("Open Scene", "Ctrl+O")) {}
             ImGui::Separator();
-            if (ImGui::MenuItem("Save", "Ctrl+S")) {}
+            if (ImGui::MenuItem("Save Project", "Ctrl+S")) {
+                if (scene) {
+                    ProjectConfig config = { "ArchuraGame", "1.0", "MainScene" };
+                    // Ensure directory exists
+                    std::filesystem::create_directories("games/ArchuraGame");
+                    ProjectSerializer::SaveProject("games/ArchuraGame/project.gameproj", config, scene);
+                    Log("Project saved to games/ArchuraGame/project.gameproj");
+                }
+            }
             if (ImGui::MenuItem("Save As...", "Ctrl+Shift+S")) {}
             ImGui::Separator();
             if (ImGui::MenuItem("Exit", "Alt+F4")) {}

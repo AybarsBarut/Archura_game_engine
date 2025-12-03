@@ -43,7 +43,7 @@ public:
 
 private:
     void SetupLayout();
-    void DrawMenuBar();
+    void DrawMenuBar(Scene* scene);
     void DrawToolbar();
     void DrawSceneHierarchy(Scene* scene);
     void DrawInspector();
