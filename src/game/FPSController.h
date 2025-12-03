@@ -16,7 +16,7 @@ public:
     FPSController(Camera* camera);
     ~FPSController() = default;
 
-    void Update(Input* input, float deltaTime);
+    void Update(Input* input, class Scene* scene, float deltaTime);
 
     // Ayarlar
     void SetWalkSpeed(float speed) { m_WalkSpeed = speed; }
@@ -34,8 +34,9 @@ public:
     bool IsRunning() const { return m_IsRunning; }
 
 private:
-    void HandleMovement(Input* input, float deltaTime);
+    void HandleMovement(Input* input, class Scene* scene, float deltaTime);
     void HandleMouseLook(Input* input, float deltaTime);
+    bool CheckCollision(const glm::vec3& position, class Scene* scene, float* outGroundHeight = nullptr, float stepHeight = 0.0f);
 
 private:
     Camera* m_Camera;

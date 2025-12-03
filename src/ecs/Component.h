@@ -40,4 +40,12 @@ struct MeshRenderer : public Component {
     glm::vec3 color = glm::vec3(1.0f);
 };
 
+/**
+ * @brief Box Collider component - Fiziksel carpisma kutusu
+ */
+struct BoxCollider : public Component {
+    glm::vec3 size = glm::vec3(1.0f); // Boyutlar (Genislik, Yukseklik, Derinlik)
+    glm::vec3 center = glm::vec3(0.0f); // Merkez ofseti
+};
+
 } // namespace Archura
