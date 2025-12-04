@@ -15,9 +15,10 @@ bool Renderer::Init() {
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     
     // Yuz kirpma - performans icin
-    glEnable(GL_CULL_FACE);
-    glCullFace(GL_BACK);
-    glFrontFace(GL_CCW);
+    // Kullanici istegi uzerine "tum sekillerin her acidan gorunmesi" icin kapatiyoruz
+    glDisable(GL_CULL_FACE);
+    // glCullFace(GL_BACK);
+    // glFrontFace(GL_CCW);
     
     // MSAA - GTX 1050'de sorunsuz calisir
     glEnable(GL_MULTISAMPLE);

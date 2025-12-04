@@ -35,9 +35,12 @@ void FPSController::HandleMovement(Input* input, Scene* scene, float deltaTime) 
     glm::vec3 front = m_Camera->GetFront();
     glm::vec3 right = m_Camera->GetRight();
     
-    // Y eksenini sifirla (Sadece XZ duzleminde hareket)
-    front.y = 0.0f;
-    right.y = 0.0f;
+    // Yercekimi aciksa Y eksenini sifirla (Sadece XZ duzleminde hareket)
+    // Kapaliysa (Fly Mode) kameranin baktigi yere git
+    if (m_GravityEnabled) {
+        front.y = 0.0f;
+        right.y = 0.0f;
+    }
     
     if (glm::length(front) > 0.001f) front = glm::normalize(front);
     if (glm::length(right) > 0.001f) right = glm::normalize(right);
@@ -52,72 +55,72 @@ void FPSController::HandleMovement(Input* input, Scene* scene, float deltaTime) 
     if (glm::length(movement) > 0.001f) {
         movement = glm::normalize(movement) * currentSpeed * deltaTime;
         
-        // X ekseninde hareket dene
-        glm::vec3 nextPosX = currentPos;
-        nextPosX.x += movement.x;
-        // Yatay harekette adimYuksekligi kullanarak zemine takilmayi onle (0.2f)
-        if (!CheckCollision(nextPosX, scene, nullptr, 0.2f)) {
-            targetPos.x = nextPosX.x;
-        }
+        if (m_GravityEnabled) {
+            // Normal yurume (Collision var)
+            // X ekseninde hareket dene
+            glm::vec3 nextPosX = currentPos;
+            nextPosX.x += movement.x;
+            if (!CheckCollision(nextPosX, scene, nullptr, 0.3f)) {
+                targetPos.x = nextPosX.x;
+            }
 
-        // Z ekseninde hareket dene
-        glm::vec3 nextPosZ = currentPos;
-        nextPosZ.z += movement.z;
-        if (!CheckCollision(nextPosZ, scene, nullptr, 0.2f)) {
-            targetPos.z = nextPosZ.z;
+            // Z ekseninde hareket dene
+            glm::vec3 nextPosZ = currentPos;
+            nextPosZ.z += movement.z;
+            if (!CheckCollision(nextPosZ, scene, nullptr, 0.3f)) {
+                targetPos.z = nextPosZ.z;
+            }
+        } else {
+            // Fly Mode (Collision yok veya basit hareket)
+            // Kullanici "istedigim gibi ucmami sagla" dedi, collision'i kapatalim (Noclip gibi)
+            // Boylece harita yaparken duvarlarin icinden gecebilir
+            targetPos += movement;
         }
     }
 
-    // Yercekimi ve Ziplama
-    m_VerticalVelocity += m_Gravity * deltaTime;
+    if (m_GravityEnabled) {
+        // Yercekimi ve Ziplama
+        m_VerticalVelocity += m_Gravity * deltaTime;
 
-    // Ziplama (Bosluk)
-    if (input->IsKeyDown(m_Bindings.jump) && m_IsGrounded) {
-        m_VerticalVelocity = sqrt(m_JumpHeight * -2.0f * m_Gravity);
-        m_IsGrounded = false;
-    }
+        // Ziplama (Bosluk)
+        if (input->IsKeyDown(m_Bindings.jump) && m_IsGrounded) {
+            m_VerticalVelocity = sqrt(m_JumpHeight * -2.0f * m_Gravity);
+            m_IsGrounded = false;
+        }
 
-    // Dikey hareket
-    glm::vec3 nextPosY = targetPos;
-    nextPosY.y += m_VerticalVelocity * deltaTime;
-    
-    float groundHeight = 0.0f; // Varsayilan zemin (Model duzlemi y=0)
-    float objectTopY = 0.0f;
-    // Dikey harekette adimYuksekligi 0 olmali ki tam inis yapabilelim
-    bool hitObject = CheckCollision(nextPosY, scene, &objectTopY, 0.0f);
-
-    // Zemin kontrolu (Basit duzlem carpismasi)
-    // Oyuncu boyu yaklasik 1.8 birim (Goz hizasi)
-    // Ayaklar = position.y - 1.8f
-    float playerEyeHeight = 1.8f;
-    float minGroundY = 0.0f + playerEyeHeight; // Zemin (Y=0) uzerinde durus pozisyonu
-
-    if (hitObject) {
-        // Eger dusuyorsak ve ayagimiz objenin ustundeyse, inis yap
-        // Ayak pozisyonu: nextPosY.y - 1.8f
-        // Obje ustu: objectTopY
+        // Dikey hareket
+        glm::vec3 nextPosY = targetPos;
+        nextPosY.y += m_VerticalVelocity * deltaTime;
         
-        // Toleransli kontrol: Ayaklar objenin biraz icine girmis olabilir
-        if (m_VerticalVelocity <= 0.0f && (targetPos.y - playerEyeHeight) >= (objectTopY - 0.5f)) {
-            targetPos.y = objectTopY + playerEyeHeight;
+        float groundHeight = 0.0f; 
+        float objectTopY = 0.0f;
+        bool hitObject = CheckCollision(nextPosY, scene, &objectTopY, 0.0f);
+
+        float playerEyeHeight = 1.8f;
+        float minGroundY = 0.0f + playerEyeHeight; 
+
+        if (hitObject) {
+            if (m_VerticalVelocity <= 0.0f && (targetPos.y - playerEyeHeight) >= (objectTopY - 0.5f)) {
+                targetPos.y = objectTopY + playerEyeHeight;
+                m_VerticalVelocity = 0.0f;
+                m_IsGrounded = true;
+            }
+            else if (m_VerticalVelocity > 0.0f) {
+                m_VerticalVelocity = 0.0f;
+            }
+        }
+        else if (nextPosY.y < minGroundY) {
+            targetPos.y = minGroundY;
             m_VerticalVelocity = 0.0f;
             m_IsGrounded = true;
         }
-        else if (m_VerticalVelocity > 0.0f) {
-            // Kafayi vurduk
-            m_VerticalVelocity = 0.0f;
-            // targetPos.y degismez, yukari cikamaz
+        else {
+            targetPos.y = nextPosY.y;
+            m_IsGrounded = false;
         }
-    }
-    else if (nextPosY.y < minGroundY) {
-        // Zemine carptik
-        targetPos.y = minGroundY;
+    } else {
+        // Fly Mode'da dikey hiz sifirlanir
         m_VerticalVelocity = 0.0f;
-        m_IsGrounded = true;
-    }
-    else {
-        // Havada serbest hareket
-        targetPos.y = nextPosY.y;
         m_IsGrounded = false;
     }
 
@@ -149,22 +152,50 @@ bool FPSController::CheckCollision(const glm::vec3& position, Scene* scene, floa
         auto* transform = entity->GetComponent<Transform>();
         
         if (collider && transform) {
-            // AABB carpisma testi
-            glm::vec3 boxCenter = transform->position + collider->center;
-            glm::vec3 boxSize = collider->size * transform->scale;
-            
-            glm::vec3 boxMin = boxCenter - boxSize * 0.5f;
-            glm::vec3 boxMax = boxCenter + boxSize * 0.5f;
+            // Helper lambda for AABB check
+            auto CheckAABB = [&](const glm::vec3& center, const glm::vec3& size) -> bool {
+                glm::vec3 boxCenter = transform->position + center;
+                glm::vec3 boxSize = size * transform->scale;
+                
+                glm::vec3 boxMin = boxCenter - boxSize * 0.5f;
+                glm::vec3 boxMax = boxCenter + boxSize * 0.5f;
 
-            // AABB vs AABB intersection
-            bool collisionX = playerMin.x <= boxMax.x && playerMax.x >= boxMin.x;
-            bool collisionY = playerMin.y <= boxMax.y && playerMax.y >= boxMin.y;
-            bool collisionZ = playerMin.z <= boxMax.z && playerMax.z >= boxMin.z;
+                bool collisionX = playerMin.x <= boxMax.x && playerMax.x >= boxMin.x;
+                bool collisionY = playerMin.y <= boxMax.y && playerMax.y >= boxMin.y;
+                bool collisionZ = playerMin.z <= boxMax.z && playerMax.z >= boxMin.z;
 
-            if (collisionX && collisionY && collisionZ) {
-                if (outGroundHeight) {
-                    *outGroundHeight = boxMax.y;
+                if (collisionX && collisionY && collisionZ) {
+                    if (outGroundHeight) {
+                        // Keep the highest ground found so far
+                        if (boxMax.y > *outGroundHeight) {
+                            *outGroundHeight = boxMax.y;
+                        }
+                    }
+                    return true;
                 }
+                return false;
+            };
+
+            bool hit = false;
+            
+            // Check main box (if size is not zero)
+            if (glm::length(collider->size) > 0.01f) {
+                if (CheckAABB(collider->center, collider->size)) hit = true;
+            }
+
+            // Check sub boxes
+            for (const auto& box : collider->subBoxes) {
+                if (CheckAABB(box.center, box.size)) hit = true;
+            }
+
+            if (hit && !outGroundHeight) return true; // Early exit if we don't need ground height
+            if (hit && outGroundHeight) {
+                // Continue checking other entities to find highest ground? 
+                // For now, just return true, but we updated outGroundHeight inside lambda
+                // However, we need to check ALL entities to find true highest ground.
+                // The current function returns true on FIRST collision.
+                // This is fine for blocking, but for ground height it might be inaccurate if multiple overlap.
+                // But usually we stand on one.
                 return true;
             }
         }

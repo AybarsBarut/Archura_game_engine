@@ -45,6 +45,9 @@ public:
     
     // Spawn Position (from Raycast)
     void SetSpawnPosition(const glm::vec3& pos) { m_SpawnPosition = pos; }
+    
+    // Set FPS Controller
+    void SetFPSController(class FPSController* controller) { m_FPSController = controller; }
 
 private:
     void SpawnEntity(Scene* scene, const std::string& type);
@@ -79,6 +82,9 @@ private:
     Entity* m_LookedAtEntity = nullptr;
     glm::vec3 m_SpawnPosition = glm::vec3(0.0f);
     Window* m_Window = nullptr;
+    
+    // Reference to FPS Controller for commands
+    class FPSController* m_FPSController = nullptr;
 
     std::vector<std::string> m_ConsoleLogs;
     char m_InputBuf[256] = "";

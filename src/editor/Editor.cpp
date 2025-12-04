@@ -6,6 +6,7 @@
 #include "../game/Projectile.h"
 #include "../rendering/Texture.h"
 #include "../rendering/Mesh.h"
+#include "../game/FPSController.h"
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
@@ -527,7 +528,32 @@ void Editor::ExecuteCommand(const char* command) {
     if (cmd == "clear") {
         ClearLogs();
     } else if (cmd == "help") {
-        Log("Available commands: clear, help");
+        Log("Available commands: clear, help, /gravity <0|1>");
+    } else if (cmd.rfind("/gravity", 0) == 0) {
+        // /gravity 0 veya /gravity 1
+        if (m_FPSController) {
+            std::string arg = cmd.substr(8);
+            // Trim whitespace
+            size_t first = arg.find_first_not_of(' ');
+            if (std::string::npos != first) {
+                arg = arg.substr(first);
+            }
+            
+            if (!arg.empty()) {
+                try {
+                    int val = std::stoi(arg);
+                    bool enable = (val != 0);
+                    m_FPSController->SetGravityEnabled(enable);
+                    Log(enable ? "Gravity Enabled" : "Gravity Disabled (Fly Mode)");
+                } catch (...) {
+                    Log("Invalid argument for /gravity. Use 0 or 1.");
+                }
+            } else {
+                Log("Usage: /gravity <0|1>");
+            }
+        } else {
+            Log("Error: FPSController not linked.");
+        }
     } else {
         Log("Unknown command: " + cmd);
     }
@@ -557,11 +583,48 @@ void Editor::SpawnEntity(Scene* scene, const std::string& type) {
         meshRenderer->mesh = Mesh::CreateCapsule(0.5f, 2.0f);
         collider->size = glm::vec3(1.0f, 2.0f, 1.0f);
     } else if (type == "Stairs") {
-        meshRenderer->mesh = Mesh::CreateStairs(1.0f, 1.0f, 2.0f, 5); // 5 basamak
-        collider->size = glm::vec3(1.0f, 1.0f, 2.0f);
+        // Kullanici istegi: "ilk basamagi biraz daha alcalt" -> Basamak sayisini artirarak (10) basamak yuksekligini dusuruyoruz (0.1)
+        meshRenderer->mesh = Mesh::CreateStairs(1.0f, 1.0f, 2.0f, 10); 
+        // Ana kutuyu devre disi birak (0 boyut)
+        collider->size = glm::vec3(0.0f);
+        
+        // 10 Basamak icin alt kutular ekle
+        float stepHeight = 1.0f / 10.0f; // 0.1
+        float stepDepth = 2.0f / 10.0f;  // 0.2
+        
+        for (int i = 0; i < 10; ++i) {
+            BoxCollider::AABB box;
+            box.size = glm::vec3(1.0f, (i + 1) * stepHeight, stepDepth);
+            
+            float zCenter = -1.0f + (i * stepDepth) + (stepDepth * 0.5f);
+            box.center = glm::vec3(0.0f, box.size.y * 0.5f, zCenter);
+            
+            collider->subBoxes.push_back(box);
+        }
     } else if (type == "Ramp") {
         meshRenderer->mesh = Mesh::CreateRamp(1.0f, 1.0f, 2.0f);
-        collider->size = glm::vec3(1.0f, 1.0f, 2.0f);
+        // Ana kutuyu devre disi birak
+        collider->size = glm::vec3(0.0f);
+
+        // Rampayi daha pruzsuz yapmak icin basamak sayisini artiralim (25)
+        // Karakterin takilmasini onler
+        int segments = 25;
+        float stepHeight = 1.0f / segments;
+        float stepDepth = 2.0f / segments;
+
+        for (int i = 0; i < segments; ++i) {
+            BoxCollider::AABB box;
+            // Mesh High at -Z, Low at +Z
+            // Collision Z goes from -1.0 to +1.0
+            // Height goes from High to Low
+            
+            box.size = glm::vec3(1.0f, (segments - i) * stepHeight, stepDepth);
+            
+            float zCenter = -1.0f + (i * stepDepth) + (stepDepth * 0.5f);
+            box.center = glm::vec3(0.0f, box.size.y * 0.5f, zCenter);
+            
+            collider->subBoxes.push_back(box);
+        }
     }
 
     Log("Spawned " + type + " at " + std::to_string(m_SpawnPosition.x) + ", " + std::to_string(m_SpawnPosition.y) + ", " + std::to_string(m_SpawnPosition.z));

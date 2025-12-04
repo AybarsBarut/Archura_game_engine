@@ -362,12 +362,14 @@ Mesh* Mesh::CreateStairs(float width, float height, float depth, int steps) {
 
     for (int i = 0; i < steps; ++i) {
         // Basamak boyutlari
-        float yBottom = 0.0f; // Hepsi yerden baslasin (dolu merdiven)
+        float yBottom = 0.0f; 
         float yTop = (i + 1) * stepHeight;
+        float yPrevTop = i * stepHeight; // Onceki basamagin tepesi
+        
         float zFront = (i) * stepDepth - (depth * 0.5f);
         float zBack = (i + 1) * stepDepth - (depth * 0.5f);
         
-        // 8 Kose
+        // 8 Kose (Tam Kutu icin)
         glm::vec3 p0(-halfWidth, yBottom, zBack);
         glm::vec3 p1( halfWidth, yBottom, zBack);
         glm::vec3 p2( halfWidth, yTop,    zBack);
@@ -377,47 +379,73 @@ Mesh* Mesh::CreateStairs(float width, float height, float depth, int steps) {
         glm::vec3 p6( halfWidth, yTop,    zFront);
         glm::vec3 p7(-halfWidth, yTop,    zFront);
 
-        // Yuzeyler (Normaller ile)
-        // On (Front) - p4, p5, p6, p7
-        vertices.push_back({p4, {0,0,1}, {0,0}, {1,1,1}});
-        vertices.push_back({p5, {0,0,1}, {1,0}, {1,1,1}});
-        vertices.push_back({p6, {0,0,1}, {1,1}, {1,1,1}});
-        vertices.push_back({p7, {0,0,1}, {0,1}, {1,1,1}});
+        // --- Yuzeyler ---
+
+        // 1. On (Front/Riser) - Normal -Z
+        // Sadece gorunen kismi ciz (Onceki basamagin ustu ile bu basamagin ustu arasi)
+        // i=0 icin yerden baslar
+        float riserBottomY = (i == 0) ? 0.0f : yPrevTop;
         
-        // Ust (Top) - p7, p6, p2, p3
+        glm::vec3 r4(-halfWidth, riserBottomY, zFront);
+        glm::vec3 r5( halfWidth, riserBottomY, zFront);
+        glm::vec3 r6( halfWidth, yTop,         zFront); // p6
+        glm::vec3 r7(-halfWidth, yTop,         zFront); // p7
+
+        vertices.push_back({r4, {0,0,-1}, {0,0}, {1,1,1}});
+        vertices.push_back({r5, {0,0,-1}, {1,0}, {1,1,1}});
+        vertices.push_back({r6, {0,0,-1}, {1,1}, {1,1,1}});
+        vertices.push_back({r7, {0,0,-1}, {0,1}, {1,1,1}});
+        
+        // 2. Ust (Top/Tread) - Normal +Y
+        // Winding fixed: CCW (p7 -> p3 -> p2 -> p6)
         vertices.push_back({p7, {0,1,0}, {0,0}, {1,1,1}});
-        vertices.push_back({p6, {0,1,0}, {1,0}, {1,1,1}});
-        vertices.push_back({p2, {0,1,0}, {1,1}, {1,1,1}});
         vertices.push_back({p3, {0,1,0}, {0,1}, {1,1,1}});
+        vertices.push_back({p2, {0,1,0}, {1,1}, {1,1,1}});
+        vertices.push_back({p6, {0,1,0}, {1,0}, {1,1,1}});
 
-        // Yanlar (Left/Right)
-        // Sag - p5, p1, p2, p6
-        vertices.push_back({p5, {1,0,0}, {0,0}, {1,1,1}});
-        vertices.push_back({p1, {1,0,0}, {1,0}, {1,1,1}});
-        vertices.push_back({p2, {1,0,0}, {1,1}, {1,1,1}});
-        vertices.push_back({p6, {1,0,0}, {0,1}, {1,1,1}});
+        // 3. Yanlar (Left/Right) - Normal +/-X
+        auto GetSideUV = [&](const glm::vec3& p) {
+            float u = (p.z + depth * 0.5f) / depth;
+            float v = p.y / height;
+            return glm::vec2(u, v);
+        };
 
-        // Sol - p0, p4, p7, p3
-        vertices.push_back({p0, {-1,0,0}, {0,0}, {1,1,1}});
-        vertices.push_back({p4, {-1,0,0}, {1,0}, {1,1,1}});
-        vertices.push_back({p7, {-1,0,0}, {1,1}, {1,1,1}});
-        vertices.push_back({p3, {-1,0,0}, {0,1}, {1,1,1}});
+        // Sag - Winding fixed: CCW (p5 -> p6 -> p2 -> p1)
+        vertices.push_back({p5, {1,0,0}, GetSideUV(p5), {1,1,1}});
+        vertices.push_back({p6, {1,0,0}, GetSideUV(p6), {1,1,1}});
+        vertices.push_back({p2, {1,0,0}, GetSideUV(p2), {1,1,1}});
+        vertices.push_back({p1, {1,0,0}, GetSideUV(p1), {1,1,1}});
 
-        // Arka ve Alt (Genellikle gorunmez ama ekleyelim)
-        // Arka - p1, p0, p3, p2
-        vertices.push_back({p1, {0,0,-1}, {0,0}, {1,1,1}});
-        vertices.push_back({p0, {0,0,-1}, {1,0}, {1,1,1}});
-        vertices.push_back({p3, {0,0,-1}, {1,1}, {1,1,1}});
-        vertices.push_back({p2, {0,0,-1}, {0,1}, {1,1,1}});
+        // Sol - CCW (p0 -> p4 -> p7 -> p3) - Already Correct
+        vertices.push_back({p0, {-1,0,0}, GetSideUV(p0), {1,1,1}});
+        vertices.push_back({p4, {-1,0,0}, GetSideUV(p4), {1,1,1}});
+        vertices.push_back({p7, {-1,0,0}, GetSideUV(p7), {1,1,1}});
+        vertices.push_back({p3, {-1,0,0}, GetSideUV(p3), {1,1,1}});
 
-        // Alt - p0, p1, p5, p4
+        // 4. Arka (Back) - Normal +Z
+        if (i == steps - 1) {
+            vertices.push_back({p1, {0,0,1}, {0,0}, {1,1,1}});
+            vertices.push_back({p2, {0,0,1}, {1,0}, {1,1,1}});
+            vertices.push_back({p3, {0,0,1}, {1,1}, {1,1,1}});
+            vertices.push_back({p0, {0,0,1}, {0,1}, {1,1,1}});
+        }
+
+        // 5. Alt (Bottom) - Normal -Y
+        // Winding fixed: CCW (p0 -> p4 -> p5 -> p1)
         vertices.push_back({p0, {0,-1,0}, {0,0}, {1,1,1}});
-        vertices.push_back({p1, {0,-1,0}, {1,0}, {1,1,1}});
-        vertices.push_back({p5, {0,-1,0}, {1,1}, {1,1,1}});
         vertices.push_back({p4, {0,-1,0}, {0,1}, {1,1,1}});
+        vertices.push_back({p5, {0,-1,0}, {1,1}, {1,1,1}});
+        vertices.push_back({p1, {0,-1,0}, {1,0}, {1,1,1}});
 
-        // Indeksler (Her yuzey icin 2 ucgen)
-        for (int f = 0; f < 6; ++f) {
+        // Indeksler
+        // Her basamak icin kac yuz ekledik?
+        // Front(1) + Top(1) + Right(1) + Left(1) + Bottom(1) = 5 quads
+        // Back(1) sadece son basamakta
+        
+        int quads = 5;
+        if (i == steps - 1) quads = 6;
+
+        for (int f = 0; f < quads; ++f) {
             int base = vertexOffset + f * 4;
             indices.push_back(base + 0);
             indices.push_back(base + 1);
@@ -426,7 +454,7 @@ Mesh* Mesh::CreateStairs(float width, float height, float depth, int steps) {
             indices.push_back(base + 2);
             indices.push_back(base + 3);
         }
-        vertexOffset += 24;
+        vertexOffset += quads * 4;
     }
 
     return new Mesh(vertices, indices);
@@ -457,12 +485,17 @@ Mesh* Mesh::CreateRamp(float width, float height, float depth) {
     // Egimli Yuzey (Rampa) - p4, p5, p2, p3
     // Normali hesapla
     glm::vec3 rampVec = glm::vec3(0, h, -2*d);
-    glm::vec3 rampNormal = glm::normalize(glm::cross(rampVec, glm::vec3(1,0,0))); // Basitce
+    // Cross product order changed to point OUTWARD (Up/Front)
+    // Right (1,0,0) x Slope (0,h,-2d) = (0, 2d, h) -> Up (+Y) and Front (+Z)
+    glm::vec3 rampNormal = glm::normalize(glm::cross(glm::vec3(1,0,0), rampVec));
 
+    // UV: Egimli yuzey icin Z derinligini kullanabiliriz veya egim uzunlugunu
+    // Basitlik icin Z'yi map edelim (0-1)
+    // Winding fixed: CCW (p4 -> p3 -> p2 -> p5)
     vertices.push_back({p4, rampNormal, {0,0}, {1,1,1}});
-    vertices.push_back({p5, rampNormal, {1,0}, {1,1,1}});
-    vertices.push_back({p2, rampNormal, {1,1}, {1,1,1}});
     vertices.push_back({p3, rampNormal, {0,1}, {1,1,1}});
+    vertices.push_back({p2, rampNormal, {1,1}, {1,1,1}});
+    vertices.push_back({p5, rampNormal, {1,0}, {1,1,1}});
 
     // Arka Yuz
     vertices.push_back({p1, {0,0,-1}, {0,0}, {1,1,1}});
@@ -471,21 +504,28 @@ Mesh* Mesh::CreateRamp(float width, float height, float depth) {
     vertices.push_back({p2, {0,0,-1}, {0,1}, {1,1,1}});
 
     // Alt Yuz
+    // Winding fixed: CCW (p0 -> p4 -> p5 -> p1)
     vertices.push_back({p0, {0,-1,0}, {0,0}, {1,1,1}});
-    vertices.push_back({p1, {0,-1,0}, {1,0}, {1,1,1}});
-    vertices.push_back({p5, {0,-1,0}, {1,1}, {1,1,1}});
     vertices.push_back({p4, {0,-1,0}, {0,1}, {1,1,1}});
+    vertices.push_back({p5, {0,-1,0}, {1,1}, {1,1,1}});
+    vertices.push_back({p1, {0,-1,0}, {1,0}, {1,1,1}});
 
-    // Yan Yuzler (Ucgen)
+    // Yan Yuzler (Ucgen) - UV Duzeltme
+    auto GetSideUV = [&](const glm::vec3& p) {
+        float u = (p.z + d) / (2*d); // Z: -d to d -> 0 to 1
+        float v = p.y / h;           // Y: 0 to h -> 0 to 1
+        return glm::vec2(u, v);
+    };
+
     // Sag - p5, p1, p2
-    vertices.push_back({p5, {1,0,0}, {0,0}, {1,1,1}});
-    vertices.push_back({p1, {1,0,0}, {1,0}, {1,1,1}});
-    vertices.push_back({p2, {1,0,0}, {0,1}, {1,1,1}});
+    vertices.push_back({p5, {1,0,0}, GetSideUV(p5), {1,1,1}});
+    vertices.push_back({p1, {1,0,0}, GetSideUV(p1), {1,1,1}});
+    vertices.push_back({p2, {1,0,0}, GetSideUV(p2), {1,1,1}});
 
     // Sol - p0, p4, p3
-    vertices.push_back({p0, {-1,0,0}, {0,0}, {1,1,1}});
-    vertices.push_back({p4, {-1,0,0}, {1,0}, {1,1,1}});
-    vertices.push_back({p3, {-1,0,0}, {0,1}, {1,1,1}});
+    vertices.push_back({p0, {-1,0,0}, GetSideUV(p0), {1,1,1}});
+    vertices.push_back({p4, {-1,0,0}, GetSideUV(p4), {1,1,1}});
+    vertices.push_back({p3, {-1,0,0}, GetSideUV(p3), {1,1,1}});
 
     // Indeksler
     // Rampa (Quad)
