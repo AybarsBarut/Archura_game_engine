@@ -45,15 +45,8 @@ struct MeshRenderer : public Component {
  * @brief Box Collider component - Fiziksel carpisma kutusu
  */
 struct BoxCollider : public Component {
-    struct AABB {
-        glm::vec3 size;
-        glm::vec3 center;
-    };
-
     glm::vec3 size = glm::vec3(1.0f); // Boyutlar (Genislik, Yukseklik, Derinlik)
     glm::vec3 center = glm::vec3(0.0f); // Merkez ofseti
-    
-    std::vector<AABB> subBoxes; // Ek kutular (Compound collider)
 };
 
 /**

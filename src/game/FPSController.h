@@ -43,9 +43,6 @@ public:
     // State
     bool IsGrounded() const { return m_IsGrounded; }
     bool IsRunning() const { return m_IsRunning; }
-    
-    void SetGravityEnabled(bool enabled) { m_GravityEnabled = enabled; }
-    bool IsGravityEnabled() const { return m_GravityEnabled; }
 
 private:
     void HandleMovement(Input* input, class Scene* scene, float deltaTime);
@@ -61,7 +58,6 @@ private:
     float m_JumpHeight = 2.0f;
     float m_MouseSensitivity = 0.1f;
     float m_Gravity = -9.81f;
-    bool m_GravityEnabled = true; // Yercekimi varsayilan olarak acik
     KeyBindings m_Bindings;
 
     // State

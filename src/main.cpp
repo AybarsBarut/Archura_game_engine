@@ -97,7 +97,6 @@ int main() {
         return -1;
     }
     editor.SetEnabled(true); // Editor aktif
-    editor.SetFPSController(&fpsController);
 
     // Oyuncu varligi (silah tasiyicisi)
     // Oyuncu varligi (silah tasiyicisi)
