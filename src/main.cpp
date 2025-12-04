@@ -143,7 +143,7 @@ int main() {
     // Zemin (Platform)
     Entity* ground = scene.CreateEntity("Ground");
     auto* groundMesh = ground->AddComponent<MeshRenderer>();
-    groundMesh->mesh = Mesh::CreatePlane(100.0f, 100.0f);
+    groundMesh->mesh = Mesh::CreatePlane(100.0f, 100.0f, 10.0f);
     groundMesh->color = glm::vec3(0.2f, 0.25f, 0.2f); // Koyu gri-yesil zemin
     auto* groundTransform = ground->GetComponent<Transform>();
     groundTransform->position = glm::vec3(0.0f, 0.0f, 0.0f);
@@ -165,31 +165,13 @@ int main() {
 
     std::vector<WallDef> walls;
 
-    // 4 Kenar Duvar
-    walls.push_back({ glm::vec3(0, wallHeight/2, -mapSize), glm::vec3(mapSize*2, wallHeight, wallThickness), wallColor }); // Kuzey
-    walls.push_back({ glm::vec3(0, wallHeight/2, mapSize), glm::vec3(mapSize*2, wallHeight, wallThickness), wallColor }); // Guney
-    walls.push_back({ glm::vec3(-mapSize, wallHeight/2, 0), glm::vec3(wallThickness, wallHeight, mapSize*2), wallColor }); // Bati
-    walls.push_back({ glm::vec3(mapSize, wallHeight/2, 0), glm::vec3(wallThickness, wallHeight, mapSize*2), wallColor }); // Dogu
+    // 4 Kenar Duvar (IDs 0-3) - KEEP ALL
+    walls.push_back({ glm::vec3(0, wallHeight/2, -mapSize), glm::vec3(mapSize*2, wallHeight, wallThickness), wallColor }); // Kuzey (ID 0)
+    walls.push_back({ glm::vec3(0, wallHeight/2, mapSize), glm::vec3(mapSize*2, wallHeight, wallThickness), wallColor }); // Guney (ID 1)
+    walls.push_back({ glm::vec3(-mapSize, wallHeight/2, 0), glm::vec3(wallThickness, wallHeight, mapSize*2), wallColor }); // Bati (ID 2)
+    walls.push_back({ glm::vec3(mapSize, wallHeight/2, 0), glm::vec3(wallThickness, wallHeight, mapSize*2), wallColor }); // Dogu (ID 3)
 
-    // Ic Duvarlar ve Engeller (Labirentimsi Yapi)
-    // Sol taraf siperleri
-    walls.push_back({ glm::vec3(-15, 2, -15), glm::vec3(10, 4, 2), wallColor });
-    walls.push_back({ glm::vec3(-25, 2, -5), glm::vec3(2, 4, 15), wallColor });
-
-    // Sag taraf siperleri
-    walls.push_back({ glm::vec3(15, 2, 15), glm::vec3(10, 4, 2), wallColor });
-    walls.push_back({ glm::vec3(25, 2, 5), glm::vec3(2, 4, 15), wallColor });
-
-    // Orta Alan (Arena)
-    walls.push_back({ glm::vec3(0, 1.5f, 0), glm::vec3(5, 3, 5), obstacleColor }); // Merkez kutu
-    walls.push_back({ glm::vec3(-8, 1, 8), glm::vec3(3, 2, 3), obstacleColor });
-    walls.push_back({ glm::vec3(8, 1, -8), glm::vec3(3, 2, 3), obstacleColor });
-
-    // Rastgele dagilmis kucuk siperler
-    walls.push_back({ glm::vec3(0, 1.5f, 25), glm::vec3(8, 3, 1), wallColor });
-    walls.push_back({ glm::vec3(0, 1.5f, -25), glm::vec3(8, 3, 1), wallColor });
-    walls.push_back({ glm::vec3(25, 1.5f, 0), glm::vec3(1, 3, 8), wallColor });
-    walls.push_back({ glm::vec3(-25, 1.5f, 0), glm::vec3(1, 3, 8), wallColor });
+    // Diger tum duvarlar kaldirildi (ID 4+)
 
     // Duvarlari Olustur
     int wallCount = 0;

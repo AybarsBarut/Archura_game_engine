@@ -58,12 +58,20 @@ private:
     float m_JumpHeight = 2.0f;
     float m_MouseSensitivity = 0.1f;
     float m_Gravity = -9.81f;
+    bool m_GravityEnabled = true;
     KeyBindings m_Bindings;
 
     // State
     bool m_IsGrounded = true;
     bool m_IsRunning = false;
     float m_VerticalVelocity = 0.0f;
+
+    // Mantling State
+    bool m_IsMantling = false;
+    glm::vec3 m_MantleStartPos;
+    glm::vec3 m_MantleTargetPos;
+    float m_MantleTimer = 0.0f;
+    float m_MantleDuration = 0.5f;
 };
 
 } // namespace Archura

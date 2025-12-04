@@ -43,7 +43,7 @@ public:
 
     // Procedural mesh oluşturucular
     static Mesh* CreateCube(float size = 1.0f);
-    static Mesh* CreatePlane(float width = 10.0f, float height = 10.0f);
+    static Mesh* CreatePlane(float width = 10.0f, float height = 10.0f, float uvScale = 1.0f);
     static Mesh* CreateSphere(float radius = 1.0f, int segments = 32);
     static Mesh* CreateCapsule(float radius = 0.5f, float height = 2.0f);
     static Mesh* CreateStairs(float width = 1.0f, float height = 1.0f, float depth = 1.0f, int steps = 5);

@@ -130,15 +130,15 @@ Mesh* Mesh::CreateCube(float size) {
     return new Mesh(vertices, indices);
 }
 
-Mesh* Mesh::CreatePlane(float width, float height) {
+Mesh* Mesh::CreatePlane(float width, float height, float uvScale) {
     float w = width * 0.5f;
     float h = height * 0.5f;
     
     std::vector<Vertex> vertices = {
         {{-w, 0, -h}, {0, 1, 0}, {0, 0}, {0.8f, 0.8f, 0.8f}},
-        {{ w, 0, -h}, {0, 1, 0}, {1, 0}, {0.8f, 0.8f, 0.8f}},
-        {{ w, 0,  h}, {0, 1, 0}, {1, 1}, {0.8f, 0.8f, 0.8f}},
-        {{-w, 0,  h}, {0, 1, 0}, {0, 1}, {0.8f, 0.8f, 0.8f}},
+        {{ w, 0, -h}, {0, 1, 0}, {1 * uvScale, 0}, {0.8f, 0.8f, 0.8f}},
+        {{ w, 0,  h}, {0, 1, 0}, {1 * uvScale, 1 * uvScale}, {0.8f, 0.8f, 0.8f}},
+        {{-w, 0,  h}, {0, 1, 0}, {0, 1 * uvScale}, {0.8f, 0.8f, 0.8f}},
     };
     
     std::vector<unsigned int> indices = {

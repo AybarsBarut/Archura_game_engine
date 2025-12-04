@@ -76,7 +76,15 @@ void RenderSystem::Update(float deltaTime) {
                 
                 // Materyal (basit, sabit degerler)
                 shader->SetVec3("uAmbient", glm::vec3(0.2f));
-                shader->SetVec3("uDiffuse", meshRenderer->color);
+                
+                // Eger doku varsa, diffuse rengini beyaz yap (dokunun kendi rengi gorunsun)
+                // Yoksa mesh rengini kullan
+                if (meshRenderer->texture) {
+                    shader->SetVec3("uDiffuse", glm::vec3(1.0f));
+                } else {
+                    shader->SetVec3("uDiffuse", meshRenderer->color);
+                }
+
                 shader->SetVec3("uSpecular", glm::vec3(0.5f));
                 shader->SetVec3("uSpecular", glm::vec3(0.5f));
                 shader->SetFloat("uShininess", 32.0f);
