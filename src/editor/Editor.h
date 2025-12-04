@@ -13,11 +13,10 @@ namespace Archura {
 class Scene;
 class Entity;
 class Window;
+class Camera;
 
 /**
  * @brief ImGui Editor - Main editor coordinator
- * 
- * Tüm editor panellerini yönetir ve ImGui lifecycle'ı handle eder
  */
 class Editor {
 public:
@@ -26,55 +25,28 @@ public:
 
     bool Init(Window* window);
     void Shutdown();
-
     void BeginFrame();
     void EndFrame();
-
     void Update(Scene* scene, float deltaTime, float fps);
 
+    // Visibility Control
     void SetEnabled(bool enabled) { m_Enabled = enabled; }
     bool IsEnabled() const { return m_Enabled; }
-
-    // Selected entity
-    Entity* GetSelectedEntity() const { return m_SelectedEntity; }
-    void SetSelectedEntity(Entity* entity) { m_SelectedEntity = entity; }
-
-    // Looked at entity (Debug)
-    // Looked at entity (Debug)
-    void SetLookedAtEntity(Entity* entity) { m_LookedAtEntity = entity; }
     
-    // Spawn Position (from Raycast)
+    // Game Mode Control
+    bool IsGameRunning() const { return m_IsGameRunning; }
+
+    // Interaction
+    void SetSelectedEntity(Entity* entity) { m_SelectedEntity = entity; }
+    void SetLookedAtEntity(Entity* entity) { m_LookedAtEntity = entity; }
     void SetSpawnPosition(const glm::vec3& pos) { m_SpawnPosition = pos; }
 
-private:
-    void SpawnEntity(Scene* scene, const std::string& type);
-
-    void SetupLayout();
-    void DrawMenuBar(Scene* scene);
-    void DrawToolbar();
-    void DrawSceneHierarchy(Scene* scene);
-    void DrawInspector();
-    void DrawProjectPanel();
-    void DrawConsolePanel();
-    void DrawPerformanceMetrics(float deltaTime, float fps);
-    void DrawDemoWindow();
-    
+    // Logging
+    void Log(const std::string& msg) { m_ConsoleLogs.push_back(msg); }
+    void ClearLogs() { m_ConsoleLogs.clear(); }
     void ExecuteCommand(const char* command);
 
-public:
-    // Console logging
-    void Log(const std::string& message) { m_ConsoleLogs.push_back(message); }
-    void ClearLogs() { m_ConsoleLogs.clear(); }
-
-private:
-    bool m_Enabled = true;
-    bool m_ShowDemoWindow = false;
-    bool m_ShowSceneHierarchy = true;
-    bool m_ShowInspector = true;
-    bool m_ShowProjectPanel = true;
-    bool m_ShowConsole = true;
-    bool m_ShowPerformance = false;
-
+public: // Members
     Entity* m_SelectedEntity = nullptr;
     Entity* m_LookedAtEntity = nullptr;
     glm::vec3 m_SpawnPosition = glm::vec3(0.0f);
@@ -90,6 +62,30 @@ private:
     // Stream redirection
     std::streambuf* m_OldCoutBuf = nullptr;
     std::unique_ptr<std::streambuf> m_NewCoutBuf;
+
+private:
+    void SetupLayout();
+    void DrawSceneHierarchy(Scene* scene);
+    void DrawInspector();
+    void DrawProjectPanel();
+    void DrawConsolePanel();
+    void DrawPerformanceMetrics(float deltaTime, float fps);
+    void DrawDemoWindow();
+    void DrawToolbar();
+    void DrawOverlay(Scene* scene, Camera* camera);
+    void SpawnEntity(Scene* scene, const std::string& type);
+
+private:
+    bool m_Enabled = true;
+    bool m_IsGameRunning = false;
+
+    // Window States
+    bool m_ShowSceneHierarchy = true;
+    bool m_ShowInspector = true;
+    bool m_ShowProjectPanel = true;
+    bool m_ShowConsole = true;
+    bool m_ShowPerformance = false;
+    bool m_ShowDemoWindow = false;
 };
 
 // Custom streambuf to redirect cout to Editor

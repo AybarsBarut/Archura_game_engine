@@ -204,7 +204,7 @@ void FPSController::HandleMovement(Input* input, Scene* scene, float deltaTime) 
 
         if (hitObject) {
             if (m_VerticalVelocity <= 0.0f && (targetPos.y - playerEyeHeight) >= (objectTopY - 0.5f)) {
-                targetPos.y = objectTopY + playerEyeHeight + 0.001f; // Epsilon ekle (Jitter onlemek icin)
+                targetPos.y = objectTopY + playerEyeHeight + 0.05f; // Epsilon increased to 0.05f to prevent clipping
                 m_VerticalVelocity = 0.0f;
                 m_IsGrounded = true;
             }

@@ -15,6 +15,8 @@
 #include "game/RenderSystem.h"
 #include "game/Weapon.h"
 #include "game/Projectile.h"
+#include "game/PhysicsSystem.h"
+#include "game/ScriptSystem.h"
 #include "editor/Editor.h"
 #include "game/DevConsole.h"
 #include "core/AudioSystem.h"
@@ -119,6 +121,14 @@ int main() {
     // Mermi sistemi
     ProjectileSystem projectileSystem;
 
+    // Fizik Sistemi
+    PhysicsSystem physicsSystem;
+    physicsSystem.Init(&scene);
+
+    // Script Sistemi
+    ScriptSystem scriptSystem;
+    scriptSystem.Init(&scene);
+
     // Dev Console Baslat
     DevConsole::Get().Init();
 
@@ -134,7 +144,43 @@ int main() {
 
     // ... (Inside Loop) ...
 
+    // Spawn Logic Helper
+    auto SpawnPlayer = [&](Entity* playerEntity, int teamId) {
+        std::vector<Entity*> spawnPoints;
+        for (auto& entity : scene.GetEntities()) {
+            auto* sp = entity->GetComponent<SpawnPoint>();
+            if (sp && sp->teamId == teamId) {
+                spawnPoints.push_back(entity.get());
+            }
+        }
 
+        if (spawnPoints.empty()) {
+            std::cout << "No spawn points found for team " << teamId << "!" << std::endl;
+            return;
+        }
+
+        // Shuffle spawn points (Random selection)
+        // Basit random index secimi
+        int idx = rand() % spawnPoints.size();
+        
+        // Cakisma kontrolu yapilabilir ama simdilik rastgele birini secelim
+        // Gelismis versiyonda: Tum noktalari gez, bos olani bul.
+        
+        Entity* spEntity = spawnPoints[idx];
+        auto* spTransform = spEntity->GetComponent<Transform>();
+        auto* playerTransform = playerEntity->GetComponent<Transform>();
+        
+        if (spTransform && playerTransform) {
+            playerTransform->position = spTransform->position;
+            // Hafif yukarida dogsun ki yere dusmesin
+            playerTransform->position.y += 1.0f; 
+            
+            // Rotasyonu da alabiliriz
+            // playerTransform->rotation = spTransform->rotation;
+            
+            std::cout << "Player spawned at Team " << teamId << " point." << std::endl;
+        }
+    };
 
     // ==================== Demo Varliklar ====================
     
@@ -193,6 +239,73 @@ int main() {
         collider->size = glm::vec3(1.0f); // Model boyutu 1x1x1 oldugu icin carpisma kutusu da 1x1x1 (olcek ile carpilacak)
     }
 
+    // Spawn Noktalari Olustur
+    // Team A (Kuzey Tarafi)
+    {
+        Entity* sp = scene.CreateEntity("Spawn_A_1");
+        auto* t = sp->GetComponent<Transform>();
+        t->position = glm::vec3(0, 1, -40); // Kuzey duvara yakin
+        sp->AddComponent<SpawnPoint>()->teamId = 1;
+    }
+    {
+        Entity* sp = scene.CreateEntity("Spawn_A_2");
+        auto* t = sp->GetComponent<Transform>();
+        t->position = glm::vec3(-10, 1, -40);
+        sp->AddComponent<SpawnPoint>()->teamId = 1;
+    }
+    {
+        Entity* sp = scene.CreateEntity("Spawn_A_3");
+        auto* t = sp->GetComponent<Transform>();
+        t->position = glm::vec3(10, 1, -40);
+        sp->AddComponent<SpawnPoint>()->teamId = 1;
+    }
+
+    // Team B (Guney Tarafi)
+    {
+        Entity* sp = scene.CreateEntity("Spawn_B_1");
+        auto* t = sp->GetComponent<Transform>();
+        t->position = glm::vec3(0, 1, 40); // Guney duvara yakin
+        sp->AddComponent<SpawnPoint>()->teamId = 2;
+    }
+    {
+        Entity* sp = scene.CreateEntity("Spawn_B_2");
+        auto* t = sp->GetComponent<Transform>();
+        t->position = glm::vec3(-10, 1, 40);
+        sp->AddComponent<SpawnPoint>()->teamId = 2;
+    }
+    {
+        Entity* sp = scene.CreateEntity("Spawn_B_3");
+        auto* t = sp->GetComponent<Transform>();
+        t->position = glm::vec3(10, 1, 40);
+        sp->AddComponent<SpawnPoint>()->teamId = 2;
+    }
+
+    // Oyuncuyu Spawnla (Simdilik Team A - ID 1)
+    // Ileride takim secim ekrani eklenebilir
+    SpawnPlayer(player, 1);
+
+    // TEST: Physics & Scripting Demo Cube
+    {
+        Entity* cube = scene.CreateEntity("PhysicsCube");
+        auto* mesh = cube->AddComponent<MeshRenderer>();
+        mesh->mesh = Mesh::CreateCube(1.0f);
+        mesh->color = glm::vec3(1.0f, 0.0f, 1.0f); // Magenta
+        
+        auto* t = cube->GetComponent<Transform>();
+        t->position = glm::vec3(0, 10, 0); // High up
+        
+        cube->AddComponent<BoxCollider>()->size = glm::vec3(1.0f);
+        
+        // Add RigidBody (Physics)
+        auto* rb = cube->AddComponent<RigidBody>();
+        rb->mass = 5.0f;
+        rb->useGravity = true;
+
+        // Add Script (Scripting)
+        auto* script = cube->AddComponent<ScriptComponent>();
+        script->className = "Rotator"; // Should rotate while falling
+    }
+
     std::cout << "Scene created with " << scene.GetEntities().size() << " entities." << std::endl;
     std::cout << "\n=== Controls ===" << std::endl;
     std::cout << "  WASD: Move" << std::endl;
@@ -213,6 +326,29 @@ int main() {
 
     // Uzak Oyuncular Haritasi
     std::unordered_map<uint32_t, Entity*> remotePlayers;
+
+    // ==================== Game Loop State ====================
+    struct RoundState {
+        int teamAScore = 0;
+        int teamBScore = 0;
+        int currentRound = 1;
+        float roundTimer = 120.0f; // 2 minutes
+        bool isBuyPhase = true;
+        float buyPhaseTimer = 15.0f; // 15 seconds
+        bool showScoreboard = false;
+        bool showBuyMenu = false;
+    };
+    RoundState roundState;
+
+    // Player Stats for Scoreboard
+    struct PlayerStats {
+        std::string name;
+        int kills = 0;
+        int deaths = 0;
+        int ping = 0;
+    };
+    std::unordered_map<uint32_t, PlayerStats> playerStats;
+    playerStats[myClientID] = { "Player", 0, 0, 0 }; // Local player
 
     // Ag Geri Cagrisi
     network.SetOnPlayerUpdate([&](const PlayerUpdatePacket& packet) {
@@ -271,18 +407,6 @@ int main() {
     // Ag Zamanlayicisi
     float networkTimer = 0.0f;
     const float networkTickRate = 0.05f; // 20 updates per second
-
-    // Bu istemci icin rastgele ID
-    srand((unsigned int)time(0));
-    uint32_t myClientID = rand(); 
-    
-    // Network Callback - Shoot
-    network.SetOnPlayerShoot([&](const PlayerShootPacket& packet) {
-        if (packet.id == myClientID) return;
-
-        Entity* owner = nullptr;
-        auto it = remotePlayers.find(packet.id);
-        if (it != remotePlayers.end()) {
             owner = it->second;
         }
 
@@ -296,6 +420,20 @@ int main() {
         );
     }); 
 
+    // Register Editor Toggle Command (/1)
+    CommandRegistry::Get().RegisterCommand("1", [&](const std::vector<std::string>& args) {
+        bool newState = !editor.IsEnabled();
+        editor.SetEnabled(newState);
+        // Editor acikken de imlec serbest olsun
+        if (newState) {
+            input->SetCursorMode(GLFW_CURSOR_NORMAL);
+            DevConsole::Get().Log("Editor Enabled");
+        } else {
+            input->SetCursorMode(GLFW_CURSOR_DISABLED);
+            DevConsole::Get().Log("Editor Disabled");
+        }
+    });
+
     while (!window->ShouldClose()) {
         float deltaTime = window->GetDeltaTime();
         
@@ -306,8 +444,8 @@ int main() {
         // Giris guncellemesi
         input->Update();
 
-        // F1 tusu ile Gelistirici Konsolu
-        if (input->IsKeyPressed(GLFW_KEY_F1)) {
+        // " (Grave Accent) tusu ile Gelistirici Konsolu
+        if (input->IsKeyPressed(GLFW_KEY_GRAVE_ACCENT)) {
             DevConsole::Get().Toggle();
             // Konsol acildiginda imleci serbest birak
             if (DevConsole::Get().IsOpen()) {
@@ -360,19 +498,30 @@ int main() {
 
         // Oyun mantigi (Duraklatilmadiysa)
         if (!isPaused) {
-            // Ag Guncellemeleri
-            if (network.IsServer()) {
-                network.UpdateServer();
+            // Round Logic
+            if (roundState.isBuyPhase) {
+                roundState.buyPhaseTimer -= deltaTime;
+                if (roundState.buyPhaseTimer <= 0.0f) {
+                    roundState.isBuyPhase = false;
+                    roundState.showBuyMenu = false; // Close buy menu if open
+                    DevConsole::Get().Log("Round Started!");
+                }
             } else {
-                network.UpdateClient();
-            }
-
-            // Oyuncu Guncellemesi Gonder
-            if (network.IsConnected()) {
-                networkTimer += deltaTime;
-                if (networkTimer >= networkTickRate) {
-                    PlayerUpdatePacket packet;
-                    packet.id = myClientID;
+                roundState.roundTimer -= deltaTime;
+                if (roundState.roundTimer <= 0.0f) {
+                    // Time limit reached - Draw or Defending team wins
+                    DevConsole::Get().Log("Time Limit Reached! Round End.");
+                    // Reset Round
+                    roundState.currentRound++;
+                    roundState.roundTimer = 120.0f;
+                    roundState.isBuyPhase = true;
+                    roundState.buyPhaseTimer = 15.0f;
+                    
+                    // Respawn Player
+                    SpawnPlayer(player, 1); // Team A
+                    playerHealthComp->current = 100.0f;
+                    weapon->stats.currentMag = weapon->stats.magSize;
+                }
                     glm::vec3 pos = camera.GetPosition();
                     packet.x = pos.x;
                     packet.y = pos.y - 1.8f; // Ayak pozisyonu (Kamera gozde)
@@ -385,7 +534,8 @@ int main() {
                 }
             }
 
-            // TAB tusu ile Editor ac/kapa (3 saniye bekleme suresi)
+            // TAB tusu ile Editor ac/kapa - KALDIRILDI (Konsol komutu /1 kullaniliyor)
+            /*
             if (input->IsKeyPressed(GLFW_KEY_TAB) && tabCooldown <= 0.0f) {
                 tabCooldown = 3.0f;
                 bool newState = !editor.IsEnabled();
@@ -394,22 +544,6 @@ int main() {
                 if (newState) {
                     input->SetCursorMode(GLFW_CURSOR_NORMAL);
                 } else {
-                    input->SetCursorMode(GLFW_CURSOR_DISABLED);
-                }
-            }
-
-            // FPS kontrolcusu guncellemesi
-            fpsController.Update(input, &scene, deltaTime);
-
-            // Silah sistemi guncellemesi (mermi olusturma ile)
-            if (input->IsMouseButtonDown(GLFW_MOUSE_BUTTON_LEFT) && !editor.IsEnabled()) {
-                if (weaponSystem.TryShoot(weapon, player, &scene, &camera, &projectileSystem)) {
-                    // Paketi Gonder
-                    PlayerShootPacket packet;
-                    packet.id = myClientID;
-                    glm::vec3 pos = camera.GetPosition();
-                    glm::vec3 dir = camera.GetFront();
-                    packet.originX = pos.x;
                     packet.originY = pos.y;
                     packet.originZ = pos.z;
                     packet.dirX = dir.x;
@@ -419,20 +553,6 @@ int main() {
                     
                     network.SendPlayerShoot(packet);
                 }
-            }
-            
-            weaponSystem.Update(player, input, &scene, &camera, &projectileSystem, deltaTime);
-            weaponSystem.UpdateRecoil(weapon, &camera, deltaTime);
-
-            // Mermi sistemi guncellemesi
-            projectileSystem.Update(&scene, deltaTime);
-            
-            // Oyuncu Olum Kontrolu
-            if (playerHealthComp->current <= 0.0f) {
-                // Yeniden dogus mantigi veya Oyun Bitti
-                // Simdilik sadece sifirla
-                playerHealthComp->current = 100.0f;
-                camera.SetPosition(glm::vec3(0.0f, 2.0f, 0.0f));
                 std::cout << "YOU DIED! Respawning..." << std::endl;
             }
         }
@@ -448,6 +568,79 @@ int main() {
         // Editor Arayuzu (ImGui)
         editor.BeginFrame();
         
+        // Round Info Overlay (Top Center)
+        {
+            ImGui::SetNextWindowPos(ImVec2(window->GetWidth() * 0.5f, 50.0f), ImGuiCond_Always, ImVec2(0.5f, 0.0f));
+            ImGui::SetNextWindowBgAlpha(0.5f);
+            ImGui::Begin("RoundInfo", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav);
+            
+            ImGui::Text("Team A: %d  |  Round %d  |  Team B: %d", roundState.teamAScore, roundState.currentRound, roundState.teamBScore);
+            
+            if (roundState.isBuyPhase) {
+                ImGui::TextColored(ImVec4(0, 1, 0, 1), "Buy Phase: %.1f", roundState.buyPhaseTimer);
+            } else {
+                ImGui::TextColored(ImVec4(1, 0.5f, 0, 1), "Time: %.1f", roundState.roundTimer);
+            }
+            ImGui::End();
+        }
+
+        // Scoreboard
+        if (roundState.showScoreboard) {
+            ImGui::SetNextWindowPos(ImVec2(window->GetWidth() * 0.5f, window->GetHeight() * 0.5f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+            ImGui::SetNextWindowSize(ImVec2(600, 400));
+            ImGui::Begin("Scoreboard", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
+            
+            ImGui::Columns(4, "ScoreColumns");
+            ImGui::Text("Name"); ImGui::NextColumn();
+            ImGui::Text("Kills"); ImGui::NextColumn();
+            ImGui::Text("Deaths"); ImGui::NextColumn();
+            ImGui::Text("Ping"); ImGui::NextColumn();
+            ImGui::Separator();
+
+            for (const auto& [id, stats] : playerStats) {
+                ImGui::Text("%s", stats.name.c_str()); ImGui::NextColumn();
+                ImGui::Text("%d", stats.kills); ImGui::NextColumn();
+                ImGui::Text("%d", stats.deaths); ImGui::NextColumn();
+                ImGui::Text("%d", stats.ping); ImGui::NextColumn();
+            }
+            
+            ImGui::End();
+        }
+
+        // Buy Menu
+        if (roundState.showBuyMenu) {
+            ImGui::SetNextWindowPos(ImVec2(window->GetWidth() * 0.5f, window->GetHeight() * 0.5f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+            ImGui::SetNextWindowSize(ImVec2(500, 400));
+            ImGui::Begin("Buy Menu", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
+            
+            ImGui::Text("Select Weapon:");
+            ImGui::Separator();
+
+            if (ImGui::Button("Rifle (AK-47)", ImVec2(-1, 40))) {
+                weapon->type = WeaponType::Rifle;
+                weapon->stats = { 30.0f, 600.0f, 0.1f, 2.0f, 30, 30 }; // Rifle stats
+                DevConsole::Get().Log("Bought Rifle");
+            }
+            if (ImGui::Button("Pistol (Glock)", ImVec2(-1, 40))) {
+                weapon->type = WeaponType::Pistol;
+                weapon->stats = { 15.0f, 400.0f, 0.2f, 1.5f, 12, 12 }; // Pistol stats
+                DevConsole::Get().Log("Bought Pistol");
+            }
+            if (ImGui::Button("Shotgun (Nova)", ImVec2(-1, 40))) {
+                weapon->type = WeaponType::Shotgun;
+                weapon->stats = { 100.0f, 1000.0f, 1.0f, 3.0f, 8, 8 }; // Shotgun stats
+                DevConsole::Get().Log("Bought Shotgun");
+            }
+            
+            ImGui::Separator();
+            if (ImGui::Button("Close", ImVec2(-1, 30))) {
+                roundState.showBuyMenu = false;
+                input->SetCursorMode(GLFW_CURSOR_DISABLED);
+            }
+
+            ImGui::End();
+        }
+
         // Duraklatma Menusu Mantigi
         if (isPaused) {
             ImGui::SetNextWindowPos(ImVec2(window->GetWidth() * 0.5f, window->GetHeight() * 0.5f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
@@ -629,25 +822,6 @@ int main() {
             // Can bari (sol alt)
             hudRenderer.DrawHealthBar(playerHealthComp->current, playerHealthComp->max, 40.0f, 50.0f, 300.0f, 30.0f);
             
-            hudRenderer.EndHUD();
-        }
-        
-        editor.EndFrame();
-        
-        // Dev Console Cizimi (En ust katman)
-        DevConsole::Get().Render();
-        
-        renderer->EndFrame();
-
-        // Pencere guncellemesi
-        window->Update();
-
-        // FPS bilgisini goster (1 saniyede bir)
-        static float fpsTimer = 0.0f;
-        fpsTimer += deltaTime;
-        if (fpsTimer >= 1.0f) {
-            std::cout << "FPS: " << window->GetFPS() 
-                      << " | Frame Time: " << (deltaTime * 1000.0f) << "ms"
                       << " | Camera Pos: (" << camera.GetPosition().x << ", " 
                       << camera.GetPosition().y << ", " << camera.GetPosition().z << ")"
                       << std::endl;

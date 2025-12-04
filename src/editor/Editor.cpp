@@ -70,11 +70,11 @@ void Editor::Shutdown() {
 }
 
 void Editor::BeginFrame() {
-    if (!m_Enabled) return;
-
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
+
+    if (!m_Enabled) return;
 
     // Dockspace (tum pencere)
     // ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_PassthroughCentralNode;
@@ -119,46 +119,8 @@ void Editor::SetupLayout() {
 }
 
 void Editor::EndFrame() {
-    if (!m_Enabled) return;
-
-    ImGui::Render();
-    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-}
-
-void Editor::Update(Scene* scene, float deltaTime, float fps) {
-    if (!m_Enabled) return;
-
-    DrawMenuBar(scene);
-    // DrawToolbar();
-
-    if (m_ShowSceneHierarchy) {
-        DrawSceneHierarchy(scene);
-    }
-
-    if (m_ShowInspector) {
-        DrawInspector();
-    }
-
-    if (m_ShowProjectPanel) {
-        DrawProjectPanel();
-    }
-
-    if (m_ShowConsole) {
-        DrawConsolePanel();
-    }
-
-    if (m_ShowPerformance) {
-        DrawPerformanceMetrics(deltaTime, fps);
-    }
-
-    if (m_ShowDemoWindow) {
-        ImGui::ShowDemoWindow(&m_ShowDemoWindow);
-    }
-}
-
-// ... (inside DrawMenuBar)
-void Editor::DrawMenuBar(Scene* scene) {
-    if (ImGui::BeginMainMenuBar()) {
+    if (m_Enabled) {
+        if (ImGui::BeginMainMenuBar()) {
         if (ImGui::BeginMenu("File")) {
             if (ImGui::MenuItem("New Scene", "Ctrl+N")) {}
             if (ImGui::MenuItem("Open Scene", "Ctrl+O")) {}
@@ -225,8 +187,56 @@ void Editor::DrawMenuBar(Scene* scene) {
             ImGui::EndMenu();
         }
 
+        // Play / Stop Button in Menu Bar
+        ImGui::Separator();
+        if (m_IsGameRunning) {
+            if (ImGui::MenuItem("STOP [Esc]")) {
+                m_IsGameRunning = false;
+                Log("Game Stopped.");
+            }
+        } else {
+            if (ImGui::MenuItem("PLAY [F5]")) {
+                m_IsGameRunning = true;
+                Log("Game Started.");
+            }
+        }
+
         ImGui::EndMainMenuBar();
+        }
     }
+
+    ImGui::Render();
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+}
+
+void Editor::DrawOverlay(Scene* scene, Camera* camera) {
+    const float DISTANCE = 10.0f;
+    static int corner = 1; // Top-right
+    ImGuiIO& io = ImGui::GetIO();
+    ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav;
+    
+    if (corner != -1) {
+        window_flags |= ImGuiWindowFlags_NoMove;
+        ImVec2 window_pos = ImVec2((corner & 1) ? io.DisplaySize.x - DISTANCE : DISTANCE, (corner & 2) ? io.DisplaySize.y - DISTANCE : DISTANCE + 20.0f); // +20 for menu bar
+        ImVec2 window_pos_pivot = ImVec2((corner & 1) ? 1.0f : 0.0f, (corner & 2) ? 1.0f : 0.0f);
+        ImGui::SetNextWindowPos(window_pos, ImGuiCond_Always, window_pos_pivot);
+    }
+    
+    ImGui::SetNextWindowBgAlpha(0.35f); // Transparent background
+    if (ImGui::Begin("Overlay", nullptr, window_flags)) {
+        ImGui::Text("Archura Engine Dev");
+        ImGui::Separator();
+        
+        if (camera) {
+            glm::vec3 pos = camera->GetPosition();
+            ImGui::Text("Pos: (%.1f, %.1f, %.1f)", pos.x, pos.y, pos.z);
+            glm::vec3 rot = camera->GetRotation();
+            ImGui::Text("Rot: (%.1f, %.1f, %.1f)", rot.x, rot.y, rot.z);
+        }
+        
+        ImGui::Text("FPS: %.1f", io.Framerate);
+    }
+    ImGui::End();
 }
 
 void Editor::DrawSceneHierarchy(Scene* scene) {
@@ -566,6 +576,22 @@ void Editor::SpawnEntity(Scene* scene, const std::string& type) {
 
     Log("Spawned " + type + " at " + std::to_string(m_SpawnPosition.x) + ", " + std::to_string(m_SpawnPosition.y) + ", " + std::to_string(m_SpawnPosition.z));
     m_SelectedEntity = entity;
+}
+
+void Editor::Update(Scene* scene, float deltaTime, float fps) {
+    if (m_Enabled) {
+        DrawToolbar();
+        
+        if (m_ShowSceneHierarchy) DrawSceneHierarchy(scene);
+        if (m_ShowInspector) DrawInspector();
+        if (m_ShowProjectPanel) DrawProjectPanel();
+        if (m_ShowConsole) DrawConsolePanel();
+        if (m_ShowPerformance) DrawPerformanceMetrics(deltaTime, fps);
+        if (m_ShowDemoWindow) DrawDemoWindow();
+        
+        // Overlay (Pass nullptr for camera for now as we don't have it here)
+        DrawOverlay(scene, nullptr);
+    }
 }
 
 } // namespace Archura
