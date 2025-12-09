@@ -157,8 +157,14 @@ namespace Archura {
             window->Update(); 
             input->Update();
 
-             // --- FIX 2: TAB Key Logic (Instant Switch) ---
-             if (input->IsKeyPressed(GLFW_KEY_TAB)) {
+             // --- FIX 2: TAB Key Logic (Instant Switch with Cooldown) ---
+             static float tabCooldown = 0.0f;
+             if (tabCooldown > 0.0f) {
+                 tabCooldown -= deltaTime;
+             }
+
+             if (input->IsKeyPressed(GLFW_KEY_TAB) && tabCooldown <= 0.0f) {
+                 tabCooldown = 1.0f; // 1 second cooldown
                  devModeActive = !devModeActive;
                  editor.SetEnabled(devModeActive);
                  
