@@ -63,6 +63,66 @@ void Mesh::SetupMesh() {
     glBindVertexArray(0);
 }
 
+
+void Mesh::SetupInstancedAttributes() {
+    if (m_InstancedSetup) return;
+
+    glBindVertexArray(m_VAO);
+    glGenBuffers(1, &m_InstanceVBO);
+    glBindBuffer(GL_ARRAY_BUFFER, m_InstanceVBO);
+    
+    // Mat4 4 tane vec4'ten olusur. Attribute location 4, 5, 6, 7 kullanacagiz.
+    std::size_t vec4Size = sizeof(glm::vec4);
+    
+    for (int i = 0; i < 4; i++) {
+        glEnableVertexAttribArray(4 + i);
+        glVertexAttribPointer(4 + i, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)(i * vec4Size));
+        glVertexAttribDivisor(4 + i, 1); // Her instance icin 1 kez ilerle
+    }
+
+    glBindVertexArray(0);
+    m_InstancedSetup = true;
+}
+
+void Mesh::DrawInstanced(Shader* shader, const std::vector<glm::mat4>& models) {
+    if (models.empty()) return;
+
+    if (shader) {
+        shader->Bind();
+        // Instanced cizimde uModel uniform'u yerine attribute kullanilir. 
+        // Shader'in buna uygun olmasi lazim.
+        // Eger shader desteklemiyorsa, normal draw fallback yapilabilir ama performans duser.
+        // Simdilik Shader'in "uUseInstancing" uniformu oldugunu varsayalim veya
+        // Shader kodunu da guncelleyelim.
+        shader->SetInt("uUseInstancing", 1); 
+    }
+
+    if (!m_InstancedSetup) {
+        SetupInstancedAttributes();
+    }
+
+    glBindVertexArray(m_VAO);
+    glBindBuffer(GL_ARRAY_BUFFER, m_InstanceVBO);
+
+    // Buffer verisini guncelle
+    // Eger kapasite yeterliyse glBufferSubData, degilse glBufferData
+    size_t dataSize = models.size() * sizeof(glm::mat4);
+    if (dataSize > m_InstanceCapacity) {
+        glBufferData(GL_ARRAY_BUFFER, dataSize, models.data(), GL_DYNAMIC_DRAW);
+        m_InstanceCapacity = dataSize;
+    } else {
+        glBufferSubData(GL_ARRAY_BUFFER, 0, dataSize, models.data());
+    }
+
+    glDrawElementsInstanced(GL_TRIANGLES, static_cast<unsigned int>(m_Indices.size()), GL_UNSIGNED_INT, 0, static_cast<unsigned int>(models.size()));
+    
+    glBindVertexArray(0);
+    
+    if (shader) {
+        shader->SetInt("uUseInstancing", 0); // Reset
+    }
+}
+
 void Mesh::Draw(Shader* shader) {
     if (shader) {
         shader->Bind();

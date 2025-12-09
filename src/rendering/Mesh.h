@@ -40,6 +40,7 @@ public:
     Mesh& operator=(const Mesh&) = delete;
 
     void Draw(Shader* shader);
+    void DrawInstanced(Shader* shader, const std::vector<glm::mat4>& models);
 
     // Procedural mesh oluşturucular
     static Mesh* CreateCube(float size = 1.0f);
@@ -54,6 +55,7 @@ public:
 
 private:
     void SetupMesh();
+    void SetupInstancedAttributes();
 
 private:
     std::vector<Vertex> m_Vertices;
@@ -62,6 +64,10 @@ private:
     unsigned int m_VAO;  // Vertex Array Object
     unsigned int m_VBO;  // Vertex Buffer Object
     unsigned int m_EBO;  // Element Buffer Object
+    
+    unsigned int m_InstanceVBO = 0; // For instanced rendering
+    size_t m_InstanceCapacity = 0;  // To avoid reallocating VBO constantly
+    bool m_InstancedSetup = false;
 };
 
 } // namespace Archura

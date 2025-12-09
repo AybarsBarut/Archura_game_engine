@@ -10,38 +10,39 @@ endif()
 
 project(ArchuraEngine VERSION 1.0.0 LANGUAGES CXX)
 
-# C++ standardı
+# C++ Standard
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-# Output dizinleri
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+# Optimization Flags (High Performance)
+if(MSVC)
+    add_compile_options(/O2 /Oi /Ot /Oy /GL /fp:fast)
+    add_link_options(/LTCG)
+    add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
+else()
+    add_compile_options(-O3 -march=native -ffast-math -flto)
+endif()
+
+# Output Directories
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin/${CMAKE_BUILD_TYPE})
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
-# Bağımlılıkları bul
+# Dependencies
 find_package(OpenGL REQUIRED)
 
-# Policy settings for external projects
-set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
-set(CMAKE_POLICY_DEFAULT_CMP0091 NEW)
-
-# GLFW - Platform independent window ve input
+# GLFW
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 add_subdirectory(external/glfw)
 
-# GLM - Header-only library
-# add_subdirectory(external/glm)  # GLM modern CMake ile sorun çıkarıyor
-# GLM header-only olduğu için sadece include yeterli
-
-# GLAD - OpenGL fonksiyon yükleyici
+# GLAD
 add_library(glad external/glad/src/glad.c)
 target_include_directories(glad PUBLIC external/glad/include)
 
-# ImGui - Editor UI
+# ImGui
 set(IMGUI_DIR external/imgui)
 add_library(imgui STATIC
     ${IMGUI_DIR}/imgui.cpp
@@ -58,7 +59,7 @@ target_include_directories(imgui PUBLIC
 )
 target_link_libraries(imgui PUBLIC glfw OpenGL::GL)
 
-# Engine kaynak dosyaları
+# Engine Sources
 file(GLOB_RECURSE ENGINE_SOURCES 
     "src/core/*.cpp"
     "src/rendering/*.cpp"
@@ -79,59 +80,39 @@ file(GLOB_RECURSE ENGINE_HEADERS
     "src/network/*.h"
 )
 
-# Ana executable
+# Main Executable
 add_executable(${PROJECT_NAME} 
     src/main.cpp
     ${ENGINE_SOURCES}
     ${ENGINE_HEADERS}
 )
 
-# Include dizinleri
+# Include Directories
 target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
     ${CMAKE_CURRENT_SOURCE_DIR}/external/stb
     ${CMAKE_CURRENT_SOURCE_DIR}/external/glm
 )
 
-# Kütüphaneleri bağla
+# Linking
 target_link_libraries(${PROJECT_NAME} PRIVATE
     OpenGL::GL
     glfw
     glad
     imgui
-    imgui
     ws2_32
     winmm
 )
 
-# Windows için özel ayarlar
-if(WIN32)
-    target_compile_definitions(${PROJECT_NAME} PRIVATE _CRT_SECURE_NO_WARNINGS)
-    # Console penceresi istenmiyorsa:
-    # set_target_properties(${PROJECT_NAME} PROPERTIES WIN32_EXECUTABLE TRUE)
-endif()
-
-# Asset dosyalarını çalıştırılabilir yanına kopyala
+# Asset Copying
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
     ${CMAKE_SOURCE_DIR}/assets $<TARGET_FILE_DIR:${PROJECT_NAME}>/assets
 )
 
-# Compiler uyarıları
-if(MSVC)
-    target_compile_options(${PROJECT_NAME} PRIVATE /W4)
-else()
-    target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra -Wpedantic)
-endif()
-
-# Launcher Executable
+# Launcher
 add_executable(ArchuraLauncher src/launcher/Launcher.cpp)
 target_link_libraries(ArchuraLauncher PRIVATE ws2_32)
-
-# Çıktı dizinlerini ayarla
-set_target_properties(${PROJECT_NAME} PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/${CMAKE_BUILD_TYPE}"
-)
 set_target_properties(ArchuraLauncher PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/${CMAKE_BUILD_TYPE}"
 )

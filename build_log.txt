@@ -1,41 +1,12 @@
-.NET Framework i├ºin MSBuild s├╝r├╝m 17.14.14+a129329f1
+.NET Framework için MSBuild sürüm 17.14.14+a129329f1
 
   glad.vcxproj -> C:\Users\4RCHURA\Desktop\Archura_game_engine\build\lib\Release\glad.lib
   glfw.vcxproj -> C:\Users\4RCHURA\Desktop\Archura_game_engine\build\lib\Release\glfw3.lib
   imgui.vcxproj -> C:\Users\4RCHURA\Desktop\Archura_game_engine\build\lib\Release\imgui.lib
-  Editor.cpp
-C:\Users\4RCHURA\Desktop\Archura_game_engine\src\editor\Editor.h(46,33): error C2653: 'glm': bir s─▒n─▒f veya ad alan─▒ ad─▒ de─ƒil [C:\Users\4RCHURA\Desktop\Archura_game_engine\build\ArchuraEngine.vcxproj]
-  ('../src/editor/Editor.cpp' kaynak dosyas─▒ derleniyor)
-  
-C:\Users\4RCHURA\Desktop\Archura_game_engine\src\editor\Editor.h(46,27): error C4430: t├╝r belirticisi eksik - int varsay─▒ld─▒. Not: C++ varsay─▒lan int deste─ƒi i├ºermez [C:\Users\4RCHURA\Desktop\Archura_game_engine\build\ArchuraEngine.vcxproj]
-  ('../src/editor/Editor.cpp' kaynak dosyas─▒ derleniyor)
-  
-C:\Users\4RCHURA\Desktop\Archura_game_engine\src\editor\Editor.h(46,42): error C2143: s├Âzdizimi hatas─▒: ',' eksik ('&' ├Âncesinde) [C:\Users\4RCHURA\Desktop\Archura_game_engine\build\ArchuraEngine.vcxproj]
-  ('../src/editor/Editor.cpp' kaynak dosyas─▒ derleniyor)
-  
-C:\Users\4RCHURA\Desktop\Archura_game_engine\src\editor\Editor.h(79,5): error C2653: 'glm': bir s─▒n─▒f veya ad alan─▒ ad─▒ de─ƒil [C:\Users\4RCHURA\Desktop\Archura_game_engine\build\ArchuraEngine.vcxproj]
-  ('../src/editor/Editor.cpp' kaynak dosyas─▒ derleniyor)
-  
-C:\Users\4RCHURA\Desktop\Archura_game_engine\src\editor\Editor.h(79,15): error C3646: 'm_SpawnPosition': bilinmeyen ge├ºersiz k─▒lma belirticisi [C:\Users\4RCHURA\Desktop\Archura_game_engine\build\ArchuraEngine.vcxproj]
-  ('../src/editor/Editor.cpp' kaynak dosyas─▒ derleniyor)
-  
-C:\Users\4RCHURA\Desktop\Archura_game_engine\src\editor\Editor.h(79,31): error C2059: s├Âzdizimi hatas─▒: '=' [C:\Users\4RCHURA\Desktop\Archura_game_engine\build\ArchuraEngine.vcxproj]
-  ('../src/editor/Editor.cpp' kaynak dosyas─▒ derleniyor)
-  
-C:\Users\4RCHURA\Desktop\Archura_game_engine\src\editor\Editor.h(79,33): error C2653: 'glm': bir s─▒n─▒f veya ad alan─▒ ad─▒ de─ƒil [C:\Users\4RCHURA\Desktop\Archura_game_engine\build\ArchuraEngine.vcxproj]
-  ('../src/editor/Editor.cpp' kaynak dosyas─▒ derleniyor)
-  
-C:\Users\4RCHURA\Desktop\Archura_game_engine\src\editor\Editor.h(79,48): error C2238: ';' ├Âncesinde beklenmeyen belirte├ºler [C:\Users\4RCHURA\Desktop\Archura_game_engine\build\ArchuraEngine.vcxproj]
-  ('../src/editor/Editor.cpp' kaynak dosyas─▒ derleniyor)
-  
-C:\Users\4RCHURA\Desktop\Archura_game_engine\src\editor\Editor.h(46,51): error C2065: 'm_SpawnPosition': bildirimi yap─▒lmam─▒┼ƒ tan─▒mlay─▒c─▒ [C:\Users\4RCHURA\Desktop\Archura_game_engine\build\ArchuraEngine.vcxproj]
-  ('../src/editor/Editor.cpp' kaynak dosyas─▒ derleniyor)
-  
-C:\Users\4RCHURA\Desktop\Archura_game_engine\src\editor\Editor.h(46,69): error C2065: 'pos': bildirimi yap─▒lmam─▒┼ƒ tan─▒mlay─▒c─▒ [C:\Users\4RCHURA\Desktop\Archura_game_engine\build\ArchuraEngine.vcxproj]
-  ('../src/editor/Editor.cpp' kaynak dosyas─▒ derleniyor)
-  
-C:\Users\4RCHURA\Desktop\Archura_game_engine\src\editor\Editor.cpp(533,7): error C2181: e┼ƒle┼ƒen if olmayan ge├ºersiz else [C:\Users\4RCHURA\Desktop\Archura_game_engine\build\ArchuraEngine.vcxproj]
-C:\Users\4RCHURA\Desktop\Archura_game_engine\src\editor\Editor.cpp(546,27): error C2065: 'm_SpawnPosition': bildirimi yap─▒lmam─▒┼ƒ tan─▒mlay─▒c─▒ [C:\Users\4RCHURA\Desktop\Archura_game_engine\build\ArchuraEngine.vcxproj]
-C:\Users\4RCHURA\Desktop\Archura_game_engine\src\editor\Editor.cpp(569,53): error C2065: 'm_SpawnPosition': bildirimi yap─▒lmam─▒┼ƒ tan─▒mlay─▒c─▒ [C:\Users\4RCHURA\Desktop\Archura_game_engine\build\ArchuraEngine.vcxproj]
-C:\Users\4RCHURA\Desktop\Archura_game_engine\src\editor\Editor.cpp(569,96): error C2065: 'm_SpawnPosition': bildirimi yap─▒lmam─▒┼ƒ tan─▒mlay─▒c─▒ [C:\Users\4RCHURA\Desktop\Archura_game_engine\build\ArchuraEngine.vcxproj]
-C:\Users\4RCHURA\Desktop\Archura_game_engine\src\editor\Editor.cpp(569,139): error C2065: 'm_SpawnPosition': bildirimi yap─▒lmam─▒┼ƒ tan─▒mlay─▒c─▒ [C:\Users\4RCHURA\Desktop\Archura_game_engine\build\ArchuraEngine.vcxproj]
+  main.cpp
+C:\Users\4RCHURA\Desktop\Archura_game_engine\src\main.cpp(465,5): warning C4100: 'args': başvurulmayan parametre [C:\Users\4RCHURA\Desktop\Archura_game_engine\build\ArchuraEngine.vcxproj]
+C:\Users\4RCHURA\Desktop\Archura_game_engine\src\main.cpp(140,18): warning C4101: 'weaponSystem': yerel değişken başvurusu kaldırıldı [C:\Users\4RCHURA\Desktop\Archura_game_engine\build\ArchuraEngine.vcxproj]
+C:\Users\4RCHURA\Desktop\Archura_game_engine\src\main.cpp(432,17): warning C4189: 'networkTickRate': yerel değişken başlatıldı ancak başvurulmadı [C:\Users\4RCHURA\Desktop\Archura_game_engine\build\ArchuraEngine.vcxproj]
+     C:/Users/4RCHURA/Desktop/Archura_game_engine/build/lib/Release/ArchuraEngine.lib kitaplıgı ve C:/Users/4RCHURA/Desktop/Archura_game_engine/build/lib/Release/ArchuraEngine.exp nesnesi olusturuluyor
+  ArchuraEngine.vcxproj -> C:\Users\4RCHURA\Desktop\Archura_game_engine\build\bin\Release\ArchuraEngine.exe
+  ArchuraLauncher.vcxproj -> C:\Users\4RCHURA\Desktop\Archura_game_engine\build\bin\Release\ArchuraLauncher.exe

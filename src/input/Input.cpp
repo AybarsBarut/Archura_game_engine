@@ -68,10 +68,18 @@ bool Input::IsMouseButtonReleased(int button) const {
 
 void Input::SetCursorMode(int mode) {
     glfwSetInputMode(m_Window, GLFW_CURSOR, mode);
-    m_CursorLocked = (mode == GLFW_CURSOR_DISABLED);
+    bool locked = (mode == GLFW_CURSOR_DISABLED);
     
-    if (m_CursorLocked) {
-        m_FirstMouse = true; // Ani degisim sicramasini onle
+    if (locked != m_CursorLocked) {
+        m_CursorLocked = locked;
+        if (m_CursorLocked) {
+            m_FirstMouse = true; // Sifirla ki kamera ziplamasin
+            
+            // Mevcut pozisyonu last olarak set et
+            double xPos, yPos;
+            glfwGetCursorPos(m_Window, &xPos, &yPos);
+            m_LastMousePosition = glm::vec2((float)xPos, (float)yPos);
+        }
     }
 }
 

@@ -1,0 +1,18 @@
+.NET Framework i├ºin MSBuild s├╝r├╝m 17.14.14+a129329f1
+
+  glad.vcxproj -> C:\Users\4RCHURA\Desktop\Archura_game_engine\build\lib\Release\glad.lib
+  glfw.vcxproj -> C:\Users\4RCHURA\Desktop\Archura_game_engine\build\lib\Release\glfw3.lib
+  imgui.vcxproj -> C:\Users\4RCHURA\Desktop\Archura_game_engine\build\lib\Release\imgui.lib
+  Application.cpp
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.26100.0\shared\minwindef.h(130,9): warning C4005: 'APIENTRY': makro yeniden tan─▒mlama [C:\Users\4RCHURA\Desktop\Archura_game_engine\build\ArchuraEngine.vcxproj]
+  ('../src/core/Application.cpp' kaynak dosyas─▒ derleniyor)
+      C:\Users\4RCHURA\Desktop\Archura_game_engine\external\glfw\include\GLFW\glfw3.h(123,11):
+      ├Ânceki 'APIENTRY' tan─▒m─▒na bak─▒n
+  
+  RenderSystem.cpp
+  Mesh.cpp
+     C:/Users/4RCHURA/Desktop/Archura_game_engine/build/lib/Release/ArchuraEngine.lib kitapl─▒g─▒ ve C:/Users/4RCHURA/Desktop/Archura_game_engine/build/lib/Release/ArchuraEngine.exp nesnesi olusturuluyor
+  Kod ├╝retiliyor
+  Kodun ├╝retilmesi tamamland─▒
+  ArchuraEngine.vcxproj -> C:\Users\4RCHURA\Desktop\Archura_game_engine\build\bin\Release\ArchuraEngine.exe
+  ArchuraLauncher.vcxproj -> C:\Users\4RCHURA\Desktop\Archura_game_engine\build\bin\Release\ArchuraLauncher.exe
