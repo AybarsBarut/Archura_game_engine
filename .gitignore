@@ -47,3 +47,9 @@ Makefile
 # OS
 .DS_Store
 Thumbs.db
+
+# Logs
+*.log
+*_log.txt
+*_log_*.txt
+*.tlog
