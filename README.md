@@ -71,4 +71,3 @@ MIT License - Detaylar için `LICENSE` dosyasına bakınız.
 ## İletişim
 
 *   **GitHub**: [@aybarsbarut](https://github.com/aybarsbarut)
-*   **Email**: barutaybarsfahri@gmail.com
