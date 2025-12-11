@@ -6,7 +6,7 @@ namespace Archura {
 
     void ScriptSystem::Init(Scene* scene) {
         m_Scene = scene;
-        std::cout << "Script System Initialized (Mock .NET Host)" << std::endl;
+        // std::cout << "Script System Initialized (Mock .NET Host)" << std::endl;
         DevConsole::Get().Log("Script System Initialized");
     }
 

@@ -8,6 +8,7 @@
 #include <sstream>
 #include <string>
 #include <iostream>
+#include <ufbx.h>
 
 namespace Archura {
 
@@ -646,8 +647,96 @@ Mesh* Mesh::LoadFromOBJ(const std::string& path) {
     
     if (vertices.empty()) return nullptr;
     
-    std::cout << "Loaded OBJ: " << path << " (" << vertices.size() << " vertices)" << std::endl;
+    // std::cout << "Loaded OBJ: " << path << " (" << vertices.size() << " vertices)" << std::endl;
     return new Mesh(vertices, indices);
 }
+
+Mesh* Mesh::LoadFromFBX(const std::string& path) {
+    ufbx_load_opts opts = { 0 }; 
+    ufbx_error error;
+    ufbx_scene* scene = ufbx_load_file(path.c_str(), &opts, &error);
+
+    if (!scene) {
+        std::cerr << "Failed to load FBX: " << path << " Error: " << error.description.data << std::endl;
+        return nullptr;
+    }
+
+    std::vector<Vertex> vertices;
+    std::vector<unsigned int> indices;
+    size_t indexOffset = 0;
+
+    // Sahnedeki tum meshleri tek bir Mesh objesinde birlestirelim
+    for (size_t i = 0; i < scene->nodes.count; i++) {
+        ufbx_node* node = scene->nodes.data[i];
+        if (node->mesh) {
+            ufbx_mesh* mesh = node->mesh;
+            
+            // Transformu hesaba katalim mi? Simdilik local space alalim, 
+            // ama ideal olarak node->geometry_to_world kullanmaliyiz.
+            // Karmasiklik olmamasi icin raw mesh verisini alalim.
+            
+            // Indeksleri isle
+            // ufbx yuzleri (faces) saklar. Genelde ucgenleme gerekir ama ufbx bunu kolaylastirir.
+            // Basitce tum yuzleri dolasip ucgenlere bolelim.
+            
+            // Onceden vertexleri duzlestirmek yerine, her bir face corner icin vertex olusturacagiz.
+            // Bu duplicate vertex yaratabilir ama en guvenli yoldur.
+            
+            // Daha iyi yol: ufbx_triangulate_face
+            std::vector<uint32_t> tri_indices;
+            tri_indices.resize(mesh->max_face_triangles * 3);
+
+            for (size_t fi = 0; fi < mesh->faces.count; fi++) {
+                ufbx_face face = mesh->faces.data[fi];
+                size_t num_tris = ufbx_triangulate_face(tri_indices.data(), tri_indices.size(), mesh, face);
+
+                for (size_t ti = 0; ti < num_tris; ti++) {
+                    for (int k = 0; k < 3; k++) {
+                        uint32_t ix = tri_indices[ti * 3 + k];
+                        
+                        Vertex v;
+                        
+                        // Position
+                        ufbx_vec3 pos = ufbx_get_vertex_vec3(&mesh->vertex_position, ix);
+                        v.position = glm::vec3(pos.x, pos.y, pos.z);
+
+                        // Normal
+                        if (mesh->vertex_normal.exists) {
+                            ufbx_vec3 norm = ufbx_get_vertex_vec3(&mesh->vertex_normal, ix);
+                            v.normal = glm::vec3(norm.x, norm.y, norm.z);
+                        }
+
+                        // UV
+                        if (mesh->vertex_uv.exists) {
+                            ufbx_vec2 uv = ufbx_get_vertex_vec2(&mesh->vertex_uv, ix);
+                            v.texCoords = glm::vec2(uv.x, uv.y);
+                        }
+
+                        // Vertex Color (Optional)
+                        if (mesh->vertex_color.exists) {
+                            ufbx_vec4 col = ufbx_get_vertex_vec4(&mesh->vertex_color, ix);
+                            v.color = glm::vec3(col.x, col.y, col.z);
+                        }
+
+                        vertices.push_back(v);
+                        indices.push_back((unsigned int)(indexOffset + vertices.size() - 1));
+                    }
+                }
+            }
+            // indexOffset += ... (Tek dongude hallettik, indisler surekli artiyor)
+        }
+    }
+
+    ufbx_free_scene(scene);
+
+    if (vertices.empty()) {
+        std::cerr << "FBX loaded but no mesh data found: " << path << std::endl;
+        return nullptr;
+    }
+
+    // std::cout << "Loaded FBX: " << path << " (" << vertices.size() << " vertices)" << std::endl;
+    return new Mesh(vertices, indices);
+}
+
 
 } // namespace Archura

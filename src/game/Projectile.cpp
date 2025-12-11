@@ -50,7 +50,7 @@ void ProjectileSystem::UpdateProjectile(Entity* entity, Projectile* proj, float 
         proj->fuseTimer -= deltaTime;
         if (proj->fuseTimer <= 0.0f) {
             // Patla!
-            std::cout << "BOOM! Grenade exploded." << std::endl;
+            // std::cout << "BOOM! Grenade exploded." << std::endl;
             // Alan hasari mantigi burada (basitlestirilmis: sadece yok et)
             // Gercek bir uygulamada, tum varliklara olan mesafeyi kontrol ederdik
             m_ProjectilesToDestroy.push_back(entity);
@@ -126,7 +126,7 @@ bool ProjectileSystem::CheckCollision(Entity* projectile, Scene* scene) {
                 health->current -= proj->damage;
                 if (health->current < 0) health->current = 0;
                 
-                std::cout << "Hit Entity " << target->GetName() << "! Damage: " << proj->damage << " Health: " << health->current << std::endl;
+                // std::cout << "Hit Entity " << target->GetName() << "! Damage: " << proj->damage << " Health: " << health->current << std::endl;
                 return true;
             }
         }
@@ -190,7 +190,7 @@ Entity* ProjectileSystem::SpawnProjectile(
         proj->lifetime = 5.0f;
     }
 
-    std::cout << "Spawned projectile at " << position.x << ", " << position.y << ", " << position.z << std::endl;
+    // std::cout << "Spawned projectile at " << position.x << ", " << position.y << ", " << position.z << std::endl;
 
     return projectile;
 }

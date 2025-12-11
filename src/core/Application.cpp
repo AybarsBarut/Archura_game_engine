@@ -1,6 +1,8 @@
 #include "core/Application.h"
 #include "Engine.h"
 #include "Window.h"
+#include "ImGuiLayer.h"
+#include "../game/PauseMenu.h"
 #include "input/Input.h"
 #include "rendering/Mesh.h"
 #include "rendering/Renderer.h"
@@ -62,7 +64,8 @@ namespace Archura {
         DevConsole::Get().Init();
 
         // 5. Editor / ImGui
-        // Editor init moved to Run() to keep local scope or we can move it to member if needed later
+        m_ImGuiLayer = std::make_unique<ImGuiLayer>();
+        m_ImGuiLayer->Init(m_Window.get());
         
         return true;
     }
@@ -90,7 +93,11 @@ namespace Archura {
         
         // --- FIX 1: Start in Game Mode (Cursor Locked, Editor Hidden) ---
         bool devModeActive = false;
-        editor.SetEnabled(false);
+        bool isPaused = false; // Pause Durumu
+        
+        // Editor'u her zaman aktif tutacagiz (ImGui Context'i sursun diye),
+        // ama cizim yapip yapmayacagina asagida karar verecegiz.
+        editor.SetEnabled(true); 
 
         // Player Setup
         Entity* player = scene.CreateEntity("Player");
@@ -107,6 +114,9 @@ namespace Archura {
         ScriptSystem scriptSystem;
         scriptSystem.Init(&scene);
         ProjectileSystem projectileSystem;
+
+        // Initialize PauseMenu
+        PauseMenu pauseMenu;
 
         // --- MAP GENERATION (Optimized) ---
         // TODO: Move this to InstancedRenderer later
@@ -157,53 +167,58 @@ namespace Archura {
             window->Update(); 
             input->Update();
 
-             // --- FIX 2: TAB Key Logic (Instant Switch with Cooldown) ---
-             static float tabCooldown = 0.0f;
-             if (tabCooldown > 0.0f) {
-                 tabCooldown -= deltaTime;
-             }
-
-             if (input->IsKeyPressed(GLFW_KEY_TAB) && tabCooldown <= 0.0f) {
-                 tabCooldown = 1.0f; // 1 second cooldown
-                 devModeActive = !devModeActive;
-                 editor.SetEnabled(devModeActive);
-                 
-                 if (devModeActive) { // Switched TO Dev Mode
-                     input->SetCursorMode(GLFW_CURSOR_NORMAL);
-                     std::cout << "Switched to Developer Mode" << std::endl;
-                 } else { // Switched TO Game Mode
-                     input->SetCursorMode(GLFW_CURSOR_DISABLED);
-                     std::cout << "Switched to Game Mode" << std::endl;
-                 }
-             }
-
-             // --- FIX 3: ESC Logic (Prevent Crash/Immediate Exit) ---
-             if (input->IsKeyPressed(GLFW_KEY_ESCAPE)) {
-                 if (input->IsCursorLocked()) {
-                     // Game Mode -> Pause/Menu Mode (Unlock Cursor)
-                     input->SetCursorMode(GLFW_CURSOR_NORMAL);
-                 } else {
-                     // Cursor Unlocked -> Back to Game (Lock) only if NO dev mode
-                     if (!devModeActive) {
+            // --- INPUT HANDLING (Simplified) ---
+            static bool escHandled = false;
+            static bool tabHandled = false;
+            
+            // 1. ESC Key: Toggle Pause
+            if (input->IsKeyPressed(GLFW_KEY_ESCAPE)) {
+                 if (!escHandled) {
+                     isPaused = !isPaused;
+                     escHandled = true;
+                     
+                     // Cursor State Logic
+                     if (isPaused) {
+                         input->SetCursorMode(GLFW_CURSOR_NORMAL);
+                     } else {
                          input->SetCursorMode(GLFW_CURSOR_DISABLED);
                      }
-                     // If Dev Mode is Active, ESC might do nothing or close a window, 
-                     // but explicitly deciding NOT to quit app here. 
                  }
+            } else {
+                escHandled = false;
             }
 
-            // Game Mode Fallback: Click to capture cursor
-            if (!devModeActive && input->IsMouseButtonPressed(GLFW_MOUSE_BUTTON_LEFT) && !input->IsCursorLocked()) {
-                // Check if we are hovering over an ImGui window? 
-                // Since editor is disabled, we are not. Capture cursor.
-                if (!editor.IsEnabled()) {
-                     input->SetCursorMode(GLFW_CURSOR_DISABLED);
+            // 2. TAB Key: Toggle Dev Mode
+            if (input->IsKeyPressed(GLFW_KEY_TAB)) {
+                if (!tabHandled) {
+                    devModeActive = !devModeActive;
+                    tabHandled = true;
+                    
+                    if (devModeActive) { 
+                        input->SetCursorMode(GLFW_CURSOR_NORMAL);
+                    } else {
+                        // Returns to game mode defaults
+                         if (!isPaused) input->SetCursorMode(GLFW_CURSOR_DISABLED);
+                    }
+                }
+            } else {
+                tabHandled = false;
+            }
+
+            // 3. Mouse Clicking Logic (Only in Game Mode)
+            if (!isPaused && !devModeActive) {
+                if (input->IsMouseButtonPressed(GLFW_MOUSE_BUTTON_LEFT)) {
+                    // Lock cursor if clicked in window
+                    input->SetCursorMode(GLFW_CURSOR_DISABLED);
                 }
             }
 
-            fpsController.Update(input, &scene, deltaTime);
-            physicsSystem.Update(deltaTime);
-            scriptSystem.Update(deltaTime);
+            // Game Update Loop (Pause ise durdur)
+            if (!isPaused) {
+                fpsController.Update(input, &scene, deltaTime);
+                physicsSystem.Update(deltaTime); 
+                scriptSystem.Update(deltaTime);
+            }
 
             // Network
             if (NetworkManager::Get().IsServer()) {
@@ -223,22 +238,41 @@ namespace Archura {
             // HUD
             if (!devModeActive) {
                 hudRenderer.BeginHUD();
-                hudRenderer.DrawCrosshair();
+                hudRenderer.DrawCrosshair(); 
                 hudRenderer.DrawHealthBar(playerHealth->current, playerHealth->max, 20, 20, 200, 20);
                 hudRenderer.DrawAmmoCounter(weapon->stats.currentMag, weapon->stats.magSize, window->GetWidth() - 220, 20);
                 hudRenderer.EndHUD();
             }
 
-            // --- FIX 4: Call Editor Update ---
+            // --- EDITOR & GUI RENDER ---
+            m_ImGuiLayer->BeginFrame(); 
+            
             if (devModeActive) {
-                editor.BeginFrame(); 
-                // Ensure deltaTime is not zero
+                // Editor modu: Dockspace ve paneller
+                editor.BeginDockSpace();
+                editor.DrawEditorUI();
                 editor.Update(&scene, deltaTime, (deltaTime > 0.0f) ? 1.0f / deltaTime : 0.0f);
-                editor.EndFrame(); 
+            }
+            
+            if (isPaused) {
+                // Ensure cursor is visible
+                input->SetCursorMode(GLFW_CURSOR_NORMAL);
+                
+                // Draw new Pause Menu
+                pauseMenu.Render(isPaused, fpsController, *m_Window);
+                
+                 // Logic check: If menu requested resume (isPaused became false)
+                if (!isPaused) {
+                     input->SetCursorMode(GLFW_CURSOR_DISABLED);
+                }
             }
 
+            m_ImGuiLayer->EndFrame();
+            
             // Swap Buffer handled by window->Update() or internal loop
-        }
+
     }
 
 }
+
+} // namespace Archura

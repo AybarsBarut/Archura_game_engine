@@ -1,9 +1,6 @@
 cmake_minimum_required(VERSION 3.15)
 
-# Suppress policy warnings
-if(POLICY CMP0091)
-  cmake_policy(SET CMP0091 OLD)
-endif()
+
 if(POLICY CMP0077)
   cmake_policy(SET CMP0077 NEW)
 endif()
@@ -59,6 +56,10 @@ target_include_directories(imgui PUBLIC
 )
 target_link_libraries(imgui PUBLIC glfw OpenGL::GL)
 
+# ufbx (FBX Loader)
+add_library(ufbx external/ufbx/ufbx.c)
+target_include_directories(ufbx PUBLIC external/ufbx)
+
 # Engine Sources
 file(GLOB_RECURSE ENGINE_SOURCES 
     "src/core/*.cpp"
@@ -100,6 +101,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     glfw
     glad
     imgui
+    ufbx
     ws2_32
     winmm
 )

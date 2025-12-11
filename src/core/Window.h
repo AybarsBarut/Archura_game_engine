@@ -46,7 +46,10 @@ public:
     bool IsVSync() const { return m_VSync; }
 
     void SetFullscreen(bool enabled);
+
     bool IsFullscreen() const { return m_Fullscreen; }
+
+    void SetResolution(unsigned int width, unsigned int height); // New: Resolution support
 
     unsigned int GetWidth() const { return m_Width; }
     unsigned int GetHeight() const { return m_Height; }

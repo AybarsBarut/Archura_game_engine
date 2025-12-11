@@ -28,7 +28,8 @@ void FPSController::Update(Input* input, Scene* scene, float deltaTime) {
 }
 
 void FPSController::HandleMovement(Input* input, Scene* scene, float deltaTime) {
-    // Mantling (Tirmanma) Durumu
+    // Mantling (Tirmanma) Durumu - IPTAL EDILDI (User Request)
+    /*
     if (m_IsMantling) {
         m_MantleTimer += deltaTime;
         float t = glm::clamp(m_MantleTimer / m_MantleDuration, 0.0f, 1.0f);
@@ -47,6 +48,7 @@ void FPSController::HandleMovement(Input* input, Scene* scene, float deltaTime) 
         }
         return; // Normal hareketi atla
     }
+    */
 
     // Kosma kontrolu (Shift)
     m_IsRunning = input->IsKeyDown(m_Bindings.sprint);
@@ -114,80 +116,21 @@ void FPSController::HandleMovement(Input* input, Scene* scene, float deltaTime) 
                 m_VerticalVelocity = sqrt(m_JumpHeight * -2.0f * m_Gravity);
                 m_IsGrounded = false;
             } else {
-                // Havada veya yerde degilken ziplama tusuna basilirsa tirmanmayi dene
+                // Havada veya yerde degilken ziplama tusuna basilirsa tirmanmayi dene - IPTAL EDILDI
+                /*
                 // Mantling (Tirmanma) Mantigi
                 glm::vec3 forward = m_Camera->GetFront();
                 forward.y = 0.0f;
                 if (glm::length(forward) > 0.01f) forward = glm::normalize(forward);
 
-                // Onumuzdeki engeli bul
-                float detectDist = 1.0f;
-                glm::vec3 checkPos = currentPos + forward * detectDist;
+                // ... (Kodun geri kalanı yorum satırına alındı) ...
                 
-                // Basitce onumuzde bir engel var mi diye bakiyoruz (CheckCollision ile)
-                // Ancak engelin yuksekligini bulmamiz lazim.
-                // Sahnedeki objeleri tarayip onumuzdeki en yakin ve uygun yukseklikteki objeyi bulalim.
-                
-                float bestMantleY = -1.0f;
-                bool foundMantle = false;
-
-                for (auto& entity : scene->GetEntities()) {
-                    auto* collider = entity->GetComponent<BoxCollider>();
-                    auto* transform = entity->GetComponent<Transform>();
-                    
-                    if (collider && transform) {
-                        // Kutu sinirlarini dunya koordinatlarinda bul
-                        glm::vec3 boxSize = collider->size * transform->scale;
-                        glm::vec3 boxCenter = transform->position + collider->center * transform->scale; // Center offset varsa
-                        
-                        // AABB kontrolu (Basitlestirilmis)
-                        glm::vec3 min = boxCenter - boxSize * 0.5f;
-                        glm::vec3 max = boxCenter + boxSize * 0.5f;
-
-                        // Oyuncu onundeki nokta kutunun icinde mi (XZ duzleminde)?
-                        // Oyuncu genisligini de hesaba katarak biraz genisletelim
-                        float buffer = 0.5f;
-                        bool inX = checkPos.x >= min.x - buffer && checkPos.x <= max.x + buffer;
-                        bool inZ = checkPos.z >= min.z - buffer && checkPos.z <= max.z + buffer;
-
-                        if (inX && inZ) {
-                            // Bu obje onumuzde. Yuksekligine bakalim.
-                            float topY = max.y;
-                            
-                            // Tirmanilabilir yukseklik araligi:
-                            // Ayak hizamizdan (currentPos.y - 1.8) biraz yukarida olmali
-                            // Ve maksimum tirmanma yuksekligimizden (currentPos.y + 1.0 gibi) asagida olmali
-                            // Veya kafa hizamiza yakin olabilir.
-                            
-                            float footY = currentPos.y - 1.8f;
-                            // Ornegin: Ayaklarimizdan en az 0.5m yukarida, kafamizdan en fazla 1m yukarida
-                            if (topY > footY + 0.5f && topY < currentPos.y + 0.5f) {
-                                // Ustunde durulabilir mi? (Yani ustunde baska engel yok mu?)
-                                // Hedef pozisyon: Kutunun ustu + oyuncu boyu
-                                glm::vec3 mantleTarget = currentPos + forward * 0.5f; // Biraz ileri
-                                mantleTarget.y = topY + 1.8f + 0.01f;
-                                
-                                // Hedef noktada carpisma var mi?
-                                if (!CheckCollision(mantleTarget, scene, nullptr, 0.0f)) {
-                                    if (topY > bestMantleY) {
-                                        bestMantleY = topY;
-                                        foundMantle = true;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-
                 if (foundMantle) {
-                    // Tirman! (Smooth)
                     m_IsMantling = true;
-                    m_MantleStartPos = currentPos;
-                    m_MantleTargetPos = currentPos + forward * 0.6f; // Hafif ileri
-                    m_MantleTargetPos.y = bestMantleY + 1.8f + 0.01f; // Kutunun ustune
-                    m_MantleTimer = 0.0f;
-                    return; // Hemen basla
+                    // ...
+                    return; 
                 }
+                */
             }
         }
 
@@ -203,12 +146,21 @@ void FPSController::HandleMovement(Input* input, Scene* scene, float deltaTime) 
         float minGroundY = 0.0f + playerEyeHeight; 
 
         if (hitObject) {
+            // Eger asagi dogru dusuyorsak (veya duruyorsak) YERDEDIR
             if (m_VerticalVelocity <= 0.0f && (targetPos.y - playerEyeHeight) >= (objectTopY - 0.5f)) {
-                targetPos.y = objectTopY + playerEyeHeight + 0.05f; // Epsilon increased to 0.05f to prevent clipping
-                m_VerticalVelocity = 0.0f;
+                
+                // Jitter Fix: Epsilon reduced and sticky gravity applied
+                // 0.05f yerine 0.001f kullaniyoruz, boylece havada kalmaz.
+                float groundSnapY = objectTopY + playerEyeHeight + 0.001f; 
+                
+                targetPos.y = groundSnapY;
+                
+                // Stick to ground: Hafif eksi hiz uygulayarak sonraki karede de "yere carpma" kontrolunu garantile
+                m_VerticalVelocity = -2.0f; 
                 m_IsGrounded = true;
             }
             else if (m_VerticalVelocity > 0.0f) {
+                // Kafayi carpti
                 m_VerticalVelocity = 0.0f;
             }
         }
@@ -353,10 +305,8 @@ void FPSController::HandleMouseLook(Input* input, float deltaTime) {
                                       -mouseDelta.y * m_MouseSensitivity); // Y eksenini ters cevir
     }
 
-    // Sol tik ile imleci kilitle (Oyun moduna gir)
-    if (input->IsMouseButtonPressed(GLFW_MOUSE_BUTTON_LEFT) && !input->IsCursorLocked()) {
-        input->SetCursorMode(GLFW_CURSOR_DISABLED);
-    }
+    // Sol tik ile imleci kilitleme mantigi Application.cpp'ye tasindi.
+    // Artik burada UI durumu kontrol edilmeden kilitlenmeyecek.
     
     // ESC ile imleci serbest birak (Gecici cikis)
     // Not: Ana dongude ESC cikis yapiyor olabilir, bunu kontrol etmeliyiz.

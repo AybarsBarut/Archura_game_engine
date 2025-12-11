@@ -33,7 +33,7 @@ void WeaponSystem::Update(Entity* entity, Input* input, Scene* scene, Camera* ca
             weapon->isReloading = false;
             weapon->reloadTimer = 0.0f;
             
-            std::cout << "Reload complete! Mag: " << weapon->stats.currentMag << "/" << weapon->stats.magSize 
+            // std::cout << "Reload complete! Mag: " << weapon->stats.currentMag << "/" << weapon->stats.magSize << std::endl; 
                       << " | Total: " << weapon->stats.totalAmmo << std::endl;
         }
         return; // Sarjor degistirme sirasinda ates edilemez
@@ -92,7 +92,7 @@ bool WeaponSystem::TryShoot(Weapon* weapon, Entity* entity, Scene* scene, Camera
         if (weapon->type == Weapon::WeaponType::Knife) {
             // Bicak Mantigi (Kisa Menzilli Isin Izleme)
             // YAPILACAK: Duzgun yakin dovus vurus tespiti uygula
-            std::cout << "SWISH! Knife attack." << std::endl;
+            // std::cout << "SWISH! Knife attack." << std::endl;
             // Simdilik sadece aninda yok olan kisa menzilli bir "mermi" simule et
             // Veya daha iyisi, burada dogrudan bir isin izleme mi yapilmali?
             // Simdilik tutarlilik icin mermi sistemine sadik kalalim, ama gorunmez/kisa omurlu?
@@ -130,18 +130,18 @@ void WeaponSystem::Reload(Weapon* weapon) {
     if (!weapon || weapon->isReloading) return;
     
     if (weapon->stats.currentMag >= weapon->stats.magSize) {
-        std::cout << "Magazine is full!" << std::endl;
+        // std::cout << "Magazine is full!" << std::endl;
         return;
     }
     
     if (weapon->stats.totalAmmo <= 0) {
-        std::cout << "No ammo left!" << std::endl;
+        // std::cout << "No ammo left!" << std::endl;
         return;
     }
 
     weapon->isReloading = true;
     weapon->reloadTimer = 0.0f;
-    std::cout << "Reloading..." << std::endl;
+    // std::cout << "Reloading..." << std::endl;
 }
 
 void WeaponSystem::UpdateRecoil(Weapon* weapon, Camera* camera, float deltaTime) {

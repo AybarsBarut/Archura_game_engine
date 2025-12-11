@@ -3,6 +3,15 @@ build/
 bin/
 lib/
 cmake-build-*/
+Dist_ArchuraEngine/
+Release_Packet/
+
+# Release Distribution (Whitelisted)
+!bin/Release_Dist/
+!bin/Release_Dist/*.exe
+!bin/Release_Dist/*.dll
+!bin/Release_Dist/assets/
+Release_Packet/
 
 # Visual Studio
 .vs/

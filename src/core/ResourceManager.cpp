@@ -17,7 +17,7 @@ Shader* ResourceManager::LoadShader(const std::string& name, const std::string& 
     // Zaten var mi?
     auto it = m_Shaders.find(name);
     if (it != m_Shaders.end()) {
-        std::cout << "Shader '" << name << "' already loaded, returning cached version." << std::endl;
+        // std::cout << "Shader '" << name << "' already loaded, returning cached version." << std::endl;
         return it->second;
     }
 
@@ -25,7 +25,7 @@ Shader* ResourceManager::LoadShader(const std::string& name, const std::string& 
     Shader* shader = new Shader();
     if (shader->LoadFromFile(vertPath, fragPath)) {
         m_Shaders[name] = shader;
-        std::cout << "Loaded shader: " << name << std::endl;
+        // std::cout << "Loaded shader: " << name << std::endl;
         return shader;
     }
 
@@ -69,7 +69,7 @@ Mesh* ResourceManager::AddMesh(const std::string& name, Mesh* mesh) {
 
     auto it = m_Meshes.find(name);
     if (it != m_Meshes.end()) {
-        std::cout << "Mesh '" << name << "' already exists, replacing." << std::endl;
+        // std::cout << "Mesh '" << name << "' already exists, replacing." << std::endl;
         delete it->second;
     }
 

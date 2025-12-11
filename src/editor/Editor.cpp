@@ -30,20 +30,6 @@ Editor::~Editor() {
 bool Editor::Init(Window* window) {
     m_Window = window;
 
-    // ImGui baglamini olustur
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO();
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-    // io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-
-    // Stil
-    ImGui::StyleColorsDark();
-
-    // Platform/Renderer baglantilari
-    ImGui_ImplGlfw_InitForOpenGL(window->GetNativeWindow(), true);
-    ImGui_ImplOpenGL3_Init("#version 330");
-    
     // Ciktilari konsola yonlendir
     m_NewCoutBuf = std::make_unique<EditorStreamBuf>(this);
     m_OldCoutBuf = std::cout.rdbuf(m_NewCoutBuf.get());
@@ -55,7 +41,7 @@ bool Editor::Init(Window* window) {
     }
     m_CurrentProjectDir = m_BaseProjectDir;
 
-    std::cout << "ImGui Editor initialized." << std::endl;
+    // std::cout << "Editor Initialized (UI Logic only)." << std::endl;
     return true;
 }
 
@@ -64,23 +50,28 @@ void Editor::Shutdown() {
     if (m_OldCoutBuf) {
         std::cout.rdbuf(m_OldCoutBuf);
     }
-
-    ImGui_ImplOpenGL3_Shutdown();
-    ImGui_ImplGlfw_Shutdown();
-    ImGui::DestroyContext();
 }
 
-void Editor::BeginFrame() {
-    ImGui_ImplOpenGL3_NewFrame();
-    ImGui_ImplGlfw_NewFrame();
-    ImGui::NewFrame();
 
+
+bool Editor::WantCaptureMouse() const {
+    if (!m_Enabled) return false;
+    // ImGui baglami olusturulmamissa guvenli cikis
+    if (!ImGui::GetCurrentContext()) return false;
+    return ImGui::GetIO().WantCaptureMouse;
+}
+
+
+
+void Editor::BeginDockSpace() {
     if (!m_Enabled) return;
-
-    // Dockspace (tum pencere)
+    // Docking disabled: ImGui Docking branch not detected
     // ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_PassthroughCentralNode;
     // ImGui::DockSpaceOverViewport(ImGui::GetMainViewport(), dockspace_flags);
+}
 
+void Editor::DrawEditorUI() {
+    if (!m_Enabled) return;
     SetupLayout();
 }
 
@@ -102,20 +93,20 @@ void Editor::SetupLayout() {
 
     // 2. Hiyerarsi (Sol)
     if (m_ShowSceneHierarchy) {
-        ImGui::SetNextWindowPos(workPos);
-        ImGui::SetNextWindowSize(ImVec2(leftPanelWidth, workSize.y - bottomPanelHeight));
+        ImGui::SetNextWindowPos(workPos, ImGuiCond_FirstUseEver); // Konumu sadece ilk seferde ayarla
+        ImGui::SetNextWindowSize(ImVec2(leftPanelWidth, workSize.y - bottomPanelHeight), ImGuiCond_FirstUseEver);
     }
 
     // 3. Denetci (Sag)
     if (m_ShowInspector) {
-        ImGui::SetNextWindowPos(ImVec2(workPos.x + workSize.x - rightPanelWidth, workPos.y));
-        ImGui::SetNextWindowSize(ImVec2(rightPanelWidth, workSize.y));
+        ImGui::SetNextWindowPos(ImVec2(workPos.x + workSize.x - rightPanelWidth, workPos.y), ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowSize(ImVec2(rightPanelWidth, workSize.y), ImGuiCond_FirstUseEver);
     }
 
     // 4. Proje/Konsol (Alt)
     if (m_ShowProjectPanel || m_ShowConsole) {
-        ImGui::SetNextWindowPos(ImVec2(workPos.x, workPos.y + workSize.y - bottomPanelHeight));
-        ImGui::SetNextWindowSize(ImVec2(workSize.x - (m_ShowInspector ? rightPanelWidth : 0), bottomPanelHeight));
+        ImGui::SetNextWindowPos(ImVec2(workPos.x, workPos.y + workSize.y - bottomPanelHeight), ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowSize(ImVec2(workSize.x - (m_ShowInspector ? rightPanelWidth : 0), bottomPanelHeight), ImGuiCond_FirstUseEver);
     }
 }
 
@@ -182,6 +173,67 @@ void Editor::DrawMenuBar(Scene* scene) {
             ImGui::EndMenu();
         }
 
+        if (ImGui::BeginMenu("Entity")) {
+            if (ImGui::BeginMenu("Load Model (.obj / .fbx)")) {
+                std::string path = "assets/models";
+                if (std::filesystem::exists(path)) {
+                    for (const auto& entry : std::filesystem::directory_iterator(path)) {
+                        std::string ext = entry.path().extension().string();
+                        // Kucuk harfe cevir (windows genelde case-insensitive ama garanti olsun)
+                        // std::transform... (ne gerek var, basit kontrol)
+                        
+                        bool isObj = (ext == ".obj" || ext == ".OBJ");
+                        bool isFbx = (ext == ".fbx" || ext == ".FBX");
+
+                        if (isObj || isFbx) {
+                            std::string filename = entry.path().filename().string();
+                            
+                            // Gorsel olarak ayirt etmek icin ikon veya yazi eklenebilir
+                            std::string label = filename + (isFbx ? " [FBX-WIP]" : " [OBJ]");
+
+                            if (ImGui::MenuItem(label.c_str())) {
+                                if (scene) {
+                                    Entity* e = scene->CreateEntity(entry.path().stem().string());
+                                    
+                                    // Transform
+                                    auto* t = e->GetComponent<Transform>();
+                                    t->position = glm::vec3(0, 5, 0); 
+                                    
+                                    // Mesh
+                                    auto* mr = e->AddComponent<MeshRenderer>();
+                                    if (isObj) {
+                                        mr->mesh = Mesh::LoadFromOBJ(entry.path().string());
+                                        mr->color = glm::vec3(1.0f);
+                                    } else {
+                                        mr->mesh = Mesh::LoadFromFBX(entry.path().string());
+                                        mr->color = glm::vec3(1.0f, 0.0f, 0.0f); // Kirmizi (Placeholder oldugunu belli etmek icin)
+                                    }
+                                    
+                                    // Collider
+                                    e->AddComponent<BoxCollider>()->size = glm::vec3(1.0f);
+                                    
+                                    Log("Spawned Model: " + filename);
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    ImGui::TextDisabled("No 'assets/models' folder found");
+                }
+                ImGui::EndMenu();
+            }
+            // Other entity spawns
+            if (ImGui::MenuItem("Cube")) {
+                if (scene) {
+                    Entity* e = scene->CreateEntity("Cube");
+                    e->AddComponent<MeshRenderer>()->mesh = Mesh::CreateCube();
+                    e->AddComponent<BoxCollider>();
+                    e->GetComponent<Transform>()->position = glm::vec3(0, 5, 0);
+                }
+            }
+            ImGui::EndMenu();
+        }
+
         if (ImGui::BeginMenu("Help")) {
             if (ImGui::MenuItem("About Archura Engine")) {}
             ImGui::EndMenu();
@@ -207,12 +259,7 @@ void Editor::DrawMenuBar(Scene* scene) {
     }
 }
 
-void Editor::EndFrame() {
-    if (!m_Enabled) return;
 
-    ImGui::Render();
-    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-}
 
 void Editor::DrawOverlay(Scene* scene, Camera* camera) {
     const float DISTANCE = 10.0f;
@@ -597,5 +644,7 @@ void Editor::Update(Scene* scene, float deltaTime, float fps) {
         DrawOverlay(scene, nullptr);
     }
 }
+
+
 
 } // namespace Archura

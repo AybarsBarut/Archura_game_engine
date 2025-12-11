@@ -13,7 +13,7 @@ namespace Archura {
         static Application& Get() { return *s_Instance; }
 
         void Run();
-        void Quit();
+        void Quit() { m_Running = false; }
 
         Window& GetWindow() { return *m_Window; }
 
@@ -24,6 +24,7 @@ namespace Archura {
     private:
         static Application* s_Instance;
         std::unique_ptr<Window> m_Window;
+        std::unique_ptr<class ImGuiLayer> m_ImGuiLayer;
         bool m_Running = true;
         
         // Performance Monitoring

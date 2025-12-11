@@ -74,10 +74,10 @@ void Window::Init(const WindowProps& props) {
     }
 
     // OpenGL bilgilerini yazdir
-    std::cout << "OpenGL Info:" << std::endl;
-    std::cout << "  Vendor: " << glGetString(GL_VENDOR) << std::endl;
-    std::cout << "  Renderer: " << glGetString(GL_RENDERER) << std::endl;
-    std::cout << "  Version: " << glGetString(GL_VERSION) << std::endl;
+    // std::cout << "OpenGL Info:" << std::endl;
+    // std::cout << "  Vendor: " << glGetString(GL_VENDOR) << std::endl;
+    // std::cout << "  Renderer: " << glGetString(GL_RENDERER) << std::endl;
+    // std::cout << "  Version: " << glGetString(GL_VERSION) << std::endl;
 
     // VSync ayarla
     SetVSync(m_VSync);
@@ -164,6 +164,14 @@ void Window::SetFullscreen(bool enabled) {
     
     // VSync ayarini tekrar uygula
     SetVSync(m_VSync);
+}
+
+void Window::SetResolution(unsigned int width, unsigned int height) {
+    if (m_Fullscreen) return; // Can't change window size in fullscreen easily without re-setting monitor
+    m_Width = width;
+    m_Height = height;
+    glfwSetWindowSize(m_Window, width, height);
+    glViewport(0, 0, width, height);
 }
 
 } // namespace Archura

@@ -52,6 +52,7 @@ public:
     
     // Model Loader
     static Mesh* LoadFromOBJ(const std::string& path);
+    static Mesh* LoadFromFBX(const std::string& path);
 
 private:
     void SetupMesh();

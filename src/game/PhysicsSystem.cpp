@@ -6,7 +6,7 @@ namespace Archura {
 
     void PhysicsSystem::Init(Scene* scene) {
         m_Scene = scene;
-        std::cout << "Physics System Initialized (Internal Solver)" << std::endl;
+        // std::cout << "Physics System Initialized (Internal Solver)" << std::endl;
     }
 
     void PhysicsSystem::Update(float deltaTime) {

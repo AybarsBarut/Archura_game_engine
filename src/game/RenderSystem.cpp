@@ -25,7 +25,7 @@ void RenderSystem::Init(Scene* scene) {
         std::cerr << "Failed to load default shader!" << std::endl;
     }
     
-    std::cout << "RenderSystem initialized." << std::endl;
+    // std::cout << "RenderSystem initialized." << std::endl;
 }
 
 void RenderSystem::Update(float deltaTime) {
@@ -142,7 +142,7 @@ void RenderSystem::Update(float deltaTime) {
 
 void RenderSystem::Shutdown() {
     m_DefaultShader.reset();
-    std::cout << "RenderSystem shut down." << std::endl;
+    // std::cout << "RenderSystem shut down." << std::endl;
 }
 
 } // namespace Archura

@@ -28,7 +28,12 @@ void Input::Update() {
         m_FirstMouse = false;
     }
     
-    m_MouseDelta = currentPos - m_LastMousePosition;
+    if (m_CursorLocked) {
+        m_MouseDelta = currentPos - m_LastMousePosition;
+    } else {
+        m_MouseDelta = glm::vec2(0.0f); // Imlec serbestken delta uretme (Kamera sapmasini onler)
+    }
+
     m_LastMousePosition = currentPos;
     m_MousePosition = currentPos;
     

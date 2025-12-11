@@ -52,7 +52,7 @@ bool Texture::LoadFromFile(const std::string& path, bool generateMipmaps) {
     // Bellegi serbest birak
     stbi_image_free(data);
 
-    std::cout << "Loaded texture: " << path << " (" << m_Width << "x" << m_Height << ", " << m_Channels << " channels)" << std::endl;
+    // std::cout << "Loaded texture: " << path << " (" << m_Width << "x" << m_Height << ", " << m_Channels << " channels)" << std::endl;
     
     glBindTexture(GL_TEXTURE_2D, 0);
     return true;

@@ -25,8 +25,9 @@ public:
 
     bool Init(Window* window);
     void Shutdown();
-    void BeginFrame();
-    void EndFrame();
+    void BeginDockSpace(); // Creates the main dockspace
+
+    void DrawEditorUI(); // Manually draw editor panels
     void Update(Scene* scene, float deltaTime, float fps);
 
     // Visibility Control
@@ -35,6 +36,11 @@ public:
     
     // Game Mode Control
     bool IsGameRunning() const { return m_IsGameRunning; }
+    
+    // UI Interaction State
+    bool WantCaptureMouse() const;
+
+
 
     // Interaction
     void SetSelectedEntity(Entity* entity) { m_SelectedEntity = entity; }
