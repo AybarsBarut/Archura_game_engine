@@ -1,113 +1,74 @@
 # Archura Game Engine
 
+Modern, C++17 tabanlı ve modüler bir oyun motoru.
+
+## Özellikler
+
+*   **Grafik**: OpenGL 3.3+, Dinamik Işıklandırma, Gölge ve Texture desteği.
+*   **Fizik**: Özel çarpışma algılama ve AABB sistemi.
+*   **Ses**: MCI tabanlı ses sistemi (OpenAL hazırlığı ile).
+*   **Networking**: Entegre Host/Join multiplayer desteği (TCP).
+*   **UI**: ImGui tabanlı Editör ve Oyun İçi Menüler.
+    *   *Ayarlar*: Çözünürlük, Hassasiyet, Keybind Görüntüleme.
+*   **Modelleme**: OBJ ve FBX format desteği (ufbx & özel parser).
+*   **Scripting**: Temel komut sistemi.
 
 ## Sistem Gereksinimleri
 
-### Minimum
-- **OS**: Windows 10 / Linux
-- **GPU**: NVIDIA GTX 1050 / AMD RX 560
-- **RAM**: 1GB
-- **OpenGL**: 3.3+
+*   **OS**: Windows 10/11 (Linux desteği geliştiriliyor)
+*   **GPU**: OpenGL 3.3 destekli ekran kartı
+*   **RAM**: 4GB+
+*   **Disk**: 500MB+
 
-## Kurulum
+## Kurulum ve Çalıştırma
 
-### Gereksinimler
-- CMake 3.15+
-- C++17 destekli compiler (MSVC 2019+, GCC 7+, Clang 5+)
-- Git
+### Oyuncular İçin (Release)
+1.  **`StartGame_Release.bat`** dosyasını çalıştırın.
+    *   Bu script otomatik olarak GitHub'dan en güncel kararlı sürümü indirir ve açar.
 
-### Build
+### Geliştiriciler İçin (Local Dev)
+1.  Projeyi klonlayın:
+    ```bash
+    git clone https://github.com/aybarsbarut/archura_game_engine.git
+    cd archura_game_engine
+    ```
+2.  **`StartGame_Dev.bat`** dosyasını çalıştırın.
+    *   CMake kullanarak projeyi yerel makinenizde derler ve başlatır.
+    *   *Gereksinimler*: Visual Studio 2019+, CMake 3.15+, Git.
 
-```bash
-# Repository'yi clone'la
-git clone https://github.com/aybarsbarut/archura_game_engine.git
-cd archura_game_engine
+## Kontroller
 
-# Submodule'leri indir
-git submodule update --init --recursive
+### Oyun İçi
+*   **W / A / S / D**: Hareket
+*   **SPACE**: Zıplama
+*   **SHIFT**: Koşma
+*   **Sol Tık**: Ateş Etme
+*   **R**: Şarjör Değiştirme
+*   **1 / 2 / 3**: Silah Değiştirme (Tüfek, Tabanca, Bıçak)
+*   **ESC**: Pause Menüsü (Ayarlar, Çıkış)
+*   **TAB**: Geliştirici Modu (Mouse Kilidini Açar/Kapatır)
 
-# Build dizini oluştur
-mkdir build
-cd build
-
-# CMake ile configure et
-cmake ..
-
-# Compile et
-cmake --build . --config Release
-
-# Çalıştır
-./bin/ArchuraEngine
-```
-
-### Windows (Visual Studio)
-
-```bash
-mkdir build
-cd build
-cmake .. -G "Visual Studio 16 2019"
-cmake --build . --config Release
-```
+### Editör (Geliştirici Modu)
+*   **Sol Tık + Mouse**: Kamera Yönlendirme
+*   **Q / E**: Yükselme / Alçalma
+*   **Ctrl+S**: Sahneyi Kaydet
 
 ## Proje Yapısı
 
 ```
 archura_game_engine/
-├── assets/              # Oyun asset'leri
-│   ├── shaders/        # GLSL shader dosyaları
-│   ├── textures/       # Texture dosyaları
-│   └── models/         # 3D model dosyaları
-├── src/
-│   ├── core/           # Motor cekirdegi
-│   ├── rendering/      # Render sistemi
-│   ├── ecs/            # Entity Component System
-│   ├── input/          # Input yonetimi
-│   ├── game/           # Oyun sistemleri
-│   ├── editor/         # Editor UI
-│   └── main.cpp        # Giris noktasi
-├── external/           # Harici kutuphaneler
-└── CMakeLists.txt      # Build konfigurasyonu
+├── bin/Release_Dist/    # Dağıtıma hazır oyun dosyaları
+├── src/                 # Kaynak kodlar (Core, Game, Rendering, Network...)
+├── assets/              # Texture, Model ve Shader dosyaları
+├── external/            # 3. Parti kütüphaneler (GLFW, GLM, ImGui...)
+└── StartGame_*.bat      # Başlatıcı scriptleri
 ```
-
-## Editor Kullanimi
-
-Motor calistirildiginda ImGui tabanli editor arayuzu acilir:
-
-- **Scene Hierarchy**: Entity'leri goruntule ve duzenle
-- **Inspector**: Component ozelliklerini degistir
-- **Viewport**: 3D sahneyi etkilesimli goruntule
-- **Asset Browser**: Proje dosyalarini yonet
-- **Console**: Log mesajlarini takip et
-
-### Editor Kisayollari
-
-- `W/A/S/D`: Kamera hareketi
-- `Q/E`: Yukari/asagi hareket
-- `Mouse Sag Tik + Hareket`: Kamera dondurme
-- `Ctrl+S`: Sahneyi kaydet
-- `Ctrl+O`: Sahne ac
-- `F`: Secili objeyi odakla
-
-## Teknoloji Yigini
-
-- **C++17**: Modern C++ ozellikleri
-- **OpenGL 3.3+**: Grafik API
-- **GLFW**: Window ve input yönetimi
-- **GLM**: Matematik kutuphanesi
-- **Dear ImGui**: Editor UI
-- **stb_image**: Image loading
-
-
 
 ## Lisans
 
-MIT License - Detaylar icin LICENSE dosyasina bakiniz.
+MIT License - Detaylar için `LICENSE` dosyasına bakınız.
 
-## Katkida Bulunma
+## İletişim
 
-Pull request'ler memnuniyetle karsilanir! Buyuk degisiklikler icin lutfen once bir issue acin.
-
-## Iletisim
-
-- GitHub: [@archura](https://github.com/aybarsbarut)
-- Email: barutaybarsfahri@gmail.com
+*   **GitHub**: [@aybarsbarut](https://github.com/aybarsbarut)
+*   **Email**: barutaybarsfahri@gmail.com
