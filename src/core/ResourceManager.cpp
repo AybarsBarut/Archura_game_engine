@@ -88,7 +88,7 @@ void ResourceManager::Clear() {
     ClearShaders();
     ClearTextures();
     ClearMeshes();
-    std::cout << "ResourceManager cleared all resources." << std::endl;
+
 }
 
 void ResourceManager::ClearShaders() {

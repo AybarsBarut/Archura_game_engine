@@ -16,7 +16,7 @@ AudioSystem::AudioSystem() {
 }
 
 void AudioSystem::Init() {
-    std::cout << "AudioSystem initialized (Windows MCI)." << std::endl;
+
 }
 
 void AudioSystem::Shutdown() {
@@ -57,7 +57,7 @@ void AudioSystem::PlayMusic(const std::string& filename, bool loop) {
     mciSendString(cmdPlay.c_str(), NULL, 0, NULL);
     m_CurrentMusicAlias = alias;
     
-    std::cout << "Playing music: " << filename << std::endl;
+
 }
 
 void AudioSystem::PlayOneShot(const std::string& filename) {

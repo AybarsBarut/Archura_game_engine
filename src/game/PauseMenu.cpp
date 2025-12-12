@@ -190,6 +190,7 @@ const char* PauseMenu::GetKeyName(int keycode) {
         
         // --- SENSITIVITY ---
         ImGui::Text("Mouse Sensitivity");
+        ImGui::SetNextItemWidth(width);
         float sens = controller.GetMouseSensitivity();
         if (ImGui::SliderFloat("##sens", &sens, 0.01f, 1.0f, "%.2f")) {
             controller.SetMouseSensitivity(sens);
@@ -207,6 +208,7 @@ const char* PauseMenu::GetKeyName(int keycode) {
         else if (window.GetWidth() == 1920) currentRes = 2;
         else if (window.GetWidth() == 2560) currentRes = 3;
 
+        ImGui::SetNextItemWidth(width);
         if (ImGui::Combo("##res", &currentRes, resolutions, IM_ARRAYSIZE(resolutions))) {
             switch (currentRes) {
                 case 0: window.SetResolution(1280, 720); break;
@@ -230,13 +232,20 @@ const char* PauseMenu::GetKeyName(int keycode) {
         static int port = 27015;
         static char ip[32] = "127.0.0.1";
 
-        ImGui::InputInt("Port", &port);
+        ImGui::Text("Port");
+        ImGui::SetNextItemWidth(width);
+        ImGui::InputInt("##port", &port, 0); // STEP=0 removes +/- buttons for cleaner look, or keep them? 
+                                             // Default is 1, 100. Let's keep formatted input or default. 
+                                             // User asked to shorten. InputInt defaults with buttons.
         
         if (ImGui::Button("HOST GAME", ImVec2(width, 30))) {
             NetworkManager::Get().StartServer(port);
         }
 
-        ImGui::InputText("IP Address", ip, 32);
+        ImGui::Text("IP Address");
+        ImGui::SetNextItemWidth(width);
+        ImGui::InputText("##ip", ip, 32);
+
         if (ImGui::Button("JOIN GAME", ImVec2(width, 30))) {
             NetworkManager::Get().Connect(ip, port);
         }

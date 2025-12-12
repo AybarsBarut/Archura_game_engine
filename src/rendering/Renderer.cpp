@@ -5,7 +5,7 @@
 namespace Archura {
 
 bool Renderer::Init() {
-    // std::cout << "Renderer initializing..." << std::endl;
+
     
     // OpenGL durum ayarlari
     glEnable(GL_DEPTH_TEST);
@@ -24,12 +24,12 @@ bool Renderer::Init() {
     
     SetClearColor(m_ClearColor);
     
-    // std::cout << "Renderer initialized successfully!" << std::endl;
+
     return true;
 }
 
 void Renderer::Shutdown() {
-    // std::cout << "Renderer shutting down..." << std::endl;
+
 }
 
 void Renderer::BeginFrame() {

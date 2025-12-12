@@ -310,11 +310,27 @@ void Editor::DrawSceneHierarchy(Scene* scene) {
     }
 
     if (ImGui::BeginPopup("AddEntityPopup")) {
-        if (ImGui::MenuItem("Cube")) SpawnEntity(scene, "Cube");
-        if (ImGui::MenuItem("Sphere")) SpawnEntity(scene, "Sphere");
-        if (ImGui::MenuItem("Capsule")) SpawnEntity(scene, "Capsule");
-        if (ImGui::MenuItem("Stairs")) SpawnEntity(scene, "Stairs");
-        if (ImGui::MenuItem("Ramp")) SpawnEntity(scene, "Ramp");
+        // Primitives
+        if (ImGui::BeginMenu("Primitives")) {
+            if (ImGui::MenuItem("Cube")) SpawnEntity(scene, "Cube");
+            if (ImGui::MenuItem("Sphere")) SpawnEntity(scene, "Sphere");
+            if (ImGui::MenuItem("Capsule")) SpawnEntity(scene, "Capsule");
+            if (ImGui::MenuItem("Stairs")) SpawnEntity(scene, "Stairs");
+            if (ImGui::MenuItem("Ramp")) SpawnEntity(scene, "Ramp");
+            ImGui::EndMenu();
+        }
+
+        ImGui::Separator();
+        
+        // Models from assets/models
+        ImGui::TextDisabled("Models (assets/models)");
+        std::string modelsPath = "assets/models";
+        if (std::filesystem::exists(modelsPath)) {
+            DrawModelDirectory(scene, modelsPath);
+        } else {
+            ImGui::TextDisabled("Folder not found");
+        }
+
         ImGui::EndPopup();
     }
 
@@ -350,7 +366,7 @@ void Editor::DrawSceneHierarchy(Scene* scene) {
     ImGui::End();
 }
 
-void Editor::DrawInspector() {
+void Editor::DrawInspector(Scene* scene) {
     ImGui::Begin("Inspector");
 
     if (!m_SelectedEntity) {
@@ -360,7 +376,36 @@ void Editor::DrawInspector() {
     }
 
     // Varlik bilgileri
-    ImGui::Text("Entity: %s", m_SelectedEntity->GetName().c_str());
+    // ImGui::Text("Entity: %s", m_SelectedEntity->GetName().c_str());
+    
+    // Entity Renaming
+    static char nameBuf[128] = "";
+    // Secili entity degistiginde buffer'i guncellemek gerekir. 
+    // Ancak her frame'de burasi calisiyor. 
+    // Basit bir yaklasim: Her zaman degil, ID degistiginde bufferi yenile.
+    // Veya ImGui ID sistemiyle cakismamak icin gecici buffer kullan.
+    
+    std::string currentName = m_SelectedEntity->GetName();
+    if (m_SelectedEntity->GetID() != m_CachedEntityID) {
+        strncpy(nameBuf, currentName.c_str(), sizeof(nameBuf));
+        nameBuf[sizeof(nameBuf) - 1] = '\0';
+        m_CachedEntityID = m_SelectedEntity->GetID();
+    }
+
+    if (ImGui::InputText("Name", nameBuf, sizeof(nameBuf), ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_AutoSelectAll)) {
+        if (strlen(nameBuf) > 0) {
+            m_SelectedEntity->SetName(nameBuf);
+        }
+    }
+    // Enter'a basilmasa bile her karakterde guncellemek istersek:
+    // Ancak InputText aktifken surekli SetName cagirmak da mumkun.
+    // Simdilik EnterReturnsTrue ile yaptik ama kullanici deneyimi icin:
+    if (ImGui::IsItemDeactivatedAfterEdit()) {
+         if (strlen(nameBuf) > 0) {
+            m_SelectedEntity->SetName(nameBuf);
+        }
+    }
+
     ImGui::Text("ID: %u", m_SelectedEntity->GetID());
     ImGui::Separator();
 
@@ -465,6 +510,23 @@ void Editor::DrawInspector() {
         ImGui::Text("Has Hit: %s", projectile->hasHit ? "Yes" : "No");
         ImGui::DragFloat("Gravity", &projectile->gravity, 0.1f, -20.0f, 0.0f);
     }
+
+    ImGui::Separator();
+    ImGui::Spacing();
+    
+    // Delete Button (Red)
+    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.8f, 0.2f, 0.2f, 1.0f));
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.9f, 0.3f, 0.3f, 1.0f));
+    ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.7f, 0.1f, 0.1f, 1.0f));
+    
+    if (ImGui::Button("Delete Entity", ImVec2(-1, 0))) {
+        if (scene) {
+            scene->DestroyEntity(m_SelectedEntity->GetID());
+            m_SelectedEntity = nullptr;
+        }
+    }
+    
+    ImGui::PopStyleColor(3);
 
     ImGui::End();
 }
@@ -594,7 +656,7 @@ void Editor::ExecuteCommand(const char* command) {
     }
 }
 
-void Editor::SpawnEntity(Scene* scene, const std::string& type) {
+void Editor::SpawnEntity(Scene* scene, const std::string& type, const std::string& path) {
     if (!scene) return;
 
     static int entityCounter = 0;
@@ -623,10 +685,77 @@ void Editor::SpawnEntity(Scene* scene, const std::string& type) {
     } else if (type == "Ramp") {
         meshRenderer->mesh = Mesh::CreateRamp(1.0f, 1.0f, 2.0f);
         collider->size = glm::vec3(1.0f, 1.0f, 2.0f);
+    } else if (type == "Model" && !path.empty()) {
+        std::string ext = std::filesystem::path(path).extension().string();
+        
+        // Basit lowercase
+        for (auto & c: ext) c = tolower(c);
+
+        if (ext == ".obj") {
+            meshRenderer->mesh = Mesh::LoadFromOBJ(path);
+        } else if (ext == ".fbx") {
+            meshRenderer->mesh = Mesh::LoadFromFBX(path);
+        } else if (ext == ".glb" || ext == ".gltf") {
+            Log("[WARN] GLB/GLTF loading is not yet implemented natively.");
+            // Bir placeholder mesh (orn. Kure) koyalim ki bos kalmasin
+            meshRenderer->mesh = Mesh::CreateSphere(0.5f);
+            meshRenderer->color = glm::vec3(1.0f, 0.0f, 1.0f); // Magenta uyari rengi
+        }
+        
+        // Model adini entity adi yap (eger override edilmediyse)
+        if (entity->GetName().find("Model_") == 0) {
+            entity->SetName(std::filesystem::path(path).stem().string());
+        }
+        
+        Log("Spawned Model from: " + path);
     }
 
     Log("Spawned " + type + " at " + std::to_string(m_SpawnPosition.x) + ", " + std::to_string(m_SpawnPosition.y) + ", " + std::to_string(m_SpawnPosition.z));
     m_SelectedEntity = entity;
+}
+
+void Editor::DrawModelDirectory(Scene* scene, const std::filesystem::path& directory) {
+    // Basit bir siralama icin once klasorleri sonra dosyalari toplayalim
+    std::vector<std::filesystem::directory_entry> directories;
+    std::vector<std::filesystem::directory_entry> files;
+
+    for (const auto& entry : std::filesystem::directory_iterator(directory)) {
+        if (entry.is_directory()) {
+            directories.push_back(entry);
+        } else if (entry.is_regular_file()) {
+            files.push_back(entry);
+        }
+    }
+
+    // Klasorleri ciz
+    for (const auto& dir : directories) {
+        if (ImGui::BeginMenu(dir.path().filename().string().c_str())) {
+            DrawModelDirectory(scene, dir.path());
+            ImGui::EndMenu();
+        }
+    }
+
+    if (!directories.empty() && !files.empty()) {
+        ImGui::Separator();
+    }
+
+    // Dosyalari ciz
+    for (const auto& file : files) {
+        std::string ext = file.path().extension().string();
+        std::string extLower = ext;
+        for (auto & c: extLower) c = tolower(c);
+
+        bool isModel = (extLower == ".obj" || extLower == ".fbx" || 
+                        extLower == ".glb" || extLower == ".gltf");
+
+        if (isModel) {
+            std::string filename = file.path().filename().string();
+            // Dosya ikon veya tur bilgisi eklenebilir
+            if (ImGui::MenuItem(filename.c_str())) {
+                SpawnEntity(scene, "Model", file.path().string());
+            }
+        }
+    }
 }
 
 void Editor::Update(Scene* scene, float deltaTime, float fps) {
@@ -634,7 +763,7 @@ void Editor::Update(Scene* scene, float deltaTime, float fps) {
         DrawToolbar();
         
         if (m_ShowSceneHierarchy) DrawSceneHierarchy(scene);
-        if (m_ShowInspector) DrawInspector();
+        if (m_ShowInspector) DrawInspector(scene);
         if (m_ShowProjectPanel) DrawProjectPanel();
         if (m_ShowConsole) DrawConsolePanel();
         if (m_ShowPerformance) DrawPerformanceMetrics(deltaTime, fps);

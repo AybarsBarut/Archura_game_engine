@@ -60,6 +60,7 @@ public: // Members
 
     std::vector<std::string> m_ConsoleLogs;
     char m_InputBuf[256] = "";
+    uint32_t m_CachedEntityID = 0; // To track entity selection changes for renaming
     
     // Project Browser
     std::filesystem::path m_BaseProjectDir;
@@ -72,7 +73,7 @@ public: // Members
 private:
     void SetupLayout();
     void DrawSceneHierarchy(Scene* scene);
-    void DrawInspector();
+    void DrawInspector(Scene* scene);
     void DrawProjectPanel();
     void DrawConsolePanel();
     void DrawPerformanceMetrics(float deltaTime, float fps);
@@ -80,7 +81,8 @@ private:
     void DrawToolbar();
     void DrawMenuBar(Scene* scene);
     void DrawOverlay(Scene* scene, Camera* camera);
-    void SpawnEntity(Scene* scene, const std::string& type);
+    void SpawnEntity(Scene* scene, const std::string& type, const std::string& path = "");
+    void DrawModelDirectory(Scene* scene, const std::filesystem::path& directory);
 
 private:
     bool m_Enabled = true;

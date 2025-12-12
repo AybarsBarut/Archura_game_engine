@@ -40,7 +40,7 @@ namespace Archura {
         file << "}\n";
 
         file.close();
-        std::cout << "Project saved to: " << path << std::endl;
+
         return true;
     }
 
@@ -48,7 +48,7 @@ namespace Archura {
         // Basic parsing logic would go here. 
         // For this implementation, we will focus on the structure.
         // In a real scenario, use a library like nlohmann/json.
-        std::cout << "Loading project from: " << path << " (Not fully implemented without JSON lib)" << std::endl;
+
         return true;
     }
 

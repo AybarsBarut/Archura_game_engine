@@ -12,10 +12,7 @@ Engine& Engine::Get() {
 }
 
 bool Engine::Init(const EngineConfig& config) {
-    std::cout << "=== Archura Engine Initialization ===" << std::endl;
-    std::cout << "Target: GTX 1050 @ 120+ FPS" << std::endl;
-    std::cout << "Graphics API: OpenGL 3.3+" << std::endl;
-    std::cout << "======================================" << std::endl;
+
 
     m_EditorMode = config.editorMode;
 
@@ -45,12 +42,12 @@ bool Engine::Init(const EngineConfig& config) {
     }
 
     m_Running = true;
-    std::cout << "Engine initialized successfully!" << std::endl;
+
     return true;
 }
 
 void Engine::Run() {
-    std::cout << "Engine is running..." << std::endl;
+
 
     // Ana oyun dongusu
     while (m_Running && !m_Window->ShouldClose()) {
@@ -72,7 +69,7 @@ void Engine::Run() {
         }
     }
 
-    std::cout << "Engine shutting down..." << std::endl;
+
 }
 
 void Engine::Shutdown() {
@@ -85,7 +82,7 @@ void Engine::Shutdown() {
     m_Window.reset();
     
     m_Running = false;
-    std::cout << "Engine shutdown complete." << std::endl;
+
 }
 
 void Engine::Update(float deltaTime) {
@@ -94,8 +91,7 @@ void Engine::Update(float deltaTime) {
     fpsTimer += deltaTime;
     
     if (fpsTimer >= 1.0f) {
-        std::cout << "FPS: " << m_Window->GetFPS() 
-                  << " | Frame Time: " << (deltaTime * 1000.0f) << "ms" << std::endl;
+        // FPS logging removed
         fpsTimer = 0.0f;
     }
 

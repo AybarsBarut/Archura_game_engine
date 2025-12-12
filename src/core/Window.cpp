@@ -82,7 +82,7 @@ void Window::Init(const WindowProps& props) {
     // VSync ayarla
     SetVSync(m_VSync);
 
-    // OpenGL ayarlari - GTX 1050 icin optimize
+    // OpenGL ayarlari
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_MULTISAMPLE); // MSAA aktif
     glEnable(GL_CULL_FACE);

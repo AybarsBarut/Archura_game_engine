@@ -31,13 +31,13 @@ int main() {
     // Eger "build/bin/Release" icindeysek 3 ust dizine cik
     if (currentPath.filename() == "Release" && currentPath.parent_path().filename() == "bin" && currentPath.parent_path().parent_path().filename() == "build") {
         fs::current_path(currentPath.parent_path().parent_path().parent_path());
-        std::cout << "Calisma dizini kok dizine ayarlandi: " << fs::current_path() << std::endl;
+
     } 
     // Eger sadece "Release" veya "Debug" icindeysek (build/Release gibi)
     else if (currentPath.filename() == "Release" || currentPath.filename() == "Debug") {
          if (currentPath.parent_path().filename() == "build") {
               fs::current_path(currentPath.parent_path().parent_path());
-              std::cout << "Calisma dizini kok dizine ayarlandi: " << fs::current_path() << std::endl;
+
          }
     }
 

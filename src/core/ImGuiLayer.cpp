@@ -31,7 +31,7 @@ namespace Archura {
         ImGui_ImplGlfw_InitForOpenGL(window->GetNativeWindow(), true);
         ImGui_ImplOpenGL3_Init("#version 330");
 
-        std::cout << "ImGuiLayer Initialized" << std::endl;
+
     }
 
     void ImGuiLayer::Shutdown() {

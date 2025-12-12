@@ -35,7 +35,7 @@ namespace Archura {
         if (it != m_Commands.end()) {
             it->second(args);
         } else {
-            std::cout << "Unknown command: " << commandName << std::endl;
+            // Unknown command (silently ignore for CLI, Editor handles its own logging)
         }
     }
 

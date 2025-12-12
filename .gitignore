@@ -60,3 +60,13 @@ StartGame_Dev.bat
 PackageGame.bat
 setup_dependencies.bat
 *.ps1
+
+# Packages
+*.zip
+*.7z
+*.rar
+
+# Assets (Ignore content, keep structure)
+assets/*
+!assets/**/.gitkeep
+

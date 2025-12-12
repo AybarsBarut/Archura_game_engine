@@ -66,7 +66,7 @@ bool HUDRenderer::Init() {
 
     CreateQuadMesh();
     
-    // std::cout << "HUD Renderer initialized." << std::endl;
+
     return true;
 }
 

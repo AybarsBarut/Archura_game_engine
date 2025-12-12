@@ -69,7 +69,7 @@ bool NetworkManager::StartServer(int port) {
 
     m_IsServer = true;
     m_IsConnected = true;
-    // std::cout << "Server started on port " << port << std::endl;
+
     return true;
 }
 
@@ -79,7 +79,7 @@ void NetworkManager::UpdateServer() {
     // Accept new connections
     SOCKET clientSocket = accept(m_Socket, NULL, NULL);
     if (clientSocket != INVALID_SOCKET) {
-        // std::cout << "New client connected!" << std::endl;
+
         
         // Non-blocking for client
         u_long mode = 1;
@@ -120,7 +120,7 @@ void NetworkManager::UpdateServer() {
             ++it;
         }
         else if (bytesReceived == 0 || (bytesReceived == SOCKET_ERROR && WSAGetLastError() != WSAEWOULDBLOCK)) {
-            // std::cout << "Client disconnected" << std::endl;
+
             closesocket(client);
             it = m_ClientSockets.erase(it);
         }
@@ -153,7 +153,7 @@ bool NetworkManager::Connect(const std::string& ip, int port) {
 
     m_IsServer = false;
     m_IsConnected = true;
-    // std::cout << "Connected to server!" << std::endl;
+
     return true;
 }
 
@@ -180,7 +180,7 @@ void NetworkManager::UpdateClient() {
         }
     }
     else if (bytesReceived == 0 || (bytesReceived == SOCKET_ERROR && WSAGetLastError() != WSAEWOULDBLOCK)) {
-        // std::cout << "Disconnected from server" << std::endl;
+
         m_IsConnected = false;
         closesocket(m_Socket);
         m_Socket = INVALID_SOCKET;

@@ -34,7 +34,7 @@ void WeaponSystem::Update(Entity* entity, Input* input, Scene* scene, Camera* ca
             weapon->reloadTimer = 0.0f;
             
             // std::cout << "Reload complete! Mag: " << weapon->stats.currentMag << "/" << weapon->stats.magSize << std::endl; 
-                      << " | Total: " << weapon->stats.totalAmmo << std::endl;
+            //           << " | Total: " << weapon->stats.totalAmmo << std::endl;
         }
         return; // Sarjor degistirme sirasinda ates edilemez
     }
