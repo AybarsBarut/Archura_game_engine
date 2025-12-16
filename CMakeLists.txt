@@ -14,8 +14,15 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Optimization Flags (High Performance)
 if(MSVC)
-    add_compile_options(/O2 /Oi /Ot /Oy /GL /fp:fast)
-    add_link_options(/LTCG)
+    add_compile_options(
+        $<$<CONFIG:Release>:/O2>
+        $<$<CONFIG:Release>:/Oi>
+        $<$<CONFIG:Release>:/Ot>
+        $<$<CONFIG:Release>:/Oy>
+        $<$<CONFIG:Release>:/GL>
+        $<$<CONFIG:Release>:/fp:fast>
+    )
+    add_link_options($<$<CONFIG:Release>:/LTCG>)
     add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
 else()
     add_compile_options(-O3 -march=native -ffast-math -flto)
@@ -65,6 +72,7 @@ file(GLOB_RECURSE ENGINE_SOURCES
     "src/core/*.cpp"
     "src/rendering/*.cpp"
     "src/ecs/*.cpp"
+    "src/ecs_new/*.cpp"
     "src/input/*.cpp"
     "src/game/*.cpp"
     "src/editor/*.cpp"
@@ -75,6 +83,7 @@ file(GLOB_RECURSE ENGINE_HEADERS
     "src/core/*.h"
     "src/rendering/*.h"
     "src/ecs/*.h"
+    "src/ecs_new/*.h"
     "src/input/*.h"
     "src/game/*.h"
     "src/editor/*.h"
