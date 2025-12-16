@@ -480,6 +480,14 @@ void Editor::DrawInspector(Scene* scene) {
         }
     }
 
+    // Kutu Carpistirici
+    auto* boxCollider = m_SelectedEntity->GetComponent<BoxCollider>();
+    if (boxCollider && ImGui::CollapsingHeader("Box Collider")) {
+        ImGui::DragFloat3("Size", &boxCollider->size.x, 0.1f);
+        ImGui::DragFloat3("Center", &boxCollider->center.x, 0.1f);
+        ImGui::Checkbox("Is Trigger", &boxCollider->isTrigger);
+    }
+
     // Silah bileseni
     auto* weapon = m_SelectedEntity->GetComponent<Weapon>();
     if (weapon && ImGui::CollapsingHeader("Weapon")) {

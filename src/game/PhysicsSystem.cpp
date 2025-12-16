@@ -64,6 +64,9 @@ namespace Archura {
                 // We collide with static objects (no RB) or dynamic objects (RB)
                 if (!colB || !transB) continue;
 
+                // Check for Triggers
+                if (colA->isTrigger || colB->isTrigger) continue;
+
                 // Check AABB
                 if (CheckAABB(transA->position, colA->size * transA->scale, transB->position, colB->size * transB->scale)) {
                     // Collision Detected!

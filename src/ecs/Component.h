@@ -48,6 +48,7 @@ struct MeshRenderer : public Component {
 struct BoxCollider : public Component {
     glm::vec3 size = glm::vec3(1.0f); // Boyutlar (Genislik, Yukseklik, Derinlik)
     glm::vec3 center = glm::vec3(0.0f); // Merkez ofseti
+    bool isTrigger = false;
 };
 
 /**

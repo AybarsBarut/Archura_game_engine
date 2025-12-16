@@ -203,6 +203,8 @@ bool FPSController::CheckCollision(const glm::vec3& position, Scene* scene, floa
         auto* transform = entity->GetComponent<Transform>();
         
         if (collider && transform) {
+            if (collider->isTrigger) continue;
+
             // Model Matrisini Olustur (T * R * S)
             glm::mat4 model = glm::mat4(1.0f);
             model = glm::translate(model, transform->position);

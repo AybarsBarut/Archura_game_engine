@@ -235,6 +235,11 @@ namespace Archura {
             
             renderSystem.Update(deltaTime);
             
+            // Draw Debug Colliders if in Dev Mode
+            if (devModeActive) {
+                renderSystem.DrawColliders();
+            }
+            
             // HUD
             if (!devModeActive) {
                 hudRenderer.BeginHUD();

@@ -5,6 +5,8 @@
 #include "../ecs/Component.h"
 #include "../rendering/Mesh.h"
 #include "../rendering/Texture.h"
+#include <glad/glad.h>
+#include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
 
 namespace Archura {
@@ -24,12 +26,20 @@ void RenderSystem::Init(Scene* scene) {
     if (!m_DefaultShader->LoadFromFile("assets/shaders/basic.vert", "assets/shaders/basic.frag")) {
         std::cerr << "Failed to load default shader!" << std::endl;
     }
+
+    // Debug Mesh (Cube)
+    m_DebugMesh = Mesh::CreateCube(1.0f);
     
     // std::cout << "RenderSystem initialized." << std::endl;
 }
 
 void RenderSystem::Update(float deltaTime) {
     if (!m_Scene || !m_Camera) return;
+
+    // Reset State to defaults for normal rendering
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
 
     // Kamera matrisleri
     glm::mat4 view = m_Camera->GetViewMatrix();
@@ -140,8 +150,65 @@ void RenderSystem::Update(float deltaTime) {
     }
 }
 
+
+
+void RenderSystem::DrawColliders() {
+    if (!m_Scene || !m_Camera || !m_DebugMesh || !m_DefaultShader) return;
+    if (m_DefaultShader->GetProgramID() == 0) return;
+
+    // Save previous state (optional but good practice)
+    GLint polygonMode[2];
+    glGetIntegerv(GL_POLYGON_MODE, polygonMode);
+
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    glDisable(GL_CULL_FACE); 
+    glDisable(GL_DEPTH_TEST);
+
+    m_DefaultShader->Bind();
+    
+    // Camera uniforms
+    glm::mat4 view = m_Camera->GetViewMatrix();
+    glm::mat4 projection = m_Camera->GetProjectionMatrix(Engine::Get().GetWindow()->GetAspectRatio());
+
+    m_DefaultShader->SetMat4("uView", view);
+    m_DefaultShader->SetMat4("uProjection", projection);
+    m_DefaultShader->SetInt("uUseTexture", 0);
+    // Light is minimal for wireframe
+    m_DefaultShader->SetVec3("uLightColor", glm::vec3(1.0f)); 
+
+    for (const auto& entityPtr : m_Scene->GetEntities()) {
+        auto* collider = entityPtr->GetComponent<BoxCollider>();
+        auto* transform = entityPtr->GetComponent<Transform>();
+        
+        if (!collider || !transform) continue;
+
+        // Color based on isTrigger
+        glm::vec3 color = collider->isTrigger ? glm::vec3(1.0f, 1.0f, 0.0f) : glm::vec3(0.0f, 1.0f, 0.0f);
+        m_DefaultShader->SetVec3("uDiffuse", color);
+
+        // Calculate Transform: EntityModel * ColliderOffset * ColliderSize
+        glm::mat4 model = transform->GetModelMatrix();
+        model = glm::translate(model, collider->center);
+        model = glm::scale(model, collider->size);
+        
+        m_DefaultShader->SetMat4("uModel", model);
+        
+        m_DebugMesh->Draw(m_DefaultShader.get());
+    }
+
+    // Restore state
+    glPolygonMode(GL_FRONT, polygonMode[0]);
+    glPolygonMode(GL_BACK, polygonMode[1]);
+    glEnable(GL_CULL_FACE);
+    glEnable(GL_DEPTH_TEST);
+}
+
 void RenderSystem::Shutdown() {
     m_DefaultShader.reset();
+    if (m_DebugMesh) {
+        delete m_DebugMesh;
+        m_DebugMesh = nullptr;
+    }
     // std::cout << "RenderSystem shut down." << std::endl;
 }
 

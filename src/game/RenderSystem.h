@@ -19,12 +19,15 @@ public:
     void Update(float deltaTime) override;
     void Shutdown() override;
 
+    void DrawColliders();
+
     void SetCamera(Camera* camera) { m_Camera = camera; }
     Camera* GetCamera() const { return m_Camera; }
 
 private:
     Camera* m_Camera;
     std::unique_ptr<Shader> m_DefaultShader;
+    class Mesh* m_DebugMesh = nullptr;
     
     // Lighting
     glm::vec3 m_LightPos = glm::vec3(5.0f, 10.0f, 5.0f);
