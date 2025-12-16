@@ -1,73 +1,47 @@
 # Archura Game Engine
 
-Modern, C++17 tabanlı ve modüler bir oyun motoru.
+![License](https://img.shields.io/badge/license-MIT-blue.svg) ![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg) ![Status](https://img.shields.io/badge/status-Active%20Development-green.svg) ![C++](https://img.shields.io/badge/C++-17-blue.svg)
 
-## Özellikler
+**Archura**, modern C++17 standartları ile geliştirilmiş, performans odaklı ve modüler bir FPS oyun motorudur. Düşük seviyeli sistem erişimi, veri odaklı tasarım (Data-Oriented Design) ve çok çekirdekli işlemci mimarilerinden tam yararlanmayı hedefleyen bir yapı üzerine kurulmuştur.
 
-*   **Grafik**: OpenGL 3.3+, Dinamik Işıklandırma, Gölge ve Texture desteği.
-*   **Fizik**: Özel çarpışma algılama ve AABB sistemi.
-*   **Ses**: MCI tabanlı ses sistemi (OpenAL hazırlığı ile).
-*   **Networking**: Entegre Host/Join multiplayer desteği (TCP).
-*   **UI**: ImGui tabanlı Editör ve Oyun İçi Menüler.
-    *   *Ayarlar*: Çözünürlük, Hassasiyet, Keybind Görüntüleme.
-*   **Modelleme**: OBJ ve FBX format desteği (ufbx & özel parser).
-*   **Scripting**: Temel komut sistemi.
+## 🚀 Temel Özellikler
 
-## Sistem Gereksinimleri
+### Çekirdek Sistemler
+*   **Veri Odaklı ECS (Entity Component System)**: Cache-friendly (önbellek dostu) ve yüksek performanslı entity yönetimi.
+*   **Job System (Multithreading)**: [JobSystem](cci:2://file:///c:/Users/4RCHURA/Desktop/Archura_game_engine/src/core/threading/JobSystem.h:12:0-41:1) mimarisi ile fizik, animasyon ve render hazırlık aşamalarında tam paralel işlem gücü.
+*   **Özel Bellek Yönetimi**: Yığın parçalanmasını (fragmentation) önleyen [Stack](cci:1://file:///c:/Users/4RCHURA/Desktop/Archura_game_engine/src/core/memory/StackAllocator.h:9:4-9:37) ve [Pool](cci:1://file:///c:/Users/4RCHURA/Desktop/Archura_game_engine/src/core/memory/PoolAllocator.cpp:8:0-23:1) tahsisçileri (allocators).
 
-*   **OS**: Windows 10/11 (Linux desteği geliştiriliyor)
-*   **GPU**: OpenGL 3.3 destekli ekran kartı
-*   **RAM**: 4GB+
-*   **Disk**: 500MB+
+### Grafik & Render
+*   **OpenGL 3.3+**: Modern render pipeline.
+*   **Aydınlatma**: Dinamik ışıklandırma ve gölge haritalama (Shadow Mapping).
+*   **Varlık Yönetimi**: `ufbx` entegrasyonu ile OBJ ve FBX formatında model desteği.
 
-## Kurulum ve Çalıştırma
+### Oyun Sistemleri
+*   **Fizik**: AABB (Axis-Aligned Bounding Box) tabanlı hızlı çarpışma tespiti.
+*   **Ağ (Networking)**: TCP tabanlı entegre Host/Join multiplayer mimarisi.
+*   **UI**: ImGui destekli, oyun içi ayarlanabilir Geliştirici Konsolu ve Editör araçları.
+*   **Ses**: MCI tabanlı, genişletilebilir ses sistemi.
+
+## 🛠️ Kurulum ve Derleme
 
 ### Oyuncular İçin (Release)
-1.  **`StartGame_Release.bat`** dosyasını çalıştırın.
-    *   Bu script otomatik olarak GitHub'dan en güncel kararlı sürümü indirir ve açar.
+En son kararlı sürümü oynamak için:
+1.  **[StartGame_Release.bat](cci:7://file:///c:/Users/4RCHURA/Desktop/Archura_game_engine/StartGame_Release.bat:0:0-0:0)** dosyasını çalıştırın.
+2.  Script, oyunun en güncel sürümünü otomatik olarak indirip başlatacaktır.
 
-### Geliştiriciler İçin (Local Dev)
-1.  Projeyi klonlayın:
-    ```bash
-    git clone https://github.com/aybarsbarut/archura_game_engine.git
-    cd archura_game_engine
-    ```
-2.  **`StartGame_Dev.bat`** dosyasını çalıştırın.
-    *   CMake kullanarak projeyi yerel makinenizde derler ve başlatır.
-    *   *Gereksinimler*: Visual Studio 2019+, CMake 3.15+, Git.
+### Geliştiriciler İçin (Build)
+Kaynak koddan derlemek için:
 
-## Kontroller
+**Gereksinimler:**
+*   Visual Studio 2019 veya üzeri (C++17 desteği ile)
+*   CMake 3.15+
+*   Git
 
-### Oyun İçi
-*   **W / A / S / D**: Hareket
-*   **SPACE**: Zıplama
-*   **SHIFT**: Koşma
-*   **Sol Tık**: Ateş Etme
-*   **R**: Şarjör Değiştirme
-*   **1 / 2 / 3**: Silah Değiştirme (Tüfek, Tabanca, Bıçak)
-*   **ESC**: Pause Menüsü (Ayarlar, Çıkış)
-*   **TAB**: Geliştirici Modu (Mouse Kilidini Açar/Kapatır)
+**Adımlar:**
+```bash
+# Projeyi klonlayın
+git clone [https://github.com/aybarsbarut/archura_game_engine.git](https://github.com/aybarsbarut/archura_game_engine.git)
+cd archura_game_engine
 
-### Editör (Geliştirici Modu)
-*   **Sol Tık + Mouse**: Kamera Yönlendirme
-*   **Q / E**: Yükselme / Alçalma
-*   **Ctrl+S**: Sahneyi Kaydet
-
-## Proje Yapısı
-
-```
-archura_game_engine/
-├── bin/Release_Dist/    # Dağıtıma hazır oyun dosyaları
-├── src/                 # Kaynak kodlar (Core, Game, Rendering, Network...)
-├── assets/              # Texture, Model ve Shader dosyaları
-├── external/            # 3. Parti kütüphaneler (GLFW, GLM, ImGui...)
-└── StartGame_*.bat      # Başlatıcı scriptleri
-```
-
-## Lisans
-
-MIT License - Detaylar için `LICENSE` dosyasına bakınız.
-
-## İletişim
-
-*   **GitHub**: [@aybarsbarut](https://github.com/aybarsbarut)
+# Derleme ve Başlatma
+StartGame_Dev.bat
