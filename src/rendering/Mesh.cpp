@@ -8,6 +8,8 @@
 #include <sstream>
 #include <string>
 #include <iostream>
+#include <map>
+#include <algorithm>
 #include <ufbx.h>
 
 namespace Archura {
@@ -60,6 +62,15 @@ void Mesh::SetupMesh() {
     // Color
     glEnableVertexAttribArray(3);
     glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, color));
+
+    // Animation Attributes (8, 9 to avoid conflict with Instancing 4-7)
+    // Bone IDs
+    glEnableVertexAttribArray(8);
+    glVertexAttribIPointer(8, MAX_BONE_INFLUENCE, GL_INT, sizeof(Vertex), (void*)offsetof(Vertex, m_BoneIDs));
+
+    // Weights
+    glEnableVertexAttribArray(9);
+    glVertexAttribPointer(9, MAX_BONE_INFLUENCE, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, m_Weights));
 
     glBindVertexArray(0);
 }
@@ -671,6 +682,28 @@ Mesh* Mesh::LoadFromFBX(const std::string& path) {
         if (node->mesh) {
             ufbx_mesh* mesh = node->mesh;
             
+            // --- Precompute Skinning Weights ---
+            // Map: Original Vertex Index -> List of (BoneID, Weight)
+            std::map<int, std::vector<std::pair<int, float>>> vertexWeights;
+
+            if (mesh->skin_deformers.count > 0) {
+                ufbx_skin_deformer* skin = mesh->skin_deformers.data[0];
+                for (size_t ci = 0; ci < skin->clusters.count; ci++) {
+                    ufbx_skin_cluster* cluster = skin->clusters.data[ci];
+                    int boneID = (int)ci; // Ideally map bone name to ID using BoneInfo, but for now linear ID
+
+                    // Note: This logic assumes simple linear bone mapping. 
+                    // To do it properly, we need to build the skeleton hierarchy first.
+                    // But simplified: Just assign IDs.
+                    
+                    for (size_t vi = 0; vi < cluster->vertices.count; vi++) {
+                        int vertIndex = cluster->vertices.data[vi];
+                        float weight = (float)cluster->weights.data[vi];
+                        vertexWeights[vertIndex].push_back({boneID, weight});
+                    }
+                }
+            }
+
             // Transformu hesaba katalim mi? Simdilik local space alalim, 
             // ama ideal olarak node->geometry_to_world kullanmaliyiz.
             // Karmasiklik olmamasi icin raw mesh verisini alalim.
@@ -712,10 +745,22 @@ Mesh* Mesh::LoadFromFBX(const std::string& path) {
                             v.texCoords = glm::vec2(uv.x, uv.y);
                         }
 
-                        // Vertex Color (Optional)
                         if (mesh->vertex_color.exists) {
                             ufbx_vec4 col = ufbx_get_vertex_vec4(&mesh->vertex_color, ix);
                             v.color = glm::vec3(col.x, col.y, col.z);
+                        }
+                        
+                        // Weights
+                        // ix is the control point index (index into vertex_position), which matches cluster indices.
+                        if (vertexWeights.count((int)ix)) {
+                            auto& weights = vertexWeights[(int)ix];
+                            // Sort by weight descending
+                            std::sort(weights.begin(), weights.end(), [](const auto& a, const auto& b){ return a.second > b.second; });
+                            
+                            for (int w = 0; w < std::min((int)weights.size(), MAX_BONE_INFLUENCE); w++) {
+                                v.m_BoneIDs[w] = weights[w].first;
+                                v.m_Weights[w] = weights[w].second;
+                            }
                         }
 
                         vertices.push_back(v);

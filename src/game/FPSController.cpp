@@ -7,6 +7,9 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/euler_angles.hpp>
 #include <glm/gtx/quaternion.hpp>
+#include "../game/Weapon.h"
+#include "../game/Projectile.h"
+#include <algorithm>
 
 namespace Archura {
 
@@ -22,9 +25,54 @@ FPSController::FPSController(Camera* camera)
     m_Bindings.sprint = GLFW_KEY_LEFT_SHIFT;
 }
 
-void FPSController::Update(Input* input, Scene* scene, float deltaTime) {
+void FPSController::Update(Input* input, Scene* scene, float deltaTime, ProjectileSystem* projectileSystem) {
     HandleMovement(input, scene, deltaTime);
     HandleMouseLook(input, deltaTime);
+
+    // --- GERİ TEPME İYİLEŞTİRMESİ ---
+    if (glm::length(m_CurrentRecoil) > 0.001f) {
+        glm::vec3 recovery = m_CurrentRecoil * m_RecoilReturnSpeed * deltaTime;
+        
+        // Aşırı iyileştirme yapma (over-recover)
+        if (glm::length(recovery) > glm::length(m_CurrentRecoil)) {
+            recovery = m_CurrentRecoil;
+        }
+
+        m_CurrentRecoil -= recovery;
+        
+        // Kamerayı düzelt (aşağı eğ)
+        // Not: m_CurrentRecoil pozitiftir (yukarı vuruş), bu yüzden çıkararak (aşağı bakarak) telafi ediyoruz.
+        // Ama ProcessMouseMovement (x, y) alır ve y eğimdir (pitch).
+        // Eğer geri tepme için +Y (Yukarı) eklediysek, düzeltmek için -Y ekleriz.
+        m_Camera->ProcessMouseMovement(-recovery.y, -recovery.x, true);
+    }
+
+    // --- ATIŞ MANTIĞI ---
+    if (input->IsMouseButtonDown(GLFW_MOUSE_BUTTON_LEFT)) {
+        // Oyuncuyu Bul (Her kare verimsiz arama, ama demo için uygun)
+        Entity* player = nullptr;
+        for(auto& e : scene->GetEntities()) {
+            if(e->GetName() == "Player") { player = e.get(); break; }
+        }
+
+        if (player && projectileSystem) {
+            auto* weapon = player->GetComponent<Weapon>();
+            if (weapon) {
+                // Genel sistem sarmalayıcısını örneklendir
+                WeaponSystem ws;
+                if (ws.TryShoot(weapon, player, scene, m_Camera, projectileSystem)) {
+                    // Geri Tepme Uygula
+                    // Eğim (X ekseni dönüşü) genellikle Y fare hareketidir
+                    // Geri tepme YUKARI teper, bu yüzden fare YUKARI (+Y) hareket etmiş gibi davranıyoruz
+                    // Rastgele yatay sallantı
+                    float rX = ((rand() % 100) / 100.0f - 0.5f) * weapon->stats.recoilAmount * 0.5f;
+                    float rY = weapon->stats.recoilAmount; 
+
+                    AddRecoil(glm::vec3(rY, rX, 0.0f)); 
+                }
+            }
+        }
+    }
 }
 
 void FPSController::HandleMovement(Input* input, Scene* scene, float deltaTime) {
@@ -149,13 +197,13 @@ void FPSController::HandleMovement(Input* input, Scene* scene, float deltaTime) 
             // Eger asagi dogru dusuyorsak (veya duruyorsak) YERDEDIR
             if (m_VerticalVelocity <= 0.0f && (targetPos.y - playerEyeHeight) >= (objectTopY - 0.5f)) {
                 
-                // Jitter Fix: Epsilon reduced and sticky gravity applied
+                // Titreşim Düzeltmesi: Epsilon azaltıldı ve yapışkan yerçekimi uygulandı
                 // 0.05f yerine 0.001f kullaniyoruz, boylece havada kalmaz.
                 float groundSnapY = objectTopY + playerEyeHeight + 0.001f; 
                 
                 targetPos.y = groundSnapY;
                 
-                // Stick to ground: Hafif eksi hiz uygulayarak sonraki karede de "yere carpma" kontrolunu garantile
+                // Yere yapış: Hafif eksi hız uygulayarak sonraki karede de "yere çarpma" kontrolünü garantile
                 m_VerticalVelocity = -2.0f; 
                 m_IsGrounded = true;
             }
@@ -220,7 +268,7 @@ bool FPSController::CheckCollision(const glm::vec3& position, Scene* scene, floa
             
             glm::mat4 invModel = glm::inverse(model);
 
-            // Helper lambda for OBB check
+            // OBB kontrolü için yardımcı lambda
             auto CheckOBB = [&](const glm::vec3& localCenter, const glm::vec3& localSize) -> bool {
                 // Kutu Boyutu (Scale dahil)
                 glm::vec3 boxHalfSize = localSize * transform->scale * 0.5f;
@@ -279,12 +327,12 @@ bool FPSController::CheckCollision(const glm::vec3& position, Scene* scene, floa
 
             bool hit = false;
             
-            // Check main box
+            // Ana kutuyu kontrol et
             if (glm::length(collider->size) > 0.01f) {
                 if (CheckOBB(collider->center, collider->size)) hit = true;
             }
 
-            // Check sub boxes - REMOVED (BoxCollider does not support subBoxes)
+            // Alt kutuları kontrol et - KALDIRILDI (BoxCollider alt kutuları desteklemez)
             /*
             for (const auto& box : collider->subBoxes) {
                 if (CheckOBB(box.center, box.size)) hit = true;
@@ -313,6 +361,18 @@ void FPSController::HandleMouseLook(Input* input, float deltaTime) {
     // ESC ile imleci serbest birak (Gecici cikis)
     // Not: Ana dongude ESC cikis yapiyor olabilir, bunu kontrol etmeliyiz.
     // Simdilik sadece kilitli degilse serbest birakma mantigi kalsin.
+}
+
+void FPSController::AddRecoil(const glm::vec3& recoil) {
+    // Anlık vuruş ekle
+    m_CurrentRecoil += recoil;
+
+    // Kameraya hemen uygula (Yukarı Vur)
+    m_Camera->ProcessMouseMovement(recoil.y, recoil.x, true);
+}
+
+void FPSController::ResetRecoil() {
+    m_CurrentRecoil = glm::vec3(0.0f);
 }
 
 } // namespace Archura

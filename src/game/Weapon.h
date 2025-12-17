@@ -25,6 +25,10 @@ struct Weapon : public Component {
         Sniper = 5
     };
 
+    struct RecoilPattern {
+        std::vector<glm::vec2> offsets; // Pitch, Yaw offsets per shot
+    };
+
     struct WeaponStats {
         float damage = 25.0f;
         float fireRate = 0.2f;
@@ -35,6 +39,7 @@ struct Weapon : public Component {
         float reloadTime = 1.5f;
         float recoilAmount = 2.0f;
         bool isAutomatic = true;
+        RecoilPattern pattern;
     };
 
     WeaponType type = WeaponType::Rifle;
@@ -50,6 +55,7 @@ struct Weapon : public Component {
     bool isReloading = false;
     float reloadTimer = 0.0f;
     float currentRecoil = 0.0f;
+    int shotsFired = 0; // Track spray index
 
     // Helper to initialize inventory
     void InitInventory() {

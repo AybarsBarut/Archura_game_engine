@@ -14,7 +14,9 @@
 #include "game/Weapon.h"
 #include "game/Projectile.h"
 #include "game/PhysicsSystem.h"
+#include "game/PhysicsSystem.h"
 #include "game/ScriptSystem.h"
+#include "game/ParticleSystem.h"
 #include "editor/Editor.h"
 #include "game/DevConsole.h"
 #include "core/AudioSystem.h"
@@ -38,9 +40,9 @@ namespace Archura {
     }
 
     bool Application::Init() {
-        // 1. Engine / Window Init
+        // 1. Motor / Pencere Başlatma
         Engine::EngineConfig config;
-        // Updated title to reflect state
+        // Durumu yansıtmak için başlık güncellendi
         config.windowTitle = "Archura FPS Engine - Build 0.2"; 
         config.windowWidth = 1920;
         config.windowHeight = 1080;
@@ -54,16 +56,16 @@ namespace Archura {
 
         m_Window = std::unique_ptr<Window>(Engine::Get().GetWindow());
 
-        // 2. Audio
+        // 2. Ses
         AudioSystem::Get().Init();
 
-        // 3. Network
+        // 3. Ağ (Network)
         NetworkManager::Get().Init();
 
-        // 4. Console
+        // 4. Konsol
         DevConsole::Get().Init();
 
-        // 5. Editor / ImGui
+        // 5. Editör / ImGui
         m_ImGuiLayer = std::make_unique<ImGuiLayer>();
         m_ImGuiLayer->Init(m_Window.get());
         
@@ -73,7 +75,7 @@ namespace Archura {
     void Application::Run() {
         if (!Init()) return;
 
-        // --- SCENE SETUP (Migrated from main.cpp) ---
+        // --- SAHNE KURULUMU (main.cpp'den taşındı) ---
         Scene scene("Demo Scene");
         Camera camera(glm::vec3(0.0f, 2.0f, 10.0f));
         FPSController fpsController(&camera);
@@ -91,7 +93,7 @@ namespace Archura {
         Editor editor;
         editor.Init(Engine::Get().GetWindow());
         
-        // --- FIX 1: Start in Game Mode (Cursor Locked, Editor Hidden) ---
+        // --- DÜZELTME 1: Oyun Modunda Başla (İmleç Kilitli, Editör Gizli) ---
         bool devModeActive = false;
         bool isPaused = false; // Pause Durumu
         
@@ -99,7 +101,7 @@ namespace Archura {
         // ama cizim yapip yapmayacagina asagida karar verecegiz.
         editor.SetEnabled(true); 
 
-        // Player Setup
+        // Oyuncu Kurulumu
         Entity* player = scene.CreateEntity("Player");
         auto* weapon = player->AddComponent<Weapon>();
         weapon->InitInventory();
@@ -108,18 +110,20 @@ namespace Archura {
         playerHealth->current = 100.0f;
         player->AddComponent<BoxCollider>()->size = glm::vec3(0.8f, 1.8f, 0.8f);
 
-        // Systems
+        // Sistemler
         PhysicsSystem physicsSystem;
         physicsSystem.Init(&scene);
         ScriptSystem scriptSystem;
         scriptSystem.Init(&scene);
+        ParticleSystem particleSystem;
+        particleSystem.Init(&scene);
         ProjectileSystem projectileSystem;
 
-        // Initialize PauseMenu
+        // Duraklatma Menüsünü (PauseMenu) Başlat
         PauseMenu pauseMenu;
 
-        // --- MAP GENERATION (Optimized) ---
-        // TODO: Move this to InstancedRenderer later
+        // --- HARİTA OLUŞTURMA (Optimize Edildi) ---
+        // TODO: Bunu daha sonra InstancedRenderer'a taşı
         Entity* ground = scene.CreateEntity("Ground");
         auto* groundMesh = ground->AddComponent<MeshRenderer>();
         groundMesh->mesh = Mesh::CreatePlane(100.0f, 100.0f, 10.0f);
@@ -131,7 +135,7 @@ namespace Archura {
         float wallThickness = 2.0f;
         glm::vec3 wallColor(0.5f, 0.5f, 0.55f);
         
-        // Shared Mesh for Walls to enable Batching
+        // Kütüphaneyi (Batching) etkinleştirmek için Duvarlar için Paylaşılan Mesh
         Mesh* sharedWallMesh = Mesh::CreateCube(1.0f);
         
         auto CreateWall = [&](glm::vec3 pos, glm::vec3 scale) {
@@ -150,12 +154,12 @@ namespace Archura {
         CreateWall(glm::vec3(-mapSize, wallHeight/2, 0), glm::vec3(wallThickness, wallHeight, mapSize*2));
         CreateWall(glm::vec3(mapSize, wallHeight/2, 0), glm::vec3(wallThickness, wallHeight, mapSize*2));
 
-        // --- GAME LOOP ---
+        // --- OYUN DÖNGÜSÜ (GAME LOOP) ---
         auto* window = Engine::Get().GetWindow();
         auto* input = Engine::Get().GetInput();
         auto* renderer = Engine::Get().GetRenderer();
 
-        // Ensure cursor is locked at start
+        // Başlangıçta imlecin kilitli olduğundan emin ol
         input->SetCursorMode(GLFW_CURSOR_DISABLED);
 
         while (!window->ShouldClose() && m_Running) {
@@ -163,21 +167,21 @@ namespace Archura {
             float deltaTime = time - (float)m_LastFrameTime;
             m_LastFrameTime = time;
 
-            // Poll Events FIRST
+            // Önce Olayları (Events) Dinle
             window->Update(); 
             input->Update();
 
-            // --- INPUT HANDLING (Simplified) ---
+            // --- GİRİŞ İŞLEME (Basitleştirilmiş) ---
             static bool escHandled = false;
             static bool tabHandled = false;
             
-            // 1. ESC Key: Toggle Pause
+            // 1. ESC Tuşu: Duraklatmayı Aç/Kapa
             if (input->IsKeyPressed(GLFW_KEY_ESCAPE)) {
                  if (!escHandled) {
                      isPaused = !isPaused;
                      escHandled = true;
                      
-                     // Cursor State Logic
+                     // İmleç Durum Mantığı
                      if (isPaused) {
                          input->SetCursorMode(GLFW_CURSOR_NORMAL);
                      } else {
@@ -188,7 +192,7 @@ namespace Archura {
                 escHandled = false;
             }
 
-            // 2. TAB Key: Toggle Dev Mode
+            // 2. TAB Tuşu: Geliştirici Modunu Aç/Kapa
             if (input->IsKeyPressed(GLFW_KEY_TAB)) {
                 if (!tabHandled) {
                     devModeActive = !devModeActive;
@@ -197,7 +201,7 @@ namespace Archura {
                     if (devModeActive) { 
                         input->SetCursorMode(GLFW_CURSOR_NORMAL);
                     } else {
-                        // Returns to game mode defaults
+                        // Oyun modu varsayılanlarına döner
                          if (!isPaused) input->SetCursorMode(GLFW_CURSOR_DISABLED);
                     }
                 }
@@ -205,19 +209,22 @@ namespace Archura {
                 tabHandled = false;
             }
 
-            // 3. Mouse Clicking Logic (Only in Game Mode)
+            // 3. Fare Tıklama Mantığı (Sadece Oyun Modunda)
             if (!isPaused && !devModeActive) {
                 if (input->IsMouseButtonPressed(GLFW_MOUSE_BUTTON_LEFT)) {
-                    // Lock cursor if clicked in window
+                    // Pencereye tıklanırsa imleci kilitle
                     input->SetCursorMode(GLFW_CURSOR_DISABLED);
                 }
             }
 
             // Game Update Loop (Pause ise durdur)
             if (!isPaused) {
-                fpsController.Update(input, &scene, deltaTime);
+                fpsController.Update(input, &scene, deltaTime, &projectileSystem);
                 physicsSystem.Update(deltaTime); 
                 scriptSystem.Update(deltaTime);
+                scriptSystem.Update(deltaTime);
+                particleSystem.Update(deltaTime);
+                AudioSystem::Get().Update(&scene, &camera);
             }
 
             // Network
@@ -227,7 +234,7 @@ namespace Archura {
                 NetworkManager::Get().UpdateClient();
             }
 
-            // Render
+            // Çizim (Render)
             renderer->BeginFrame();
             
             float aspectRatio = (float)window->GetWidth() / (float)window->GetHeight();
@@ -235,7 +242,7 @@ namespace Archura {
             
             renderSystem.Update(deltaTime);
             
-            // Draw Debug Colliders if in Dev Mode
+            // Geliştirici Modundaysa Hata Ayıklama Çarpıştırıcılarını Çiz
             if (devModeActive) {
                 renderSystem.DrawColliders();
             }
@@ -249,7 +256,7 @@ namespace Archura {
                 hudRenderer.EndHUD();
             }
 
-            // --- EDITOR & GUI RENDER ---
+            // --- EDİTÖR & ARAYÜZ ÇİZİMİ ---
             m_ImGuiLayer->BeginFrame(); 
             
             if (devModeActive) {
@@ -260,13 +267,13 @@ namespace Archura {
             }
             
             if (isPaused) {
-                // Ensure cursor is visible
+                // İmlecin görünür olduğundan emin ol
                 input->SetCursorMode(GLFW_CURSOR_NORMAL);
                 
-                // Draw new Pause Menu
+                // Yeni Duraklatma Menüsünü Çiz
                 pauseMenu.Render(isPaused, fpsController, *m_Window);
                 
-                 // Logic check: If menu requested resume (isPaused became false)
+                 // Mantık kontrolü: Eğer menü devam etmeyi istediyse (isPaused false olduysa)
                 if (!isPaused) {
                      input->SetCursorMode(GLFW_CURSOR_DISABLED);
                 }
@@ -274,7 +281,7 @@ namespace Archura {
 
             m_ImGuiLayer->EndFrame();
             
-            // Swap Buffer handled by window->Update() or internal loop
+            // Swap Buffer window->Update() veya dahili döngü tarafından yönetilir
 
     }
 

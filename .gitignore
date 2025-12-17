@@ -68,5 +68,6 @@ setup_dependencies.bat
 
 # Assets (Ignore content, keep structure)
 assets/*
+!assets/shaders/
 !assets/**/.gitkeep
 

@@ -6,6 +6,9 @@
 
 namespace Archura {
 
+class Scene;
+class Camera;
+
 /**
  * @brief Windows MCI tabanli basit Ses Sistemi (MP3 destegi icin)
  * 
@@ -39,6 +42,13 @@ public:
 
     // Muziği durdur
     void StopMusic();
+
+    // 3D Audio Update Loop
+    void Update(Scene* scene, Camera* camera);
+
+    // Play/Stop AudioSource
+    void Play(struct AudioSource* source, const std::string& alias);
+    void Stop(struct AudioSource* source);
 
     // Ses Ayarlari (0.0f - 1.0f)
     void SetMasterVolume(float volume);

@@ -17,7 +17,7 @@ namespace Archura {
     }
 
     void PhysicsSystem::Shutdown() {
-        // Cleanup if needed
+        // Gerekirse temizlik
     }
 
     void PhysicsSystem::Integrate(float deltaTime) {
@@ -27,23 +27,23 @@ namespace Archura {
             auto* transform = entity->GetComponent<Transform>();
 
             if (rb && transform && !rb->isKinematic) {
-                // Apply Gravity
+                // Yerçekimi Uygula
                 if (rb->useGravity) {
                     rb->velocity += m_Gravity * deltaTime;
                 }
 
-                // Apply Drag
+                // Sürüklemeyi (Direnç) Uygula
                 rb->velocity *= (1.0f - rb->drag * deltaTime);
 
-                // Apply Velocity to Position
+                // Hızı Pozisyona Uygula
                 transform->position += rb->velocity * deltaTime;
             }
         }
     }
 
     void PhysicsSystem::ResolveCollisions() {
-        // Very basic O(N^2) AABB collision resolution
-        // In a real engine, use a spatial partition (Octree/BVH) and PhysX
+        // Çok temel O(N^2) AABB çarpışma çözümü
+        // Gerçek bir motorda, uzaysal bölümleme (Octree/BVH) ve PhysX kullanın
         
         auto& entities = m_Scene->GetEntities();
         for (size_t i = 0; i < entities.size(); ++i) {
@@ -61,22 +61,22 @@ namespace Archura {
                 auto* colB = entityB->GetComponent<BoxCollider>();
                 auto* transB = entityB->GetComponent<Transform>();
 
-                // We collide with static objects (no RB) or dynamic objects (RB)
+                // Statik nesnelerle (RB yok) veya dinamik nesnelerle (RB) çarpışıyoruz
                 if (!colB || !transB) continue;
 
-                // Check for Triggers
+                // Tetikleyicileri (Trigger) Kontrol Et
                 if (colA->isTrigger || colB->isTrigger) continue;
 
-                // Check AABB
+                // AABB Kontrolü
                 if (CheckAABB(transA->position, colA->size * transA->scale, transB->position, colB->size * transB->scale)) {
-                    // Collision Detected!
-                    // Very simple resolution: Stop velocity and push out (naive)
+                    // Çarpışma Tespit Edildi!
+                    // Çok basit çözüm: Hızı durdur ve dışarı it (saf yöntem)
                     
-                    // Determine overlap on Y axis to see if it's ground
+                    // Zemin olup olmadığını anlamak için Y eksenindeki örtüşmeyi belirle
                     float yOverlap = (colA->size.y * transA->scale.y * 0.5f + colB->size.y * transB->scale.y * 0.5f) - std::abs(transA->position.y - transB->position.y);
                     
                     if (yOverlap > 0) {
-                        // If we are falling and hitting something below
+                        // Eğer düşüyorsak ve aşağıda bir şeye çarpıyorsak
                         if (rbA->velocity.y < 0 && transA->position.y > transB->position.y) {
                             transA->position.y += yOverlap;
                             rbA->velocity.y = 0;
@@ -99,8 +99,8 @@ namespace Archura {
     }
 
     bool PhysicsSystem::Raycast(const glm::vec3& origin, const glm::vec3& direction, float maxDistance, Entity** outEntity, glm::vec3* outHitPoint) {
-        // Re-implementing the raycast logic from main.cpp here for centralization
-        // ... (Simplified for brevity, can be copied from main.cpp later)
+        // Merkezileştirme için main.cpp'den ışın izleme (raycast) mantığını burada yeniden uyguluyoruz
+        // ... (Kısalık için basitleştirildi, daha sonra main.cpp'den kopyalanabilir)
         return false; 
     }
 

@@ -25,7 +25,7 @@ public:
     FPSController(Camera* camera);
     ~FPSController() = default;
 
-    void Update(Input* input, class Scene* scene, float deltaTime);
+    void Update(Input* input, class Scene* scene, float deltaTime, class ProjectileSystem* projectileSystem = nullptr);
 
     // Ayarlar
     void SetWalkSpeed(float speed) { m_WalkSpeed = speed; }
@@ -43,6 +43,10 @@ public:
     // State
     bool IsGrounded() const { return m_IsGrounded; }
     bool IsRunning() const { return m_IsRunning; }
+
+    // Recoil
+    void AddRecoil(const glm::vec3& recoil); // Pitch, Yaw, Roll (Roll unused for now)
+    void ResetRecoil();
 
 private:
     void HandleMovement(Input* input, class Scene* scene, float deltaTime);
@@ -72,6 +76,12 @@ private:
     glm::vec3 m_MantleTargetPos;
     float m_MantleTimer = 0.0f;
     float m_MantleDuration = 0.5f;
+
+    // Recoil State
+    glm::vec3 m_CurrentRecoil = glm::vec3(0.0f);
+    glm::vec3 m_TargetRecoil = glm::vec3(0.0f);
+    float m_RecoilSnappiness = 16.0f;
+    float m_RecoilReturnSpeed = 10.0f;
 };
 
 } // namespace Archura

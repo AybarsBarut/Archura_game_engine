@@ -11,11 +11,17 @@ class Shader;
 /**
  * @brief Vertex yapısı - mesh'in her bir vertex'i için data
  */
+#define MAX_BONE_INFLUENCE 4
+
 struct Vertex {
     glm::vec3 position;
     glm::vec3 normal;
     glm::vec2 texCoords;
     glm::vec3 color;
+    
+    // Animation
+    int m_BoneIDs[MAX_BONE_INFLUENCE] = {0};
+    float m_Weights[MAX_BONE_INFLUENCE] = {0.0f};
 
     Vertex(
         const glm::vec3& pos = glm::vec3(0.0f),

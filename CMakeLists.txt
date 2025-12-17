@@ -10,7 +10,13 @@ project(ArchuraEngine VERSION 1.0.0 LANGUAGES CXX)
 # C++ Standard
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+# Force MSVC Runtime to be Dynamic (DLL) to avoid LIBCMT conflicts
+if(MSVC)
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
+endif()
 
 # Optimization Flags (High Performance)
 if(MSVC)

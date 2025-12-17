@@ -1,7 +1,16 @@
 #include "AudioSystem.h"
 #include <windows.h>
+#include <mmsystem.h> // Added mmsystem.h
 #include <iostream>
 #include <filesystem>
+#include <vector> // Added vector
+#include "../game/AudioSource.h"
+#include "../game/AudioSource.h"
+#include "../rendering/Camera.h"
+#include "../ecs/Entity.h"
+#include "../ecs/Component.h"
+#include "../ecs/Component.h"
+#include <glm/glm.hpp>
 
 // Link with winmm.lib
 #pragma comment(lib, "winmm.lib")
@@ -127,6 +136,82 @@ void AudioSystem::ApplyVolume(const std::string& alias, float channelVolume) {
 
     std::string cmd = "setaudio " + alias + " volume to " + std::to_string(finalVol);
     mciSendString(cmd.c_str(), NULL, 0, NULL);
+}
+
+void AudioSystem::Update(Scene* scene, Camera* camera) {
+    if (!scene || !camera) return;
+
+    for (auto& entityPtr : scene->GetEntities()) {
+        auto* source = entityPtr->GetComponent<AudioSource>();
+        if (!source || !source->isPlaying) continue;
+
+        auto* transform = entityPtr->GetComponent<Transform>();
+        if (!transform) continue;
+
+        // Calculate distance
+        float distance = glm::distance(transform->position, camera->GetPosition());
+
+        // Linear attenuation
+        // minDistance: volume = max
+        // maxDistance: volume = 0
+        
+        float volume = source->volume;
+        
+        if (distance < source->minDistance) {
+            volume = source->volume;
+        } else if (distance > source->maxDistance) {
+            volume = 0.0f;
+        } else {
+            float pct = 1.0f - ((distance - source->minDistance) / (source->maxDistance - source->minDistance));
+            volume = source->volume * pct;
+        }
+        
+        // MCI uses volume 0-1000
+        int finalVol = (int)(volume * 1000.0f);
+        if (finalVol < 0) finalVol = 0;
+        if (finalVol > 1000) finalVol = 1000;
+
+        std::string alias = source->runtimeAlias;
+        if (alias.empty()) {
+            alias = std::string("sound_") + std::to_string(entityPtr->GetID());
+            source->runtimeAlias = alias;
+        }
+
+        std::string cmd = "setaudio " + alias + " volume to " + std::to_string(finalVol);
+        mciSendStringA(cmd.c_str(), NULL, 0, NULL);
+    }
+}
+
+void AudioSystem::Play(AudioSource* source, const std::string& alias) {
+    if (!source) return;
+
+    std::string path = "assets/audio/" + source->clipName;
+    if (!std::filesystem::exists(path)) return;
+
+    // Close previous if any
+    std::string cmdClose = "close " + alias;
+    mciSendString(cmdClose.c_str(), NULL, 0, NULL);
+
+    // Open
+    std::string cmdOpen = "open \"" + path + "\" type mpegvideo alias " + alias;
+    MCIERROR err = mciSendString(cmdOpen.c_str(), NULL, 0, NULL);
+    
+    if (err == 0) {
+        std::string cmdPlay = "play " + alias;
+        if (source->loop) cmdPlay += " repeat";
+        mciSendString(cmdPlay.c_str(), NULL, 0, NULL);
+        source->isPlaying = true;
+    } else {
+         std::cerr << "AudioSource Open Error: " << path << std::endl;
+    }
+}
+
+void AudioSystem::Stop(AudioSource* source) {
+    if (!source || source->runtimeAlias.empty()) return;
+
+    std::string cmd = "stop " + source->runtimeAlias;
+    mciSendStringA(cmd.c_str(), NULL, 0, NULL);
+    source->isPlaying = false;
 }
 
 } // namespace Archura

@@ -1,6 +1,6 @@
 #include "core/Application.h"
 
-// External GPU Selection (NVIDIA / AMD)
+// Harici GPU Seçimi (NVIDIA / AMD)
 extern "C" {
     __declspec(dllexport) unsigned long NvOptimusEnablement = 0x00000001;
     __declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;

@@ -2,7 +2,9 @@
 
 #include "../ecs/Component.h"
 #include <glm/glm.hpp>
+#include <glm/glm.hpp>
 #include <vector>
+#include "SurfaceProperty.h"
 
 namespace Archura {
 
@@ -57,6 +59,7 @@ public:
 private:
     void UpdateProjectile(Entity* entity, Projectile* proj, float deltaTime);
     bool CheckCollision(Entity* projectile, Scene* scene);
+    void SpawnDecal(Scene* scene, const glm::vec3& position, const glm::vec3& normal, SurfaceType surfaceType);
 
 private:
     std::vector<Entity*> m_ProjectilesToDestroy;
