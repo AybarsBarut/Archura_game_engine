@@ -75,161 +75,202 @@ void FPSController::Update(Input* input, Scene* scene, float deltaTime, Projecti
     }
 }
 
-void FPSController::HandleMovement(Input* input, Scene* scene, float deltaTime) {
-    // Mantling (Tirmanma) Durumu - IPTAL EDILDI (User Request)
-    /*
-    if (m_IsMantling) {
-        m_MantleTimer += deltaTime;
-        float t = glm::clamp(m_MantleTimer / m_MantleDuration, 0.0f, 1.0f);
-        
-        // Smooth step interpolation (daha yumusak gecis)
-        t = t * t * (3.0f - 2.0f * t);
+// Physics Helper: Apply Friction
+void FPSController::ApplyFriction(float t) {
+    if (!m_IsGrounded) return; // Havada surtunme yok (Source tarzi)
 
-        if (m_MantleTimer >= m_MantleDuration) {
-            m_Camera->SetPosition(m_MantleTargetPos);
-            m_IsMantling = false;
-            m_VerticalVelocity = 0.0f;
-            m_IsGrounded = true;
-        } else {
-            glm::vec3 newPos = glm::mix(m_MantleStartPos, m_MantleTargetPos, t);
-            m_Camera->SetPosition(newPos);
-        }
-        return; // Normal hareketi atla
-    }
-    */
-
-    // Kosma kontrolu (Shift)
-    m_IsRunning = input->IsKeyDown(m_Bindings.sprint);
-    float currentSpeed = m_IsRunning ? m_RunSpeed : m_WalkSpeed;
-
-    glm::vec3 currentPos = m_Camera->GetPosition();
-    glm::vec3 targetPos = currentPos;
+    glm::vec3 vel = m_Velocity;
+    // Dikey hizi yoksay (Yercekimi ayri)
+    vel.y = 0.0f;
     
-    glm::vec3 front = m_Camera->GetFront();
+    float speed = glm::length(vel);
+    if (speed < 0.1f) return;
+
+    float drop = 0.0f;
+    
+    // Konami code / Quake tarzi surtunme kontrolu
+    float control = speed < m_StopSpeed ? m_StopSpeed : speed;
+    drop += control * m_Friction * t;
+
+    float newSpeed = speed - drop;
+    if (newSpeed < 0.0f) newSpeed = 0.0f;
+    
+    if (speed > 0.0f) newSpeed /= speed;
+
+    m_Velocity.x *= newSpeed;
+    m_Velocity.z *= newSpeed;
+}
+
+// Physics Helper: Accelerate
+void FPSController::Accelerate(glm::vec3 wishDir, float wishSpeed, float accel, float deltaTime) {
+    float currentSpeed = glm::dot(m_Velocity, wishDir);
+    float addSpeed = wishSpeed - currentSpeed;
+    
+    if (addSpeed <= 0.0f) return;
+    
+    float accelSpeed = accel * deltaTime * wishSpeed;
+    if (accelSpeed > addSpeed) accelSpeed = addSpeed;
+    
+    m_Velocity.x += accelSpeed * wishDir.x;
+    m_Velocity.y += accelSpeed * wishDir.y;
+    m_Velocity.z += accelSpeed * wishDir.z;
+}
+
+// Physics Helper: Air Accelerate (Separate for clarity and future distinct logic)
+void FPSController::AirAccelerate(glm::vec3 wishDir, float wishSpeed, float accel, float deltaTime) {
+    float currentSpeed = glm::dot(m_Velocity, wishDir);
+    float addSpeed = wishSpeed - currentSpeed;
+    
+    if (addSpeed <= 0.0f) return;
+    
+    float accelSpeed = accel * deltaTime * wishSpeed;
+    if (accelSpeed > addSpeed) accelSpeed = addSpeed;
+    
+    m_Velocity.x += accelSpeed * wishDir.x;
+    m_Velocity.y += accelSpeed * wishDir.y;
+    m_Velocity.z += accelSpeed * wishDir.z;
+}
+
+void FPSController::HandleMovement(Input* input, Scene* scene, float deltaTime) {
+    // 1. Durum Kontrolu (Grounded?)
+    // Basit raycast kontrolu Update sonunda yapiliyor, burada flag kullaniyoruz.
+    
+    // 2. Giris Yonunu Hesapla (Wish Direction)
+    m_IsRunning = input->IsKeyDown(m_Bindings.sprint);
+    
+    glm::vec3 forward = m_Camera->GetFront();
     glm::vec3 right = m_Camera->GetRight();
     
-    // Yercekimi aciksa Y eksenini sifirla (Sadece XZ duzleminde hareket)
-    // Kapaliysa (Fly Mode) kameranin baktigi yere git
-    if (m_GravityEnabled) {
-        front.y = 0.0f;
-        right.y = 0.0f;
+    forward.y = 0.0f;
+    right.y = 0.0f;
+    
+    if (glm::length(forward) > 0.001f) forward = glm::normalize(forward);
+    if (glm::length(right) > 0.001f) right = glm::normalize(right);
+    
+    glm::vec3 wishDir = glm::vec3(0.0f);
+    if (input->IsKeyDown(m_Bindings.forward)) wishDir += forward;
+    if (input->IsKeyDown(m_Bindings.backward)) wishDir -= forward;
+    if (input->IsKeyDown(m_Bindings.left)) wishDir -= right;
+    if (input->IsKeyDown(m_Bindings.right)) wishDir += right;
+    
+    if (glm::length(wishDir) > 0.001f) wishDir = glm::normalize(wishDir);
+    
+    
+    if (glm::length(wishDir) > 0.001f) wishDir = glm::normalize(wishDir);
+    
+    // --- BUNNYHOPPING LOGIC ---
+    // Ziplama kontrolunu surtunmeden ONCE yapmaliyiz.
+    // Eger ziplama basarili olursa, m_IsGrounded false olur ve surtunme uygulanmaz.
+    // Boylece hiz korunur.
+    
+    if (input->IsKeyDown(m_Bindings.jump) || input->IsMouseButtonDown(GLFW_MOUSE_BUTTON_RIGHT)) { // Sag tik da zipla olsun kolaylik icin
+        if (m_IsGrounded) {
+             m_Velocity.y = sqrt(m_JumpHeight * 2.0f * -m_Gravity); 
+             m_IsGrounded = false;
+        }
+    }
+
+    // 3. Fizik Uygula
+    if (m_IsGrounded) {
+        // Yerde Hareket
+        ApplyFriction(deltaTime);
+        
+        float wishSpeed = m_IsRunning ? m_RunSpeed : m_WalkSpeed;
+        Accelerate(wishDir, wishSpeed, m_Acceleration, deltaTime);
+        
+        // Yercekimini sifirla (Sadece gorsel degil, fiziksel reset)
+        // CheckCollision kisminda anyway -2.0f yapiyoruz ama burada birikmesini onleyelim.
+    } else {
+        // Havada Hareket (Air Control)
+        // AirSpeedCap (3.0f) ile sinirli ivmelenme, ama mevcut hiz korunur.
+        AirAccelerate(wishDir, m_AirSpeedCap, m_AirAcceleration, deltaTime);
+        
+        // Yercekimi
+        m_Velocity.y += m_Gravity * deltaTime;
     }
     
-    if (glm::length(front) > 0.001f) front = glm::normalize(front);
-    if (glm::length(right) > 0.001f) right = glm::normalize(right);
-
-    // Hareket tuslari
-    glm::vec3 movement = glm::vec3(0.0f);
-    if (input->IsKeyDown(m_Bindings.forward)) movement += front;
-    if (input->IsKeyDown(m_Bindings.backward)) movement -= front;
-    if (input->IsKeyDown(m_Bindings.left)) movement -= right;
-    if (input->IsKeyDown(m_Bindings.right)) movement += right;
-
-    if (glm::length(movement) > 0.001f) {
-        movement = glm::normalize(movement) * currentSpeed * deltaTime;
-        
-        if (m_GravityEnabled) {
-            // Normal yurume (Collision var)
-            // Sıkışma kontrolü (Eğer karakter bir objenin içindeyse harekete izin ver)
-            // Radius 0.1f yapildi (daha az hassas, sadece gercekten icindeyse)
-            bool isStuck = CheckCollision(currentPos, scene, nullptr, 0.1f);
-
-            // X ekseninde hareket dene
-            glm::vec3 nextPosX = currentPos;
-            nextPosX.x += movement.x;
-            if (isStuck || !CheckCollision(nextPosX, scene, nullptr, 0.3f)) {
-                targetPos.x = nextPosX.x;
-            }
-
-            // Z ekseninde hareket dene
-            glm::vec3 nextPosZ = currentPos;
-            nextPosZ.z += movement.z;
-            if (isStuck || !CheckCollision(nextPosZ, scene, nullptr, 0.3f)) {
-                targetPos.z = nextPosZ.z;
-            }
-        } else {
-            // Fly Mode (Collision yok veya basit hareket)
-            targetPos += movement;
-        }
+    // 4. Pozisyon Entegrasyonu ve Carpisma
+    glm::vec3 currentPos = m_Camera->GetPosition();
+    glm::vec3 targetPos = currentPos + m_Velocity * deltaTime;
+    
+    // X Hareketi (Slide)
+    glm::vec3 nextPosX = currentPos;
+    nextPosX.x = targetPos.x;
+    if (CheckCollision(nextPosX, scene, nullptr, 0.3f)) {
+        m_Velocity.x = 0.0f; // Duvara carpti, hizi kes (Slide daha karmasik ama simdilik durdurma)
+        targetPos.x = currentPos.x;
     }
-
-    if (m_GravityEnabled) {
-        // Yercekimi ve Ziplama
-        m_VerticalVelocity += m_Gravity * deltaTime;
-
-        // Ziplama ve Tırmanma (Mantling)
-        if (input->IsKeyDown(m_Bindings.jump)) {
-            if (m_IsGrounded) {
-                // Normal Ziplama
-                m_VerticalVelocity = sqrt(m_JumpHeight * -2.0f * m_Gravity);
-                m_IsGrounded = false;
-            } else {
-                // Havada veya yerde degilken ziplama tusuna basilirsa tirmanmayi dene - IPTAL EDILDI
-                /*
-                // Mantling (Tirmanma) Mantigi
-                glm::vec3 forward = m_Camera->GetFront();
-                forward.y = 0.0f;
-                if (glm::length(forward) > 0.01f) forward = glm::normalize(forward);
-
-                // ... (Kodun geri kalanı yorum satırına alındı) ...
-                
-                if (foundMantle) {
-                    m_IsMantling = true;
-                    // ...
-                    return; 
-                }
-                */
-            }
-        }
-
-        // Dikey hareket
-        glm::vec3 nextPosY = targetPos;
-        nextPosY.y += m_VerticalVelocity * deltaTime;
-        
-        float groundHeight = 0.0f; 
-        float objectTopY = 0.0f;
-        bool hitObject = CheckCollision(nextPosY, scene, &objectTopY, 0.0f);
-
-        float playerEyeHeight = 1.8f;
-        float minGroundY = 0.0f + playerEyeHeight; 
-
-        if (hitObject) {
-            // Eger asagi dogru dusuyorsak (veya duruyorsak) YERDEDIR
-            if (m_VerticalVelocity <= 0.0f && (targetPos.y - playerEyeHeight) >= (objectTopY - 0.5f)) {
-                
-                // Titreşim Düzeltmesi: Epsilon azaltıldı ve yapışkan yerçekimi uygulandı
-                // 0.05f yerine 0.001f kullaniyoruz, boylece havada kalmaz.
-                float groundSnapY = objectTopY + playerEyeHeight + 0.001f; 
-                
-                targetPos.y = groundSnapY;
-                
-                // Yere yapış: Hafif eksi hız uygulayarak sonraki karede de "yere çarpma" kontrolünü garantile
-                m_VerticalVelocity = -2.0f; 
-                m_IsGrounded = true;
-            }
-            else if (m_VerticalVelocity > 0.0f) {
-                // Kafayi carpti
-                m_VerticalVelocity = 0.0f;
-            }
-        }
-        else if (nextPosY.y < minGroundY) {
-            targetPos.y = minGroundY;
-            m_VerticalVelocity = 0.0f;
-            m_IsGrounded = true;
-        }
-        else {
-            targetPos.y = nextPosY.y;
-            m_IsGrounded = false;
+    
+    // Z Hareketi (Slide)
+    glm::vec3 nextPosZ = currentPos;
+    nextPosZ.z = targetPos.z;
+    // Y ekseni degismedi, hedef X degisti (targetPos.x yukarida guncellendi veya iptal oldu)
+    nextPosZ.x = targetPos.x; 
+    
+    if (CheckCollision(nextPosZ, scene, nullptr, 0.3f)) {
+         m_Velocity.z = 0.0f;
+         targetPos.z = currentPos.z;
+    }
+    
+    // Y Hareketi (Ground / Ceiling)
+    glm::vec3 nextPosY = targetPos;
+    // X ve Z guncellendi
+    
+    float objectTopY = 0.0f;
+    bool hitY = CheckCollision(nextPosY, scene, &objectTopY, 0.0f);
+    
+    // Yere yakinlik kontrolu (Yer tespiti)
+    float playerEyeHeight = 1.8f;
+    
+    if (hitY) {
+        if (m_Velocity.y <= 0.0f && (targetPos.y - playerEyeHeight) >= (objectTopY - 0.5f)) {
+             // Landed
+             targetPos.y = objectTopY + playerEyeHeight + 0.001f;
+             m_Velocity.y = -2.0f; // Stick to ground
+             m_IsGrounded = true;
+        } else if (m_Velocity.y > 0.0f) {
+             // Head bump
+             m_Velocity.y = 0.0f;
+             // targetPos.y ayni kalsin veya asagi itilsin? 
+             // Simdilik carpisma oncesi pozisyona cekelim Y'yi
+             targetPos.y = currentPos.y; 
         }
     } else {
-        // Fly Mode'da dikey hiz sifirlanir
-        m_VerticalVelocity = 0.0f;
-        m_IsGrounded = false;
+        // Havada (En azindan su anlik carpmadi)
+        // Ama onceki karede yerdeydik, simdi boslukta miyiz?
+        float groundCheckY = targetPos.y - 0.2f; // Biraz asagi bak
+        // Eger asagi dogru hizimiz varsa ve yere cok yakinsak 'snap' yapabiliriz (Merdiven inisi vb)
+        // Simdilik basit: Carpmadiysa havadadir.
+        
+        // Yere cok yakin mi kontrol et (Eger IsGrounded idiysek ve bosluga dusmediysek)
+        // Bu kisim karmasik, o yuzden simple logic:
+        // Eger hitY yoksa ve Y hizi asagi dogruysa veya 0 ise -> falling
+        if (m_IsGrounded && m_Velocity.y <= 0.0f) {
+             // Yoklama atis (cast down)
+             glm::vec3 checkPos = targetPos;
+             checkPos.y -= 0.5f; 
+             float gHeight = 0.0f;
+             if (CheckCollision(checkPos, scene, &gHeight, 0.0f)) {
+                 // Hala zemindeyiz (egim veya kucuk cukur)
+                 if (targetPos.y - playerEyeHeight <= gHeight + 0.5f) {
+                      targetPos.y = gHeight + playerEyeHeight + 0.001f;
+                      m_Velocity.y = -2.0f;
+                 } else {
+                      m_IsGrounded = false;
+                 }
+             } else {
+                 m_IsGrounded = false;
+             }
+        } else {
+             m_IsGrounded = false;
+        }
+        
     }
-
+    
+    // Kamerayi Guncelle
     m_Camera->SetPosition(targetPos);
 
-    // FOV kontrolu (fare tekerlegi)
+    // FOV kontrolu (fare tekerlegi) (Eski koddan)
     float scrollDelta = input->GetMouseScrollDelta();
     if (scrollDelta != 0.0f) {
         m_Camera->ProcessMouseScroll(scrollDelta);

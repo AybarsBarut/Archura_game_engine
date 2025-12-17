@@ -88,4 +88,20 @@ struct SpawnPoint : public Component {
     int teamId = 0; // 1 = Team A, 2 = Team B
 };
 
+/**
+ * @brief Light component - Isik kaynagi
+ */
+struct LightComponent : public Component {
+    enum class Type {
+        Directional = 0,
+        Point = 1,
+        Circle = 2 // Ambient / Everywhere
+    };
+
+    Type type = Type::Point;
+    glm::vec3 color = glm::vec3(1.0f);
+    float intensity = 1.0f;
+    float range = 10.0f; // Sadece Point light icin
+};
+
 } // namespace Archura

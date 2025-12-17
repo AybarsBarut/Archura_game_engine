@@ -29,6 +29,8 @@ if(MSVC)
         $<$<CONFIG:Release>:/fp:fast>
     )
     add_link_options($<$<CONFIG:Release>:/LTCG>)
+    # Ignore LIBCMT to prevent LNK4098 warning when using /MD
+    add_link_options("/NODEFAULTLIB:LIBCMT")
     add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
 else()
     add_compile_options(-O3 -march=native -ffast-math -flto)

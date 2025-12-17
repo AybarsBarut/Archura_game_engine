@@ -79,7 +79,10 @@ void HUDRenderer::Shutdown() {
     m_HUDShader = nullptr;
 }
 
-void HUDRenderer::BeginHUD() {
+void HUDRenderer::BeginHUD(float width, float height) {
+    m_ScreenWidth = width;
+    m_ScreenHeight = height;
+
     // 2D cizim icin derinlik testini kapat
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_CULL_FACE); // HUD cizimi icin kirpmayi kapat
@@ -137,13 +140,17 @@ void HUDRenderer::DrawTexture(Texture* texture, float x, float y, float width, f
 void HUDRenderer::DrawCrosshair(float size, const glm::vec4& color) {
     float centerX = m_ScreenWidth * 0.5f;
     float centerY = m_ScreenHeight * 0.5f;
+    
+    // Fixed size small crosshair
+    float crossSize = 10.0f;
     float thickness = 2.0f;
+    glm::vec4 crossColor = glm::vec4(0.0f, 1.0f, 0.0f, 0.8f); // Green
     
-    // Yatay cizgi
-    DrawRect(centerX - size * 0.5f, centerY - thickness * 0.5f, size, thickness, color);
+    // Yatay
+    DrawRect(centerX - crossSize, centerY - thickness * 0.5f, crossSize * 2.0f, thickness, crossColor);
     
-    // Dikey cizgi
-    DrawRect(centerX - thickness * 0.5f, centerY - size * 0.5f, thickness, size, color);
+    // Dikey
+    DrawRect(centerX - thickness * 0.5f, centerY - crossSize, thickness, crossSize * 2.0f, crossColor);
 }
 
 void HUDRenderer::DrawAmmoCounter(int current, int total, float x, float y) {

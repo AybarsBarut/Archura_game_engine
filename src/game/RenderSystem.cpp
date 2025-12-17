@@ -27,10 +27,44 @@ void RenderSystem::Init(Scene* scene) {
         std::cerr << "Failed to load default shader!" << std::endl;
     }
 
+    // Shadow Map Init
+    InitShadowMap();
+
+    m_DepthShader = std::make_unique<Shader>();
+    if (!m_DepthShader->LoadFromFile("assets/shaders/depth.vert", "assets/shaders/depth.frag")) {
+        std::cerr << "Failed to load depth shader!" << std::endl;
+    }
+
     // Debug Mesh (Cube)
     m_DebugMesh = Mesh::CreateCube(1.0f);
     
     // std::cout << "RenderSystem initialized." << std::endl;
+}
+
+void RenderSystem::InitShadowMap() {
+    glGenFramebuffers(1, &m_DepthMapFBO);
+    
+    glGenTextures(1, &m_DepthMapTexture);
+    glBindTexture(GL_TEXTURE_2D, m_DepthMapTexture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, 
+                 SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+    
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+    float borderColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, m_DepthMapFBO);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, m_DepthMapTexture, 0);
+    glDrawBuffer(GL_NONE);
+    glReadBuffer(GL_NONE);
+    
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+        std::cerr << "Shadow Framebuffer is not complete!" << std::endl;
+        
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 void RenderSystem::Update(float deltaTime) {
@@ -111,7 +145,126 @@ void RenderSystem::Update(float deltaTime) {
         }
     }
     
-    // 2. Render
+
+    // Lighting Setup
+    // Isiklari topla
+    struct LightData {
+        glm::vec3 position;
+        glm::vec3 direction; // For directional
+        glm::vec3 color;
+        float intensity;
+        float range;
+        int type; // 0 = Directional, 1 = Point
+    };
+
+    std::vector<LightData> lights;
+    
+    // Varsayilan isik (Gunes) eger hic isik yoksa
+    bool hasLights = false;
+
+    for (const auto& entityPtr : m_Scene->GetEntities()) {
+        auto* lightComp = entityPtr->GetComponent<LightComponent>();
+        auto* transform = entityPtr->GetComponent<Transform>();
+        
+        if (lightComp && transform) {
+            LightData ld;
+            ld.position = transform->position; // Point light pos
+            
+            // Rotation'dan direction cikarimi (Directional light icin)
+            // Basitce Z ekseni rotasyonu varsayalim veya transform forward
+            // Simdilik (0, -1, 0) varsayip rotation ile cevirmemiz lazim ama 
+            // karmasiklastirmamak icin sadece position kullanalim.
+            // Directional light icin position = direction origin gibi dusunulebilir simdilik.
+            ld.direction = glm::vec3(-0.2f, -1.0f, -0.3f); // Sabit bir direction simdilik
+
+            ld.color = lightComp->color;
+            ld.intensity = lightComp->intensity;
+            ld.range = lightComp->range;
+            ld.type = (int)lightComp->type;
+            
+            lights.push_back(ld);
+            hasLights = true;
+            
+            // Simdilik sadece ilk 4 isigi alalim (Shader siniri)
+            if (lights.size() >= 4) break; 
+        }
+    }
+
+
+    // Eger hic isik yoksa varsayilan bir isik ekle
+    if (!hasLights) {
+        LightData defaultLight;
+        defaultLight.position = glm::vec3(5.0f, 10.0f, 5.0f);
+        defaultLight.color = glm::vec3(1.0f);
+        defaultLight.intensity = 1.0f;
+        defaultLight.range = 100.0f;
+        defaultLight.type = 1; // Point
+        lights.push_back(defaultLight);
+    }
+    
+    // --- 1. Pass: Render to Shadow Map (Directional Light only) ---
+    // En yakin directional isigi bul (Gunes)
+    // Simdilik list'teki type=0 olan ilk isigi alalim
+    
+    glm::vec3 lightPos = glm::vec3(0.0f);
+    bool hasDirLight = false;
+    
+    for (const auto& l : lights) {
+        if (l.type == 0) { // Directional
+             // RenderSystem'de direction yerine position alanina "yon" degil de
+             // isigin geldigi konumu yaziyoruz (Simule etmek icin).
+             // Directional light sonsuz uzakta ama golge matrisi icin bir pozisyona ihtiyacimiz var.
+             // Editor'de light objesini yukari tasiyarak bu pozisyonu belirleyebiliriz.
+             lightPos = l.position;
+             hasDirLight = true;
+             break;
+        }
+    }
+    
+    // Eger directional light yoksa, golge pass'ini deaktif edebiliriz ama
+    // shader texture bekledigi icin bos texture bind etmemiz gerekebilir.
+    // Simdilik directional light varsa render edelim.
+    
+    if (hasDirLight && m_DepthShader) {
+        glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
+        glBindFramebuffer(GL_FRAMEBUFFER, m_DepthMapFBO);
+        glClear(GL_DEPTH_BUFFER_BIT);
+        
+        // Light Space Matrix
+        float near_plane = 1.0f, far_plane = 100.0f; // Alan genisligine gore ayarlanmali
+        // Orthographic projection for directional light
+        glm::mat4 lightProjection = glm::ortho(-20.0f, 20.0f, -20.0f, 20.0f, near_plane, far_plane);
+        
+        // Light View: Isik pozisyonundan (0,0,0)'a (veya sahne merkezine) bakis
+        glm::mat4 lightView = glm::lookAt(lightPos, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        
+        m_LightSpaceMatrix = lightProjection * lightView;
+        
+        m_DepthShader->Bind();
+        m_DepthShader->SetMat4("lightSpaceMatrix", m_LightSpaceMatrix);
+        
+        // Tum sahneyi depth icin render et
+        // Batch mantigini burada da kullanabiliriz ama basitlik icin direkt loop
+        // (Sadece MeshRenderer olanlari)
+        for (const auto& batch : batches) {
+             // Texture/Shader onemsiz, sadece geometry (model matrix)
+             batch.mesh->DrawInstanced(m_DepthShader.get(), batch.instanceMatrices);
+        }
+        
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    } else {
+        // No directional light, reset matrix to identity or keep zero
+        // Maybe clear texture to white (depth 1.0) so everything is lit
+        glBindFramebuffer(GL_FRAMEBUFFER, m_DepthMapFBO);
+        glClear(GL_DEPTH_BUFFER_BIT);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    }
+
+    // --- 2. Pass: Normal Rendering ---
+    
+    // Reset Viewport
+    glViewport(0, 0, window->GetWidth(), window->GetHeight());
+    
     for (const auto& batch : batches) {
         if (batch.instanceMatrices.empty()) continue;
         
@@ -120,13 +273,32 @@ void RenderSystem::Update(float deltaTime) {
         
         shader->SetMat4("uView", view);
         shader->SetMat4("uProjection", projection);
-        shader->SetVec3("uLightPos", m_LightPos);
-        shader->SetVec3("uLightColor", m_LightColor);
         shader->SetVec3("uViewPos", m_Camera->GetPosition());
+
+        // Shadow Map Uniforms
+        shader->SetMat4("uLightSpaceMatrix", m_LightSpaceMatrix);
+        shader->SetInt("uShadowMap", 1); // Texture Unit 1
+        
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, m_DepthMapTexture);
+
+        // Pass Lights to Shader
+        // Note: Shader uniform array desteklemeli: uniform Light uLights[4]; ve int uLightCount;
+        shader->SetInt("uLightCount", (int)lights.size());
+        
+        for (size_t i = 0; i < lights.size(); i++) {
+            std::string base = "uLights[" + std::to_string(i) + "]";
+            shader->SetVec3(base + ".position", lights[i].position);
+            // shader->SetVec3(base + ".direction", lights[i].direction); // Future
+            shader->SetVec3(base + ".color", lights[i].color);
+            shader->SetFloat(base + ".intensity", lights[i].intensity);
+            shader->SetFloat(base + ".range", lights[i].range);
+            shader->SetInt(base + ".type", lights[i].type);
+        }
         
         // Material
         if (batch.texture) {
-            batch.texture->Bind(0);
+            batch.texture->Bind(0); // Unit 0
             shader->SetInt("uTexture", 0);
             shader->SetInt("uUseTexture", 1);
             shader->SetVec3("uDiffuse", glm::vec3(1.0f));
@@ -135,8 +307,7 @@ void RenderSystem::Update(float deltaTime) {
             shader->SetVec3("uDiffuse", batch.color); 
         }
         
-        // Tek seferde ciz (Instanced) ya da tek tek (Fallback)
-        // Mesh::DrawInstanced metodumuz var artik
+        // Tek seferde ciz (Instanced)
         batch.mesh->DrawInstanced(shader, batch.instanceMatrices);
         
         renderedCount += batch.instanceMatrices.size();

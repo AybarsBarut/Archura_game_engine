@@ -52,23 +52,41 @@ private:
     void HandleMovement(Input* input, class Scene* scene, float deltaTime);
     void HandleMouseLook(Input* input, float deltaTime);
     bool CheckCollision(const glm::vec3& position, class Scene* scene, float* outGroundHeight = nullptr, float stepHeight = 0.0f);
+    
+    // Physics Helpers
+    void ApplyFriction(float t);
+    void Accelerate(glm::vec3 wishDir, float wishSpeed, float accel, float deltaTime);
+    void AirAccelerate(glm::vec3 wishDir, float wishSpeed, float accel, float deltaTime);
 
 private:
     Camera* m_Camera;
 
     // Movement settings
-    float m_WalkSpeed = 5.0f;
-    float m_RunSpeed = 10.0f;
-    float m_JumpHeight = 2.0f;
+    float m_WalkSpeed = 10.0f; // Kayganliktan dolayi biraz arttirabiliriz 
+    float m_RunSpeed = 20.0f;
+    float m_JumpHeight = 2.0f; // Bu ziplama gucu icin kullanilacak (sqrt formulunde)
     float m_MouseSensitivity = 0.1f;
-    float m_Gravity = -9.81f;
+    float m_Gravity = -20.0f; // Biraz daha sert duşüş
     bool m_GravityEnabled = true;
     KeyBindings m_Bindings;
 
+    // Physics / Source Style Movement Constants
+    float m_MaxVelocity = 20.0f; // Metric scale max velocity (RunSpeed esitlendi)
+    
+    // Friction Tuning
+    // Quake Unit vs Metric Unit sorunu vardi.
+    // StopSpeed cok yuksek oldugu icin (100) surtunme tum hizi yiyordu.
+    // Metric sistemde (1 unit = 1 meter) StopSpeed kucuk olmali.
+    float m_StopSpeed = 1.0f; // Hızlanma durdurma eşiği (meter/sec)
+    float m_Friction = 6.0f;
+    float m_Acceleration = 10.0f; // Yer ivmesi
+    float m_AirAcceleration = 2.0f; // Hava kontrolü
+    float m_AirSpeedCap = 3.0f;  // Havada strafe hizi limiti
+    
     // State
+    glm::vec3 m_Velocity = glm::vec3(0.0f);
     bool m_IsGrounded = true;
     bool m_IsRunning = false;
-    float m_VerticalVelocity = 0.0f;
 
     // Mantling State
     bool m_IsMantling = false;

@@ -128,6 +128,18 @@ namespace Archura {
         auto* groundMesh = ground->AddComponent<MeshRenderer>();
         groundMesh->mesh = Mesh::CreatePlane(100.0f, 100.0f, 10.0f);
         groundMesh->color = glm::vec3(0.2f, 0.25f, 0.2f);
+        
+        // Zemin carpistiricisi (BoxCollider)
+        // Yukseklik (Y) olarak ince ama algilanabilir bir deger verelim (1.0f)
+        // Pozisyonu biraz asagi ( -0.5f ) kaydirarak zemin yuzeyini 0.0f'da tutabiliriz, 
+        // ama simdilik merkezde kalsin, karakterin ayagi batarsa duzeltiriz.
+        auto* groundCol = ground->AddComponent<BoxCollider>();
+        groundCol->size = glm::vec3(100.0f, 1.0f, 100.0f);
+        // Plane mesh genellikle Y=0'da olusur. Collider merkezi entity pozisyonundadir (0,0,0).
+        // 1 birim kalinlik verirsek yuzey Y=0.5'te olur. 
+        // Bunu engellemek icin transform.position.y = -0.5f yapabiliriz VEYA collider center offset ekleyebiliriz.
+        // Component.h'da center offset var mi? Evet (glm::vec3 center).
+        groundCol->center = glm::vec3(0.0f, -0.5f, 0.0f);
 
         // Walls
         float mapSize = 50.0f;
@@ -249,8 +261,8 @@ namespace Archura {
             
             // HUD
             if (!devModeActive) {
-                hudRenderer.BeginHUD();
-                hudRenderer.DrawCrosshair(); 
+                hudRenderer.BeginHUD((float)window->GetWidth(), (float)window->GetHeight());
+                hudRenderer.DrawCrosshair();  
                 hudRenderer.DrawHealthBar(playerHealth->current, playerHealth->max, 20, 20, 200, 20);
                 hudRenderer.DrawAmmoCounter(weapon->stats.currentMag, weapon->stats.magSize, window->GetWidth() - 220, 20);
                 hudRenderer.EndHUD();

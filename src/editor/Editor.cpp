@@ -231,6 +231,9 @@ void Editor::DrawMenuBar(Scene* scene) {
                     e->GetComponent<Transform>()->position = glm::vec3(0, 5, 0);
                 }
             }
+            if (ImGui::MenuItem("Light")) {
+                 if (scene) SpawnEntity(scene, "Light");
+            }
             ImGui::EndMenu();
         }
 
@@ -317,6 +320,7 @@ void Editor::DrawSceneHierarchy(Scene* scene) {
             if (ImGui::MenuItem("Capsule")) SpawnEntity(scene, "Capsule");
             if (ImGui::MenuItem("Stairs")) SpawnEntity(scene, "Stairs");
             if (ImGui::MenuItem("Ramp")) SpawnEntity(scene, "Ramp");
+            if (ImGui::MenuItem("Light")) SpawnEntity(scene, "Light");
             ImGui::EndMenu();
         }
 
@@ -519,6 +523,23 @@ void Editor::DrawInspector(Scene* scene) {
         ImGui::DragFloat("Gravity", &projectile->gravity, 0.1f, -20.0f, 0.0f);
     }
 
+    // Isik Bileseni
+    auto* lightComp = m_SelectedEntity->GetComponent<LightComponent>();
+    if (lightComp && ImGui::CollapsingHeader("Light Component")) {
+        const char* lightTypes[] = { "Directional", "Point", "Circle (Ambient)" };
+        int currentType = (int)lightComp->type;
+        if (ImGui::Combo("Type", &currentType, lightTypes, 3)) {
+            lightComp->type = (LightComponent::Type)currentType;
+        }
+
+        ImGui::ColorEdit3("Color", &lightComp->color.x);
+        ImGui::DragFloat("Intensity", &lightComp->intensity, 0.1f, 0.0f, 100.0f);
+        
+        if (lightComp->type == LightComponent::Type::Point) {
+            ImGui::DragFloat("Range", &lightComp->range, 0.5f, 0.0f, 1000.0f);
+        }
+    }
+
     ImGui::Separator();
     ImGui::Spacing();
     
@@ -693,6 +714,29 @@ void Editor::SpawnEntity(Scene* scene, const std::string& type, const std::strin
     } else if (type == "Ramp") {
         meshRenderer->mesh = Mesh::CreateRamp(1.0f, 1.0f, 2.0f);
         collider->size = glm::vec3(1.0f, 1.0f, 2.0f);
+    } else if (type == "Light") {
+        // Isik kaynagi icin component ekle
+        entity->AddComponent<LightComponent>();
+        
+        // Gorsel bir temsil (Editor-only? Simdilik sari kucuk bir kup)
+        // Oyun icinde gorunmesin istiyorsak MeshRenderer eklemeyebiliriz 
+        // Veya "Editor Only" flag lazim. 
+        // Kullanici "gorunur olmasin" dedi. O yuzden MeshRenderer eklemeyelim veya
+        // debug modunda cizdirelim. DebugMesh olmadigi icin simdilik bos birakiyoruz.
+        // Ama secilmesi icin Collider lazim olabilir veya Hierarchy'den secilecek.
+        // Konumunu gormek icin kucuk bir wireframe cizdirilebilir ama simdilik sadece hierarchy.
+        
+        // MeshRenderer'i kaldir (otomatik eklendi yukarida)
+        entity->RemoveComponent<MeshRenderer>();
+        // Collider? Secmek icin ise yarar ama fiziksel etkilesim olmamali.
+        // Trigger yapalim.
+        collider->isTrigger = true;
+        collider->size = glm::vec3(0.5f);
+        
+        // Simdilik kullanici nerede oldugunu bilsin diye ufak bir mesh koyalim mi?
+        // "Gorunur olmasin" dedi. O yuzden koymuyoruz.
+        // Editor'de ikon cizimi henuz yok.
+        
     } else if (type == "Model" && !path.empty()) {
         std::string ext = std::filesystem::path(path).extension().string();
         

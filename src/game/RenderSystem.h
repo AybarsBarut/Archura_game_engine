@@ -30,8 +30,16 @@ private:
     class Mesh* m_DebugMesh = nullptr;
     
     // Lighting
-    glm::vec3 m_LightPos = glm::vec3(5.0f, 10.0f, 5.0f);
-    glm::vec3 m_LightColor = glm::vec3(1.0f);
+    // Lighting
+    // Dynamic lighting handling in Update()
+
+    // Shadows
+    void InitShadowMap();
+    unsigned int m_DepthMapFBO = 0;
+    unsigned int m_DepthMapTexture = 0;
+    const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
+    std::unique_ptr<Shader> m_DepthShader;
+    glm::mat4 m_LightSpaceMatrix;
 };
 
 } // namespace Archura

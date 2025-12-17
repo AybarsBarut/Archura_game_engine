@@ -20,7 +20,7 @@ public:
     void Shutdown();
 
     // HUD rendering
-    void BeginHUD();
+    void BeginHUD(float width, float height);
     void EndHUD();
 
     // Primitive shapes
