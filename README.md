@@ -4,7 +4,7 @@
 
 **Archura**, modern C++17 standartları ile geliştirilmiş, performans odaklı ve modüler bir FPS oyun motorudur. Düşük seviyeli sistem erişimi, veri odaklı tasarım (Data-Oriented Design) ve çok çekirdekli işlemci mimarilerinden tam yararlanmayı hedefleyen bir yapı üzerine kurulmuştur.
 
-## 🚀 Temel Özellikler
+##  Temel Özellikler
 
 ### Çekirdek Sistemler
 *   **Veri Odaklı ECS (Entity Component System)**: Cache-friendly (önbellek dostu) ve yüksek performanslı entity yönetimi.
@@ -22,7 +22,7 @@
 *   **UI**: ImGui destekli, oyun içi ayarlanabilir Geliştirici Konsolu ve Editör araçları.
 *   **Ses**: MCI tabanlı, genişletilebilir ses sistemi.
 
-## 🛠️ Kurulum ve Derleme
+##  Kurulum ve Derleme
 
 ### Oyuncular İçin (Release)
 En son kararlı sürümü oynamak için:
