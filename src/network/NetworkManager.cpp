@@ -35,6 +35,8 @@ void NetworkManager::Shutdown() {
         WSACleanup();
         m_Initialized = false;
     }
+    m_IsServer = false;
+    m_IsConnected = false;
 }
 
 bool NetworkManager::StartServer(int port) {

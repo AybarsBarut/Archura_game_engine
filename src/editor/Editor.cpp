@@ -26,10 +26,7 @@ Editor::~Editor() { Shutdown(); }
 bool Editor::Init(Window *window) {
   m_Window = window;
 
-  // Archura Developer Console Integration
-  DeveloperConsole::GetInstance().AddPrintCallback([this](const std::string& msg) {
-      this->Log(msg);
-  });
+
 
   // Ciktilari konsola yonlendir
   m_NewCoutBuf = std::make_unique<EditorStreamBuf>(this);

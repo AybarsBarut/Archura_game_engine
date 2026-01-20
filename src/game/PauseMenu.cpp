@@ -243,6 +243,10 @@ const char* PauseMenu::GetKeyName(int keycode) {
             NetworkManager::Get().StartServer(port);
         }
 
+        if (ImGui::Button("STOP HOSTING", ImVec2(width, 30))) {
+            NetworkManager::Get().Shutdown();
+        }
+
         ImGui::Text("IP Address");
         ImGui::SetNextItemWidth(width);
         ImGui::InputText("##ip", ip, 32);
