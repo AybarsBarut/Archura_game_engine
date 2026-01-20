@@ -119,7 +119,7 @@ file(GLOB_RECURSE ENGINE_SOURCES
     "src/core/*.cpp"
     "src/rendering/*.cpp"
     "src/ecs/*.cpp"
-    "src/ecs_new/*.cpp"
+
     "src/input/*.cpp"
     "src/game/*.cpp"
     "src/editor/*.cpp"
@@ -130,7 +130,7 @@ file(GLOB_RECURSE ENGINE_HEADERS
     "src/core/*.h"
     "src/rendering/*.h"
     "src/ecs/*.h"
-    "src/ecs_new/*.h"
+
     "src/input/*.h"
     "src/game/*.h"
     "src/editor/*.h"
@@ -168,9 +168,4 @@ add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
     ${CMAKE_SOURCE_DIR}/assets $<TARGET_FILE_DIR:${PROJECT_NAME}>/assets
 )
 
-# Launcher (temporarily disabled due to Windows header conflicts)
-# add_executable(ArchuraLauncher src/launcher/Launcher.cpp)
-# target_link_libraries(ArchuraLauncher PRIVATE ws2_32)
-# set_target_properties(ArchuraLauncher PROPERTIES
-#     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/${CMAKE_BUILD_TYPE}"
-# )
+
