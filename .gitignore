@@ -1,33 +1,48 @@
-# Build dizinleri
+# Build Directories
 build/
 bin/
 lib/
 cmake-build-*/
+out/
+
+# Distribution / Release Packets
 Dist_ArchuraEngine/
 Release_Packet/
 
-# Release Distribution (Whitelisted)
-!bin/Release_Dist/
-!bin/Release_Dist/*.exe
-!bin/Release_Dist/*.dll
-!bin/Release_Dist/assets/
-Release_Packet/
+# Do not commit binaries or release artifacts to the repo
+# Use "GitHub Releases" to upload zips/exes instead.
+# If you REALLY want to commit the exe, uncomment below:
+# !bin/Release_Dist/
+# !bin/Release_Dist/*.exe
+# !bin/Release_Dist/*.dll
+# !bin/Release_Dist/assets/
 
-# Visual Studio
+# Temporary / Downloaded Files
+indirilenler/
+glfw-3.4.bin.WIN64/
+glfw-prebuilt.zip
+external/glfw-prebuilt/
+
+# Visual Studio / IDE
 .vs/
+.vscode/
+.idea/
 *.user
 *.suo
 *.sln
 *.vcxproj
 *.vcxproj.filters
+*.swp
+*.swo
+*~
 
-# CMake
+# CMake Generated
 CMakeCache.txt
 CMakeFiles/
 cmake_install.cmake
 Makefile
 
-# Compiled files
+# Compiled Object Files
 *.o
 *.obj
 *.exe
@@ -36,39 +51,36 @@ Makefile
 *.dylib
 *.a
 *.lib
+*.pdb
+*.ilk
+*.exp
 
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-
-# OS
+# OS Generated
 .DS_Store
 Thumbs.db
+ehthumbs.db
+Desktop.ini
 
-# Logs
+# Logs & Local Configs
 *.log
 *_log.txt
-*_log_*.txt
-*.tlog
+imgui.ini
+build_output.txt
 
-# Developer Scripts (Local Only)
-Publish_Release.bat
-StartGame_Dev.bat
-PackageGame.bat
-setup_dependencies.bat
+# Scripts (Local Utilities)
 LocalRun.bat
+cleanup_temp.bat
 *.ps1
 
-# Packages
+# Archives
 *.zip
 *.7z
 *.rar
+*.tar.gz
 
-# Assets (Ignore content, keep structure)
-assets/*
-!assets/shaders/
-!assets/**/.gitkeep
-
+# Assets
+# Generally you should track assets unless they are huge.
+# If you want to ignore all assets except shaders:
+# assets/*
+# !assets/shaders/
+# !assets/**/.gitkeep
