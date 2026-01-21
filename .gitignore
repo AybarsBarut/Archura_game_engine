@@ -84,3 +84,5 @@ cleanup_temp.bat
 # assets/*
 # !assets/shaders/
 # !assets/**/.gitkeep
+Publish_Release.bat
+StartGame_Dev.bat
