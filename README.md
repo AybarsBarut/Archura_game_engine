@@ -1,6 +1,6 @@
 # Archura Game Engine
 
-![License](https://img.shields.io/badge/license-MIT-blue.svg) ![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg) ![Status](https://img.shields.io/badge/status-Active%20Development-green.svg) ![C++](https://img.shields.io/badge/C++-17-blue.svg)
+ ![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg) ![Status](https://img.shields.io/badge/status-Active%20Development-green.svg) ![C++](https://img.shields.io/badge/C++-17-blue.svg)
 
 **Archura**, modern C++17 standartları ile geliştirilmiş, performans odaklı ve modüler bir FPS oyun motorudur. Düşük seviyeli sistem erişimi, veri odaklı tasarım (Data-Oriented Design) ve çok çekirdekli işlemci mimarilerinden tam yararlanmayı hedefleyen bir yapı üzerine kurulmuştur.
 
